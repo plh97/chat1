@@ -1,0 +1,58 @@
+# [Chatroom](http://plhh.xyz/) &middot; [![Github Action Status](https://github.com/plh2/chatroom/actions/workflows/github-CICD-actions.yml/badge.svg)](https://github.com/plh2/chatroom/actions) [![Github Action Status](https://github.com/plh2/chatroom/actions/workflows/main.yml/badge.svg)](https://github.com/plh2/chatroom/actions) [![Netlify Status](https://api.netlify.com/api/v1/badges/12d2c466-96f3-49a6-91f1-af835e81396a/deploy-status)](https://app.netlify.com/sites/plh-chat/deploys)
+
+## Architecture
+
+- Development(lerna)
+  - datebase
+    - mongodb
+  - ansible
+  - terraform
+  - nignx gateway
+  - package
+    - frontend
+      - vite[unplugin-auto-import/vite]
+      - eslint+prettier
+      - react+hook+ts+redux
+      - @chakra-ui/react
+      - tailwind
+      - socket-io/client
+      - Netlify
+    - backend
+      - node+ts
+      - websocket
+      - Koa
+      - cors
+      - koa-router
+      - koa-static
+      - AWS
+
+## Dev
+
+```bash
+pnpm
+npm install
+pnpm run dev
+```
+
+## Deploy
+
+- terraoform create a Vultr EC2 service
+- ansible create vm environment
+- ansible clone project
+- install dependences
+- build project
+- deploy project inside docker
+
+## CICD
+
+```bash
+cd ansilbe
+ansible-playbook cicd.yml
+```
+
+## TODO
+
+- [] send image message
+- [] send gif message
+- [] send audio message
+- [] send video message

@@ -1,0 +1,7 @@
+{
+  "eslint.run": "onSave",
+  "editor.formatOnSave": true,
+  "prettier.enable": true,
+  "eslint.format.enable": true,
+  "git.ignoreLimitWarning": true
+}

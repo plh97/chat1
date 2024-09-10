@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+    mongodb:
+        # command: 
+        #     - '--logpath'
+        #     - '/var/log/mongodb/mongod.log'
+        build:
+            context: "./mongodb"
+        logging:
+            driver: none
+        ports: 
+            - "27017:27017"
+        restart: always
+        volumes:
+            - ./mongodb/data:/data/db

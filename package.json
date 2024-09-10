@@ -1,0 +1,45 @@
+{
+  "name": "chatroom",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "repository": "https://github.com/pengliheng/chatroom.git",
+  "author": "plh2 <pengliheng111@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "db:up": "docker compose -f ./docker-compose.dev.yml up -d",
+    "db:down": "docker compose -f ./docker-compose.dev.yml down",
+    "bootstrap": "pnpm i",
+    "dev": "pnpm db:up && lerna run dev",
+    "lint:eslint": "lerna run lint:eslint",
+    "commit": "cz",
+    "lint:prettier": "lerna run lint:prettier",
+    "test": "lerna run test",
+    "down": "docker compose down",
+    "deploy": "docker compose up --build -d",
+    "prepare": "npx husky install"
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "commitizen": "^4.2.6",
+    "husky": "^8.0.3",
+    "lerna": "^7.1.1",
+    "lint-staged": "^13.2.2",
+    "stylelint": "^15.6.2",
+    "stylelint-config-standard": "^33.0.0",
+    "stylelint-config-standard-scss": "^9.0.0"
+  },
+  "husky": {
+    "hooks": {
+      "prepare-commit-msg": "exec < /dev/tty && npx cz --hook || true"
+    }
+  },
+  "packageManager": "pnpm@9.5.0+sha512.140036830124618d624a2187b50d04289d5a087f326c9edfc0ccd733d76c4f52c3a313d4fc148794a2a9d81553016004e6742e8cf850670268a7387fc220c903"
+}

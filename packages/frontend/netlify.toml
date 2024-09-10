@@ -1,0 +1,18 @@
+[[redirects]]
+  from = "/api/*"
+  to = "http://18.136.199.73:8080/api/:splat"
+  status = 200
+  force = true # COMMENT: ensure that we always redirect
+
+[[redirects]]
+  from = "/socket.io/*"
+  to = "http://18.136.199.73:8080/socket.io/:splat"
+  status = 200
+  force = true # COMMENT: ensure that we always redirect
+
+
+[[redirects]]
+  from = "/*"
+  to = "index.html"
+  status = 200
+

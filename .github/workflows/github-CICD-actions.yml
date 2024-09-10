@@ -1,0 +1,31 @@
+name: GitHub Actions CICD
+run-name: ${{ github.actor }} deploy chatroom 🚀
+on:
+  push:
+    branches:
+      - "develop"
+jobs:
+  Ansible-Actions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: "just-a-placeholder-so-we-dont-get-errors"
+          config: |
+            Host aws
+              HostName 18.136.199.73
+              CheckHostIP no
+              User ubuntu
+              Port 22
+
+      - name: Adding Known Hosts
+        run: ssh-keyscan -H 18.136.199.73 >> ~/.ssh/known_hosts
+
+      - name: run ansible
+        run: |
+          cd ansible && ansible-playbook cicd.yml
