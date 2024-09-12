@@ -16,7 +16,10 @@ export const List = () => {
       navigation(`/room/${payload._id}`);
     }
   }
-  const myUserInfo = useSelector<RootState, Partial<USER>>((state) => {
+  const user = useAppSelector((state) => {
+    return state.user;
+  });
+  const myUserInfo = useAppSelector((state) => {
     return state.user.data;
   });
   if (myUserInfo.room === null) {
@@ -38,15 +41,20 @@ export const List = () => {
       </ul>
     );
   }
+  const draftMap = user.draftMap;
   return (
     <ul className="flex-1 overflow-y-auto px-2">
-      {myUserInfo.room?.map((room) => (
-        <Item
-          active={room._id.toString() == id}
-          key={room._id.toString()}
-          data={room}
-        />
-      ))}
+      {myUserInfo.room?.map((room) => {
+        const draft = draftMap[room._id];
+        return (
+          <Item
+            draft={draft}
+            active={room._id.toString() == id}
+            key={room._id.toString()}
+            data={room}
+          />
+        );
+      })}
     </ul>
   );
 };

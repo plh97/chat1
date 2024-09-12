@@ -1,26 +1,22 @@
-import React from "react";
-import { IconButton, useDisclosure } from "@chakra-ui/react";
 import { FaPlus } from "react-icons/fa";
-import { Dispatch } from "@reduxjs/toolkit";
-import { useDispatch, useSelector } from "react-redux";
-import { USER } from "@/interfaces/IUser";
-import { RootState } from "@/store/index";
 import { Form } from "react-router-dom";
+import {
+  Checkbox,
+  CheckboxGroup,
+  IconButton,
+  useDisclosure,
+} from "@chakra-ui/react";
+import { USER } from "@/interfaces/IUser";
 import { modifyRoomThunk } from "@/store/reducer/room";
-import { Checkbox, CheckboxGroup } from "@chakra-ui/react";
+import { IRoom } from "@/interfaces/IMessage";
 import { Types } from "mongoose";
-import { ROOM } from "@/interfaces/IRoom";
 
 export function AddMember() {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const myUserInfo = useSelector<RootState, Partial<USER>>((state) => {
-    return state.user.data;
-  });
-  const roomInfo = useSelector<RootState, ROOM>((state) => {
-    return state.room.data;
-  });
+  const roomInfo = useAppSelector<IRoom>((state) => state.room.data);
+  const userInfo = useAppSelector<USER>((state) => state.user.data);
   const [user, setUser] = useState<string[]>([]);
-  const dispatch = useDispatch<Dispatch<any>>();
+  const dispatch = useAppDispatch();
   const toast = useToast();
   const handleAddFriend = async () => {
     if (!user.length) {
@@ -69,7 +65,7 @@ export function AddMember() {
                   }}
                 >
                   <Stack spacing={[1, 5]} direction={["column", "row"]}>
-                    {myUserInfo.friend?.map((user) => {
+                    {userInfo.friend?.map((user) => {
                       const isMember = !!roomInfo.member?.find(
                         (m) => user._id === m._id
                       );

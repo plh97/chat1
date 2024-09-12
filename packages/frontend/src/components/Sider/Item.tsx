@@ -1,25 +1,32 @@
-import { ROOM } from "@/interfaces/IRoom";
 import { AvatarComponnet } from "../Avatar";
 import { MessageTemplate } from "@/messages";
-import { IMessage } from "@chatroom/core";
+import { IRoom, IMessage } from "@/interfaces/IMessage";
 
 interface IProps {
-  data: ROOM;
+  data: IRoom;
   active: boolean;
+  draft?: Partial<IMessage>;
 }
 
-export function Item(props: IProps) {
-  const { data } = props;
+export function Item({ data, active, draft }: IProps) {
   const textMemo = useMemo(() => {
+    if (draft) {
+      return (
+        <>
+          <span className="font-bold text-red-500">Draft:</span>
+          {draft.textMessage?.text}
+        </>
+      );
+    }
     try {
-      const msg = props.data.lastMsg as IMessage;
+      const msg = data.lastMsg;
       if (!msg) return "-";
-      return MessageTemplate[msg.contentType](msg)?.preview ?? '-';
+      return MessageTemplate[msg.contentType](msg)?.preview ?? "-";
     } catch (error) {
       return "unknown message";
     }
-  }, [props.data]);
-  const containerStyle = props.active ? " bg-white/10" : "";
+  }, [data, draft]);
+  const containerStyle = active ? " bg-white/10" : "";
   return (
     <li key={data._id?.toString()}>
       <Link

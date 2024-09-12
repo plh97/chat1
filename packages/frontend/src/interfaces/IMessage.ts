@@ -24,7 +24,7 @@ export interface IRoom extends Omit<IRoomCore, "message" | "member" | '_id'> {
   message: IMessage[];
   member: USER[];
   totalCount: number;
-  lastMsg: IMessage;
+  lastMsg?: IMessage;
 }
 
 export interface MESSAGE_REQUEST {

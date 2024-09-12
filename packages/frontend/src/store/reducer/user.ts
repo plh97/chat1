@@ -1,17 +1,20 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import Api from "@/Api";
 import { STATUS } from "@/enum/common";
 import { USER } from "@/interfaces/IUser";
+import { IMessage } from "@/interfaces/IMessage";
 
 export interface IState {
   error: string | null;
   data: USER;
   auth: boolean | null;
+  draftMap: Record<string, Partial<IMessage>>;
 }
 
 const initialState: IState = {
   error: null,
   auth: null,
+  draftMap: {},
   data: {
     _id: "",
     room: null,
@@ -90,9 +93,15 @@ export const userSlice = createSlice({
         status: STATUS.FAILED,
       });
     },
+    setDraft(state, action: PayloadAction<Partial<IMessage>>) {
+      if (action.payload.channelId) {
+        state.draftMap[action.payload.channelId] = action.payload;
+      }
+    },
   },
 });
 
-export const { logout, setUserInfo, updateUserRoomMessage } = userSlice.actions;
+export const { logout, setUserInfo, updateUserRoomMessage, setDraft } =
+  userSlice.actions;
 
 export const userReducer = userSlice.reducer;

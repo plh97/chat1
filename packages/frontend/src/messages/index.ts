@@ -1,6 +1,7 @@
-import { IContentType, IMessage } from "@chatroom/core";
+import { IContentType } from "@chatroom/core";
 import { TextMsg } from "./TextMsg";
 import { MediaMsg } from "./MediaMsg";
+import { IMessage } from "@/interfaces/IMessage";
 
 export const MessageTemplate: Record<
   IContentType,

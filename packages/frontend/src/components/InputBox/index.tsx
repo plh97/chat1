@@ -1,5 +1,3 @@
-import { Dispatch } from "@reduxjs/toolkit";
-import { useDispatch } from "react-redux";
 import { useAppSelector } from "@/hooks/app";
 import { scrollToEnd } from "@/store/reducer/room";
 import { sendMessageAction } from "@/store/action/message";
@@ -11,21 +9,23 @@ import { FaRecordVinyl } from "react-icons/fa";
 import { useRecord } from "@/hooks/useRecord";
 import { Input } from "./input";
 import { UploadFile } from "./UploadFile";
+import { useDraft } from "./useDraft";
 
 const MAX_INPUT = 2000;
 const { toast } = createStandaloneToast();
 
 export function InputBox() {
   const { id = "" } = useParams();
-  const dispatch = useDispatch<Dispatch<any>>();
+  const dispatch = useAppDispatch();
   const [text, setText] = useState("");
   const { startRecording, stopRecording, time } = useRecord();
-  const myUserInfo = useAppSelector((state) => state.user.data);
+  const { data: userInfo } = useAppSelector((state) => state.user);
+  useDraft(text, setText);
   const handleSendMedia = async (file: File, duration?: string) => {
-    await dispatch(
+    await dispatch<any>(
       sendMessageAction({
         contentType: IContentType.MEDIA_MESSAGE,
-        user: myUserInfo._id,
+        user: userInfo._id,
         channelId: id,
         createdAt: new Date(),
         isRead: false,
@@ -43,13 +43,13 @@ export function InputBox() {
     const file = await getImgFromClip();
     handleSendMedia(file);
   };
-  async function handleSendText() {
+  const handleSendText = async () => {
     const _text = text.trim();
-    if (!myUserInfo._id || !_text) return;
-    await dispatch(
+    if (!userInfo._id || !_text) return;
+    await dispatch<any>(
       sendMessageAction({
         contentType: IContentType.TEXT_MESSAGE,
-        user: myUserInfo._id,
+        user: userInfo._id,
         channelId: id,
         createdAt: new Date(),
         isRead: false,
@@ -63,7 +63,7 @@ export function InputBox() {
     );
     setText("");
     dispatch(scrollToEnd());
-  }
+  };
   const UtilMome = useMemo(() => {
     if (text) {
       return (
@@ -115,6 +115,7 @@ export function InputBox() {
       </>
     );
   }, [time, text]);
+
   return (
     <div className="box-border flex flex-row gap-3 flex-0 basis-20 pt-0 pb-5 px-3">
       {!time ? (

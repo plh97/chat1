@@ -10,10 +10,9 @@ import {
   scrollToEnd,
 } from "@/store/reducer/room";
 import { throttle } from "@/utils";
-import { Item } from "./Item";
+import { Item, SkeletonItem } from "./Item";
 import { Top } from "./top";
 import { USER } from "@/interfaces/IUser";
-import { Loader2 } from "lucide-react";
 
 export function Message() {
   const scrollEl = useRef<HTMLDivElement>(null);
@@ -76,8 +75,11 @@ export function Message() {
   }, [myUserInfo?._id]);
   if (!myUserInfo?._id) {
     return (
-      <div className="overflow-y-auto flex-1 relative px-3.5 py-0 overscroll-none flex items-center justify-center flex-col">
-        <Loader2 className="text-2xl w-8 h-8 text-gray-200 animate-spin dark:text-gray-600" />
+      <div className="overflow-y-auto flex-1 relative px-3.5 py-0 overscroll-none flex items-center justify-center">
+        {/* <Loader2 className="text-2xl w-8 h-8 text-gray-200 animate-spin dark:text-gray-600" /> */}
+        <SkeletonItem />
+        <SkeletonItem />
+        <SkeletonItem />
       </div>
     );
   }

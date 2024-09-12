@@ -1,8 +1,8 @@
-import { IMessage } from "@chatroom/core";
 import { ImageMsg } from "./ImageMsg";
 import { VideoMsg } from "./VideoMsg";
 import { PdfMsg } from "./PdfMsg";
 import { AudioMsg } from "./AudioMsg";
+import { IMessage } from "@/interfaces/IMessage";
 
 export const Component = ({ message }: { message: IMessage }) => {
   const mediaMsg = message.mediaMessage;
@@ -31,8 +31,17 @@ export const Component = ({ message }: { message: IMessage }) => {
 };
 
 export const MediaMsg = (message: IMessage) => {
+  console.log(message.mediaMessage?.extension);
+  const getPreview = () => {
+    const type = message.mediaMessage?.fileType?.split("/")[0];
+    return (
+      <span className="mt-2 text-xs font-normal text-stone-400">
+        {`[${type?.toUpperCase() ?? ""}]`}
+      </span>
+    );
+  };
   return {
-    preview: message.mediaMessage?.extension,
+    preview: getPreview(),
     component: <Component message={message} />,
   };
 };

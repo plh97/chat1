@@ -1,11 +1,12 @@
 import { AxiosRequestConfig } from "axios";
 import {
   ADD_MESSAGE_REQUEST,
+  IMessage,
+  IRoom,
   MESSAGE_REQUEST,
 } from "@/interfaces/IMessage";
 import { USER } from "@/interfaces/IUser";
 import { ROOM } from "./interfaces/IRoom";
-import { IMessage, IRoom } from "@chatroom/core";
 
 const { toast } = createStandaloneToast();
 

@@ -1,5 +1,4 @@
-import React from "react";
-import { IMessage } from "@chatroom/core";
+import { IMessage } from "@/interfaces/IMessage";
 
 export const Component = ({ message }: { message: IMessage }) => {
   return <div className="box-content p-2.5">{message.textMessage?.text}</div>;

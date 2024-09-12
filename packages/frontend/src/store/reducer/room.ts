@@ -1,13 +1,11 @@
+import { Types } from "mongoose";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-
-import Api from "@/Api";
 import { IMessage, MESSAGE_REQUEST, IRoom } from "@/interfaces/IMessage";
-
 import { fetchUserInfoThunk } from "./user";
 import { ROOM } from "@/interfaces/IRoom";
 import { IChannelType } from "@chatroom/core";
-import { Types } from "mongoose";
+import Api from "@/Api";
 
 export interface IState {
   id: string;
@@ -32,6 +30,7 @@ const initialState: IState = {
     image: "",
     name: "",
     channelType: IChannelType.PRIVATE,
+    // lastMsg?: {},
     creater: new Types.ObjectId(),
     admin: [],
     createdAt: new Date(),
@@ -120,10 +119,7 @@ export const roomSlice = createSlice({
     addMessage(state, action: PayloadAction<IMessage>) {
       state.data.message.push(action.payload);
     },
-    initialMessage(
-      state,
-      action: PayloadAction<{ message: IMessage[]; totalCount: number }>
-    ) {
+    initialMessage(state, action: PayloadAction<IRoom>) {
       state.data = action.payload;
     },
   },

@@ -24,4 +24,4 @@ dist-ssr
 *.sw?
 
 .eslintrc-auto-import.json
-auto-import.d.ts
+auto-imports.d.ts
