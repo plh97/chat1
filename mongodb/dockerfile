@@ -1,1 +1,2 @@
-FROM mongo
+# FROM mongo
+FROM prismagraphql/mongo-single-replica:4.4.3-bionic

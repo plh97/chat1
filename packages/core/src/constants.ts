@@ -1,8 +1,9 @@
 export enum WS_EVENT {
-  PING = "ping",
-  PONG = "ping",
-  SUBSCRIBE = "subscribe",
-  UN_SUBSCRIBE = "un_subscribe",
-  LOGIN = "login",
-  SEND_MSG = "WSSendMsg",
+  PING = "WS_PING",
+  PONG = "WS_PONG",
+  SUBSCRIBE = "WS_SUBSCRIBE",
+  UN_SUBSCRIBE = "WS_UN_SUBSCRIBE",
+  LOGIN = "WS_LOGIN",
+  SEND_MSG = "WS_SEND_MESSAGE",
+  READ_MSG = "WS_READ_MESSAGE",
 }

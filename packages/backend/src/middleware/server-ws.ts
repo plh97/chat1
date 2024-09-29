@@ -1,6 +1,6 @@
 import { Context } from "koa";
 import { Server as HttpServer } from "http";
-import { SocketServer } from "@chatroom/core";
+import { SocketServer } from "core";
 import { onMsgReceive } from "@/ws";
 
 const socketServer = new SocketServer();

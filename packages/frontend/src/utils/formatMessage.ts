@@ -1,5 +1,6 @@
 import Api from "@/Api";
-import { IContentType, IMediaMessage, IMessage } from "@chatroom/core";
+import { IMessage } from "@/interfaces/IMessage";
+import { IContentType, IMediaMessage, IMessageCore } from "core";
 
 const uploadFile = async (
   file: File,
@@ -121,7 +122,7 @@ const formatMediaMessage = async (
   return uploadFile(file);
 };
 
-export const formatMessage = async (message: IMessage) => {
+export const formatMessage = async (message: Partial<IMessage>) => {
   switch (message.contentType) {
     // case IContentType.TEXT_MESSAGE:
     //   return {

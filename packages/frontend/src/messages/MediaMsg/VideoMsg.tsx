@@ -1,4 +1,4 @@
-import { IMediaMessage } from "@chatroom/core";
+import { IMediaMessage } from "core";
 import { ProgressImage } from "./ProgressImage";
 import { IconButton } from "@chakra-ui/react";
 import { FaPlay } from "react-icons/fa";

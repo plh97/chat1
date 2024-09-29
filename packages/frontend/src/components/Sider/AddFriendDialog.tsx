@@ -1,29 +1,28 @@
-import { Dispatch } from "@reduxjs/toolkit";
-import { useDispatch } from "react-redux";
+import { FaPlus } from "react-icons/fa";
 import { USER } from "@/interfaces/IUser";
 import { Form } from "react-router-dom";
 import { addRoomThunk } from "@/store/reducer/room";
 import { Button, IconButton } from "@chakra-ui/react";
 import Api from "@/Api";
-import { FaPlus } from "react-icons/fa";
 
 export const AddFriendDialog = () => {
   const [roomName, setRoomName] = useState("");
-  const dispatch = useDispatch<Dispatch<any>>();
+  const dispatch = useThunkDispatch();
   const navigation = useNavigate();
   async function handleAddRoom() {
     if (!roomName) {
       return;
     }
-    const { payload } = await dispatch<any>(
+    const payloadAction = await dispatch(
       addRoomThunk({
         name: roomName,
         member: [],
       })
     );
+    const payload = payloadAction?.payload as any;
     onClose();
     setRoomName("");
-    navigation(`/room/${payload._id}`);
+    navigation(`/room/${payload.id}`);
   }
   const handleSearch = async (v?: string) => {
     if (!v) {
@@ -37,7 +36,7 @@ export const AddFriendDialog = () => {
     if (!id) {
       return;
     }
-    const res = await Api.addFriend({ _id: id });
+    const res = await Api.addFriend({ id: id });
     if (res) {
       setAcc([]);
     }
@@ -70,7 +69,7 @@ export const AddFriendDialog = () => {
                       <div
                         //  hover:bg-white/10
                         className="mt-2 rounded-lg border-2 border-slate-900 border-solid px-0 my-2 flex gap-2 items-center justify-between flex-row"
-                        key={a._id}
+                        key={a.id}
                       >
                         <AvatarComponnet
                           size="md"
@@ -82,7 +81,7 @@ export const AddFriendDialog = () => {
                         <IconButton
                           aria-label="add friend"
                           onClick={() => {
-                            handleAddFriend(a._id);
+                            handleAddFriend(a.id);
                           }}
                           icon={<FaPlus />}
                         />

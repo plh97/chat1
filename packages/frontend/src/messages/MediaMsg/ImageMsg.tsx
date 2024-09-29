@@ -1,8 +1,7 @@
 import { IconButton, Image } from "@chakra-ui/react";
-import { IMediaMessage } from "@chatroom/core";
+import { IMediaMessage } from "core";
 import { FaDownload } from "react-icons/fa";
 import { ProgressImage } from "./ProgressImage";
-
 
 const useFixedSize = (
   mediaMessage?: IMediaMessage,
@@ -83,10 +82,7 @@ export const ImageMsg = ({ message }: { message: IMediaMessage }) => {
       style={{ height, width }}
     >
       <PreviewImage mediaMessage={message}>
-        <ProgressImage
-          thumbnail={message.thumbnail}
-          url={message.url}
-        />
+        <ProgressImage thumbnail={message.thumbnail} url={message.url} />
       </PreviewImage>
     </div>
   );

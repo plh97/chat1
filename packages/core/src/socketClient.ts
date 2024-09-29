@@ -109,6 +109,11 @@ export class SocketClient {
       this.eventEmitter.emit(WS_EVENT.LOGIN, dataObj);
       return;
     }
+    ///////////////// handle login
+    if (dataObj?.event === WS_EVENT.READ_MSG) {
+      this.eventEmitter.emit(WS_EVENT.READ_MSG, dataObj);
+      return;
+    }
     console.error("unalbe handle", dataObj);
   };
 
@@ -138,9 +143,9 @@ export class SocketClient {
     };
   };
 
-  sendMsg = <T>(msg: unknown) => {
+  sendMsg = <T>(msg: unknown, event = WS_EVENT.SEND_MSG) => {
     const reqId = generateTemplateId();
-    this.send({ event: WS_EVENT.SEND_MSG, data: msg, requestId: reqId });
+    this.send({ event, data: msg, requestId: reqId });
     return this.promisify(reqId) as Promise<IWsData<T>>;
   };
 }

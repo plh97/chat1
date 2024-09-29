@@ -16,7 +16,7 @@ const initialState: IState = {
   auth: null,
   draftMap: {},
   data: {
-    _id: "",
+    id: "",
     room: null,
     friend: [],
     image: "",
@@ -68,7 +68,7 @@ export const userSlice = createSlice({
   reducers: {
     updateUserRoomMessage(state, action) {
       const room = state.data.room?.find(
-        (room) => room._id === action.payload.roomId
+        (room) => room.id === action.payload.roomId
       );
       if (room?.message) {
         room.message = [action.payload.msg];

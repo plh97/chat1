@@ -5,7 +5,7 @@ import { Loading } from "./Loading";
 export function Content() {
   const { id = "" } = useParams();
   const room = useAppSelector((state) => state.user.data.room);
-  const currentRoom = room?.find((item) => item._id === id);
+  const currentRoom = room?.find((item) => item.id === id);
   if (!currentRoom) {
     return <Loading />;
   }
@@ -14,7 +14,7 @@ export function Content() {
       <WrapItem>
         <AvatarComponnet
           name={currentRoom.image ? undefined : currentRoom.name}
-          src={currentRoom.image}
+          src={currentRoom.image ?? ''}
         />
       </WrapItem>
       <div className="ml-2">

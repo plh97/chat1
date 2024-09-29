@@ -4,8 +4,9 @@ import { MessageModel } from "@/model/message";
 
 const sendMessage = async (ctx: Context) => {
   const body = ctx.request.body;
-  const msg = await MessageModel.create(body);
-  const data = await MessageModel.findOne(msg).populate("user");
+  const data = await MessageModel.create(body);
+  // const data = await MessageModel.findUnique({ where: msg });
+  // .populate("user");
   ctx.body = {
     code: 0,
     data,
@@ -13,8 +14,8 @@ const sendMessage = async (ctx: Context) => {
 };
 
 const deleteMessage = async (ctx: Context) => {
-  const { _id } = ctx.request.query;
-  const res = await MessageModel.deleteOne({ _id });
+  const id = ctx.request.query.id as string;
+  const res = await MessageModel.delete({ where: { id } });
   ctx.body = {
     code: 0,
     data: res,

@@ -1,5 +1,5 @@
 import { formatTime } from "@/utils";
-import { IMediaMessage } from "@chatroom/core";
+import { IMediaMessage } from "core";
 import { FaPauseCircle, FaPlayCircle } from "react-icons/fa";
 
 export function formatFileSize(size?: number) {

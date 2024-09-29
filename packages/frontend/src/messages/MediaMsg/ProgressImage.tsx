@@ -1,5 +1,5 @@
 import { Image } from "@chakra-ui/react";
-import { IMediaMessage } from "@chatroom/core";
+import { IMediaMessage } from "core";
 import classNames from "classnames";
 
 export const ProgressImage = ({ thumbnail, url }: Partial<IMediaMessage>) => {

@@ -1,12 +1,10 @@
-import { Dispatch } from "@reduxjs/toolkit";
-import { useDispatch } from "react-redux";
 import { logoutThunk } from "@/store/reducer/user";
 import { List } from "./List";
 import { AddRoomDialog } from "./AddRoomDialog";
 import { AddFriendDialog } from "./AddFriendDialog";
 
 export function Sider() {
-  const dispatch = useDispatch<Dispatch<any>>();
+  const dispatch = useThunkDispatch();
   function handleLogout() {
     dispatch(logoutThunk());
   }

@@ -1,23 +1,20 @@
 import { Context } from "koa";
 import { verify } from "jsonwebtoken";
-import { Types } from "mongoose";
 import { privateKey } from "@/config";
-import { MessageModel } from "@/model/message";
 import { RoomModel } from "@/model/room";
 
 export const getRoom = async (ctx: Context) => {
-  console.log(MessageModel);
-  const _id = (ctx.request.query._id as string) ?? "";
+  const id = (ctx.request.query.id as string) ?? "";
   const page = +(ctx.request.query.page ?? "1");
   const start = +(ctx.request.query.start ?? "0");
   const pageSize = +(ctx.request.query.pageSize ?? "20");
-  const data = await RoomModel.findOne({
-    _id: new Types.ObjectId(_id),
-  })
-    .populate({ path: "member creater" })
-    .populate({ path: "message", populate: { path: "user" } });
-  let message = data?.message ?? [];
-  const totalCount = data?.message?.length ?? 0;
+  const data = await RoomModel.findUnique({
+    where: { id },
+  });
+  // .populate({ path: "member creater" })
+  // .populate({ path: "message", populate: { path: "user" } });
+  let message = data?.messageId ?? [];
+  const totalCount = data?.messageId?.length ?? 0;
   if (start) {
     const begin = totalCount - +start - pageSize;
     const end = totalCount - +start;
@@ -31,7 +28,7 @@ export const getRoom = async (ctx: Context) => {
   ctx.body = {
     code: 0,
     data: {
-      ...data?.toJSON(),
+      ...data,
       totalCount,
       message,
     },
@@ -44,9 +41,10 @@ export const addRoom = async (ctx: Context) => {
   const userIdFromToken = verify(cookie, privateKey) as string;
   const roomResponse = await RoomModel.create({
     ...body,
-    creater: new Types.ObjectId(userIdFromToken),
-    member: [new Types.ObjectId(userIdFromToken), ...body.member],
-    manager: new Types.ObjectId(userIdFromToken),
+    // @ts-ignore
+    creater: userIdFromToken,
+    member: [userIdFromToken, ...body.member],
+    manager: userIdFromToken,
   });
   ctx.body = {
     code: 0,
@@ -57,10 +55,10 @@ export const addRoom = async (ctx: Context) => {
 
 export const modifyRoom = async (ctx: Context) => {
   const body = ctx.request.body;
-  const data = await RoomModel.updateOne(
-    { _id: body._id },
-    { $set: body }
-  );
+  const data = await RoomModel.update({
+    where: { id: body.id },
+    data: body,
+  });
   ctx.body = {
     code: 0,
     data,
@@ -68,30 +66,29 @@ export const modifyRoom = async (ctx: Context) => {
 };
 
 export const joinRoom = async (ctx: Context) => {
-  const { _id } = ctx.request.body;
+  let id = ctx.request.body?.id;
   const cookie = ctx.cookies.get("token") ?? "";
   const userIdFromToken = verify(cookie, privateKey) as string;
-  const room = await RoomModel.findOne(
-    _id && { _id },
-    {},
-    { sort: { createdAt: 1 } }
-  );
-  if (!room?._id) {
-    return (ctx.body = {
-      code: 1,
-      message: "haven't found a default room",
-    });
+  const room = await RoomModel.findFirst();
+  if (!id) {
+    if (!room) {
+      return (ctx.body = {
+        code: 1,
+        message: "haven't found a default room",
+      });
+    }
+    id = room.id;
+    if (room?.member?.includes(userIdFromToken)) {
+      return (ctx.body = {
+        code: 1,
+        message: "you already joined this room!",
+      });
+    }
   }
-  if (room?.member?.includes(userIdFromToken)) {
-    return (ctx.body = {
-      code: 1,
-      message: "you already joined this room!",
-    });
-  }
-  await RoomModel.updateOne(
-    { _id: room._id },
-    { $addToSet: { member: new Types.ObjectId(userIdFromToken) } }
-  );
+  await RoomModel.update({
+    where: { id: room?.id },
+    data: { member: { push: userIdFromToken } },
+  });
   return (ctx.body = {
     code: 0,
     data: room,
@@ -99,11 +96,11 @@ export const joinRoom = async (ctx: Context) => {
 };
 
 export const deleteRoom = async (ctx: Context) => {
-  // const { _id } = ctx.request.query;
-  // const res = await RoomModel.deleteOne({ _id });
+  const id = ctx.request.query.id as string;
+  const res = await RoomModel.delete({ where: { id } });
   ctx.body = {
     code: 0,
-    // data: res,
+    data: res,
     message: "done",
   };
 };

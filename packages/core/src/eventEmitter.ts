@@ -4,6 +4,7 @@ import { IWsData } from "./interface";
 type CbFunction = (data: IWsData) => void;
 
 const initEvent = Object.values(WS_EVENT).reduce((c, p) => {
+  // @ts-ignore
   c[p] = [];
   return c;
 }, {}) as Record<WS_EVENT, CbFunction[]>;

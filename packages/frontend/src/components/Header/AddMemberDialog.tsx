@@ -16,7 +16,7 @@ export function AddMember() {
   const roomInfo = useAppSelector<IRoom>((state) => state.room.data);
   const userInfo = useAppSelector<USER>((state) => state.user.data);
   const [user, setUser] = useState<string[]>([]);
-  const dispatch = useAppDispatch();
+  const dispatch = useThunkDispatch();
   const toast = useToast();
   const handleAddFriend = async () => {
     if (!user.length) {
@@ -29,10 +29,10 @@ export function AddMember() {
       });
       return;
     }
-    await dispatch<any>(
+    await dispatch(
       modifyRoomThunk({
         member: user,
-        _id: new Types.ObjectId(roomInfo._id),
+        id: new Types.ObjectId(roomInfo.id),
       })
     );
     onClose();
@@ -58,7 +58,7 @@ export function AddMember() {
                 <FormLabel>Name: </FormLabel>
                 <CheckboxGroup
                   colorScheme="green"
-                  defaultValue={[...(roomInfo.member?.map((m) => m._id) ?? [])]}
+                  defaultValue={[...(roomInfo.member?.map((m) => m.id) ?? [])]}
                   onChange={(e) => {
                     setUser(e as string[]);
                     console.log("change", e);
@@ -67,14 +67,14 @@ export function AddMember() {
                   <Stack spacing={[1, 5]} direction={["column", "row"]}>
                     {userInfo.friend?.map((user) => {
                       const isMember = !!roomInfo.member?.find(
-                        (m) => user._id === m._id
+                        (m) => user.id === m.id
                       );
                       return (
                         <Checkbox
                           disabled={isMember}
                           checked={isMember}
-                          key={user._id}
-                          value={user._id}
+                          key={user.id}
+                          value={user.id}
                         >
                           {user.username}
                         </Checkbox>

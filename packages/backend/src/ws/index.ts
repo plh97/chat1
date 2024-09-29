@@ -1,42 +1,42 @@
 import { privateKey } from "@/config";
-import { MessageModel } from "@/model/message";
 import { RoomModel } from "@/model/room";
-import { IOnMsgReceive, IWsData, WS_EVENT } from "@chatroom/core";
+import { IOnMsgReceive, IWsData, WS_EVENT } from "core";
 import jwt from "jsonwebtoken";
-import { WebSocket } from "ws";
+import { handleReadMsg } from "./readMsg";
+import { handleSendMsg } from "./sendMsg";
+import { IMessage } from "@/interface";
 
 export const onMsgReceive: IOnMsgReceive = async (objMsg, socket, ws) => {
-  const body = objMsg.data;
-  // add new message
-  // update room last modify time
-  const data = await (await MessageModel.create(body)).populate("user");
-  const room = await RoomModel.updateOne(
-    { _id: body.channelId },
-    { $addToSet: { message: data._id } }
-  ).findOneAndUpdate(
-    { _id: body.channelId },
-    { $set: { updatedAt: new Date() } }
-  );
-  if (!data) {
-    JSON.stringify({
-      code: 1,
-      event: WS_EVENT.SEND_MSG,
-      requestId: objMsg.requestId,
-      data: null,
-    });
+  const { data, event } = objMsg as IWsData<IMessage>;
+  const room = await RoomModel.findUnique({ where: { id: data.channelId } });
+  let broadcastData = null;
+  if (event === WS_EVENT.READ_MSG) {
+    broadcastData = await handleReadMsg(data);
+  } else if (event === WS_EVENT.SEND_MSG) {
+    broadcastData = await handleSendMsg(data, room!);
+  }
+  if (!broadcastData) {
+    socket.send(
+      JSON.stringify({
+        code: 1,
+        event,
+        requestId: objMsg.requestId,
+        data: null,
+      })
+    );
     return;
   }
   let broadcastUsers = room?.member ?? [];
   ws.clients.forEach((client) => {
     try {
-      const _id = jwt.verify(client.protocol, privateKey) as string;
-      if (!broadcastUsers.includes(_id)) return;
+      const id = jwt.verify(client.protocol, privateKey) as string;
+      if (!broadcastUsers.includes(id)) return;
       client.send(
         JSON.stringify({
           code: 0,
-          event: WS_EVENT.SEND_MSG,
+          event,
           requestId: objMsg.requestId,
-          data,
+          data: broadcastData,
         })
       );
     } catch (error) {

@@ -1,6 +1,8 @@
 import { AvatarComponnet } from "../Avatar";
 import { MessageTemplate } from "@/messages";
 import { IRoom, IMessage } from "@/interfaces/IMessage";
+import { USER } from "@/interfaces/IUser";
+import { cn } from "@/utils";
 
 interface IProps {
   data: IRoom;
@@ -9,6 +11,9 @@ interface IProps {
 }
 
 export function Item({ data, active, draft }: IProps) {
+  const myUserInfo = useAppSelector<Partial<USER>>((state) => {
+    return state.user.data;
+  });
   const textMemo = useMemo(() => {
     if (draft) {
       return (
@@ -26,17 +31,20 @@ export function Item({ data, active, draft }: IProps) {
       return "unknown message";
     }
   }, [data, draft]);
-  const containerStyle = active ? " bg-white/10" : "";
+  const readSeq = data.readSeq?.[myUserInfo?.id ?? ""] ?? 0;
+  const count = data.totalCount - readSeq;
   return (
-    <li key={data._id?.toString()}>
-      <Link
-        to={"/room/" + data._id}
-        className={
-          "flex flex-row items-center overflow-hidden rounded-lg px-2 py-1" +
-          containerStyle
-        }
+    <li data-read-seq={readSeq} key={data.id}>
+      <NavLink
+        to={"/room/" + data.id}
+        className={cn(
+          "flex flex-row items-center overflow-hidden rounded-lg px-2 py-1",
+          {
+            "bg-white/10": active,
+          }
+        )}
       >
-        <AvatarComponnet name={data.name} src={data.image} />
+        <AvatarComponnet name={data.name} src={data.image} count={count} />
         <span className="ml-2 flex-1 inline-flex flex-col leading-4 w-20">
           <span className="font-bold text-base break-all whitespace-nowrap text-ellipsis overflow-hidden leading-4">
             {data.name}
@@ -45,7 +53,7 @@ export function Item({ data, active, draft }: IProps) {
             {textMemo}
           </span>
         </span>
-      </Link>
+      </NavLink>
     </li>
   );
 }

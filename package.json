@@ -7,10 +7,11 @@
   "author": "plh2 <pengliheng111@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "db:up": "docker compose -f ./docker-compose.dev.yml up -d",
+    "db": "docker compose -f ./docker-compose.dev.yml up -d",
     "db:down": "docker compose -f ./docker-compose.dev.yml down",
     "bootstrap": "pnpm i",
-    "dev": "pnpm db:up && lerna run dev",
+    "dev": "pnpm db && lerna run dev",
+    "build": "lerna run build",
     "lint:eslint": "lerna run lint:eslint",
     "commit": "cz",
     "lint:prettier": "lerna run lint:prettier",

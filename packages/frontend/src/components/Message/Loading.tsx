@@ -13,6 +13,7 @@ import { throttle } from "@/utils";
 import { Item, SkeletonItem } from "./Item";
 import { Top } from "./top";
 import { USER } from "@/interfaces/IUser";
+import { useCheckboxGroup } from "@chakra-ui/react";
 
 export function Message() {
   const scrollEl = useRef<HTMLDivElement>(null);
@@ -21,7 +22,7 @@ export function Message() {
     loadingMessage,
   } = useAppSelector<IState>((state) => state.room);
   const hasMessage = totalCount > message.length;
-  const dispatch = useAppDispatch();
+  const dispatch = useThunkDispatch();
   const { id = "" } = useParams();
   const { getBottomSpace, getTopSpace } = useScroll(scrollEl);
   const [distanceToBottom, setDistanceToBottom] = useState<number | null>(null);
@@ -29,7 +30,7 @@ export function Message() {
     if (!id) return;
     // 清空旧的信息
     dispatch(initialMessage({ message: [], totalCount: 0 }));
-    dispatch(getRoomInfoThunk(id) as any);
+    dispatch(getRoomInfoThunk(id));
   }, [id]);
   const handleScroll = async () => {
     // 如果滚动到了顶部
@@ -39,15 +40,15 @@ export function Message() {
       !loadingMessage &&
       hasMessage
     ) {
-      const { payload } = await dispatch<any>(
+      const { payload } = await dispatch(
         loadRoomMoreMessageThunk({
           start: message?.length ?? 0,
           pageSize: 20,
-          _id: id,
+          id: id,
         })
       );
       const distanceToTop = getTopSpace();
-      dispatch(loadMoreMessage(payload));
+      dispatch(loadMoreMessage(payload as any));
       if (Number(distanceToTop) === 0) {
         setDistanceToBottom(getBottomSpace());
       }
@@ -69,11 +70,11 @@ export function Message() {
     return state.user.data;
   });
   useEffect(() => {
-    if (myUserInfo?._id) {
+    if (myUserInfo?.id) {
       dispatch(scrollToEnd());
     }
-  }, [myUserInfo?._id]);
-  if (!myUserInfo?._id) {
+  }, [myUserInfo?.id]);
+  if (!myUserInfo?.id) {
     return (
       <div className="overflow-y-auto flex-1 relative px-3.5 py-0 overscroll-none flex items-center justify-center">
         {/* <Loader2 className="text-2xl w-8 h-8 text-gray-200 animate-spin dark:text-gray-600" /> */}
@@ -92,7 +93,7 @@ export function Message() {
     >
       <Top hasMessage={hasMessage} loadingMessage={loadingMessage} />
       {message.map((msg) => (
-        <Item key={msg._id} data={msg} />
+        <Item key={msg.id} data={msg} />
       ))}
     </div>
   );

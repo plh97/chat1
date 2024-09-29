@@ -1,11 +1,14 @@
-import { Types } from "mongoose";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { IMessage, MESSAGE_REQUEST, IRoom } from "@/interfaces/IMessage";
 import { fetchUserInfoThunk } from "./user";
 import { ROOM } from "@/interfaces/IRoom";
-import { IChannelType } from "@chatroom/core";
+import { $Enums } from "db";
+
+const { IChannelType, Room } = $Enums;
+
 import Api from "@/Api";
+import { AppThunk } from "@/hooks/app";
 
 export interface IState {
   id: string;
@@ -23,18 +26,20 @@ const initialState: IState = {
   loadingMessage: false,
   error: null,
   data: {
-    _id: "",
+    id: "",
     message: [],
+    messageId: [],
     totalCount: 0,
     member: [],
     image: "",
     name: "",
     channelType: IChannelType.PRIVATE,
     // lastMsg?: {},
-    creater: new Types.ObjectId(),
+    creater: "",
     admin: [],
     createdAt: new Date(),
     updatedAt: new Date(),
+    readSeq: {},
   },
 };
 
@@ -49,7 +54,7 @@ export const getRoomInfoThunk = createAsyncThunk<void, string>(
     // 获取当前房间基本信息
     const res = await Api.getRoom({
       pageSize: 20,
-      _id: id,
+      id: id,
     });
     // 加载结束
     dispatch(changeLoading(false));
@@ -79,14 +84,21 @@ export const addRoomThunk = createAsyncThunk<
   return res;
 });
 
-export const modifyRoomThunk = createAsyncThunk<IRoom, Partial<IRoom>>(
-  `modifyRoom`,
-  async (data, { dispatch }) => {
-    const res = await Api.editRoom(data);
-    dispatch(getRoomInfoThunk(data._id?.toString() ?? ""));
-    return res;
-  }
-);
+export const modifyRoomThunk =
+  (data: Partial<Room>): AppThunk =>
+  async (dispatch) => {
+    await Api.editRoom(data);
+    dispatch(getRoomInfoThunk(data.id?.toString() ?? ""));
+  };
+
+// export const modifyRoomThunk = createAsyncThunk<IRoom, Partial<Room>>(
+//   `modifyRoom`,
+//   async (data, { dispatch }) => {
+//     const res = await Api.editRoom(data);
+//     dispatch(getRoomInfoThunk(data.id?.toString() ?? ""));
+//     return res;
+//   }
+// );
 
 export const joinRoomThunk = createAsyncThunk<
   ROOM,
@@ -118,9 +130,17 @@ export const roomSlice = createSlice({
     },
     addMessage(state, action: PayloadAction<IMessage>) {
       state.data.message.push(action.payload);
+      return state;
     },
-    initialMessage(state, action: PayloadAction<IRoom>) {
-      state.data = action.payload;
+    initialMessage(state, action: PayloadAction<Partial<IRoom>>) {
+      state.data = { ...state.data, ...action.payload };
+    },
+    // sync method, just modify state
+    markReadMessage(state, action: PayloadAction<IRoom>) {
+      const room = action.payload;
+      if (room.id === state.id) {
+        Object.assign(state.data.readSeq ?? {}, room.readSeq);
+      }
     },
   },
 });
@@ -133,6 +153,7 @@ export const {
   initialMessage,
   changeLoading,
   changeRoomId,
+  markReadMessage,
 } = roomSlice.actions;
 
 export const roomReducer = roomSlice.reducer;

@@ -1,5 +1,5 @@
-import { nanoid } from "nanoid";
 import md5 from "md5";
+import * as nanoid from 'nanoid'
 
 export function parseCookie() {
   const cookie = document.cookie;
@@ -16,5 +16,5 @@ export function getToken(): string | undefined {
 }
 
 export function generateTemplateId() {
-  return nanoid() + md5(navigator.userAgent);
+  return nanoid.nanoid() + md5(navigator.userAgent);
 }

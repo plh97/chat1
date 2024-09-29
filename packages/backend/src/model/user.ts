@@ -1,17 +1,5 @@
-import { Schema, Model, model, Types } from "mongoose";
-
-export interface IUser {
-  _id: Types.ObjectId;
-  image: string;
-  username: string;
-  password: string;
-  bio: string;
-  qq: string;
-  wechat: string;
-  github: string;
-  permission: string;
-  friend: IUser[];
-}
+import { IUser } from "@/interface";
+import { Schema, Model } from "mongoose";
 
 const schema = new Schema<IUser>({
   image: { type: String, default: "" },
@@ -33,4 +21,6 @@ class ModelClass extends Model {
 
 schema.loadClass(ModelClass);
 
-export const UserModel = model<IUser>("User", schema);
+import { prisma } from "db";
+
+export const UserModel = prisma.user;

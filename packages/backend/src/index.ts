@@ -1,7 +1,7 @@
 import Koa from "koa";
 import jwt from "koa-jwt";
 import path from "path";
-import json from "koa-json";
+// import json from "koa-json";
 import cors from "@koa/cors";
 import logger from "koa-logger";
 import kosStatic from "koa-static";
@@ -9,7 +9,6 @@ import koaBody from "koa-body";
 import allRouter from "@/routes";
 import { privateKey } from "@/config";
 import socket from "./middleware/server-ws";
-import "@/mongo";
 
 export const app = new Koa();
 const BACKEND_PROT = process.env.PORT || process.env.BACKEND_PORT || 8080;

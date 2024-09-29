@@ -1,10 +1,8 @@
-import { Dispatch } from "@reduxjs/toolkit";
-import { useDispatch } from "react-redux";
 import { setDraft } from "@/store/reducer/user";
 
 export const useDraft = (text: string, setText: React.Dispatch<React.SetStateAction<string>>) => {
   const { draftMap } = useAppSelector((state) => state.user);
-  const dispatch = useDispatch<Dispatch<any>>();
+  const dispatch = useThunkDispatch();
   const afterRoute = useRef("");
   const { id = "" } = useParams();
   useEffect(() => {

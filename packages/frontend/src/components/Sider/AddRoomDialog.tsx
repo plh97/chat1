@@ -1,20 +1,14 @@
-import { Dispatch } from "@reduxjs/toolkit";
-import { useDispatch, useSelector } from "react-redux";
-import { USER } from "@/interfaces/IUser";
-import { RootState } from "@/store/index";
 import { Form } from "react-router-dom";
 import { addRoomThunk } from "@/store/reducer/room";
 
 export const AddRoomDialog = () => {
-  const myUserInfo = useSelector<RootState, Partial<USER>>((state) => {
-    return state.user.data;
-  });
+  const myUserInfo = useAppSelector((state) => state.user.data);
   const [roomName, setRoomName] = useState("");
-  const dispatch = useDispatch<Dispatch<any>>();
+  const dispatch = useThunkDispatch();
   const navigation = useNavigate();
   const toast = useToast();
-  async function handleAddRoom() {
-    if (!myUserInfo._id) {
+  const handleAddRoom = async () => {
+    if (!myUserInfo?.id) {
       return;
     }
     if (!roomName) {
@@ -27,21 +21,20 @@ export const AddRoomDialog = () => {
       });
       return;
     }
-    const { payload } = await dispatch<any>(
-      addRoomThunk({
-        name: roomName,
-        member: [],
-      })
+    const { payload } = await dispatch(
+      addRoomThunk({ name: roomName, member: [] })
     );
     onClose();
     setRoomName("");
-    navigation(`/room/${payload._id}`);
-  }
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    navigation(`/room/${payload?.id}`);
+  };
   const { isOpen, onOpen, onClose } = useDisclosure();
   return (
     <>
       <Button colorScheme="grey" variant="outline" onClick={onOpen}>
-        Add Room
+        ADD ROOM
       </Button>
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
@@ -64,10 +57,10 @@ export const AddRoomDialog = () => {
           </ModalBody>
           <ModalFooter>
             <Button mr={3} onClick={onClose}>
-              Cancel
+              CANCEL
             </Button>
             <Button type="button" colorScheme="blue" onClick={handleAddRoom}>
-              Save
+              JOIN
             </Button>
           </ModalFooter>
         </ModalContent>

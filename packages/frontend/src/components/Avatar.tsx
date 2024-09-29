@@ -6,6 +6,7 @@ interface IProps {
   name?: string;
   size?: string;
   src: string;
+  count?: number;
 }
 
 // 1-1000
@@ -18,23 +19,43 @@ const generateColor = (name: string) => {
 export const AvatarComponnet = ({
   name = "?",
   src,
-  className,
   size = "xl",
+  count = 0,
   ...args
 }: IProps) => {
+  const countMemo = useMemo(() => {
+    let c = count.toString();
+    if (count < 1) {
+      return null;
+    }
+    if (count > 99) {
+      c = "99+";
+    }
+    // line-height: 16px;
+    // padding: 0 .33rem;
+    // text-align: center;
+    return (
+      <span className="absolute bg-rose-600 text-xs px-[0.33rem] text-white rounded-xl top-0 right-[-6px] text-center flex items-center justify-center">
+        {c}
+      </span>
+    );
+  }, [count]);
   return (
-    <Avatar className={cn(className)} {...args}>
-      <AvatarImage src={src} />
-      <AvatarFallback
-        className={cn(size && `text-${size}`)}
-        data-color={generateColor(name)}
-        style={{
-          // backgroundColor: 'red',
-          backgroundColor: generateColor(name),
-        }}
-      >
-        {name[0]}
-      </AvatarFallback>
-    </Avatar>
+    <span className="relative">
+      <Avatar {...args}>
+        <AvatarImage src={src} />
+        <AvatarFallback
+          className={cn(size && `text-${size}`)}
+          data-color={generateColor(name)}
+          style={{
+            // backgroundColor: 'red',
+            backgroundColor: generateColor(name),
+          }}
+        >
+          {name[0]}
+        </AvatarFallback>
+      </Avatar>
+      {countMemo}
+    </span>
   );
 };

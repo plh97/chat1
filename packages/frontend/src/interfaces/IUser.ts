@@ -1,7 +1,8 @@
 import { IRoom } from "./IMessage";
+import { User } from "db";
 
-export interface USER {
-  _id: string;
+export interface USER extends Omit<User, "friend" | "password" | "createdAt"> {
+  id: string;
   image: string;
   username: string;
   bio: string;

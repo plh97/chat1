@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  // provider = "postgresql"
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum IChannelType {
+  // PRIVATE: 0,
+  // GROUP = 1,
+  PRIVATE @map("0")
+  GROUP   @map("1")
+}
+
+enum IContentType {
+  // TEXT_MESSAGE = 0,
+  // MEDIA_MESSAGE = 1,
+  // SYSTEM_MESSAGE = 2,
+  // CALL_MESSAGE = 3,
+  // READ_MESSAGE = 4,
+  // RECALL_MESSAGE = 5,
+  TEXT_MESSAGE   @map("0")
+  MEDIA_MESSAGE  @map("1")
+  SYSTEM_MESSAGE @map("2")
+  CALL_MESSAGE   @map("3")
+  READ_MESSAGE   @map("4")
+  RECALL_MESSAGE @map("5")
+}
+
+model User {
+  id         String   @id @default(uuid()) @map("_id")
+  createdAt  DateTime @default(now())
+  username   String   @unique
+  password   String
+  bio        String?
+  qq         String?
+  wechat     String?
+  github     String?
+  permission String?
+  friend     String[]
+  image      String?
+  // roomId     String?  @db.ObjectId
+}
+
+model Room {
+  id          String       @id @default(uuid()) @map("_id") @db.ObjectId
+  name        String       @unique
+  image       String?
+  creater     String
+  channelType IChannelType @default(GROUP)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now())
+  member      String[]
+  admin       String[]
+  message     Message[]
+  messageId   String[]
+  readSeq     Json
+}
+
+model Message {
+  id           String        @id @default(uuid()) @map("_id") @db.ObjectId
+  createdAt    DateTime      @default(now())
+  user         String
+  seq          Int
+  contentType  IContentType  @default(TEXT_MESSAGE)
+  channelId    String
+  textMessage  TextMessage?
+  mediaMessage MediaMessage?
+  readMessage  ReadMessage?
+  roomId       String?       @db.ObjectId
+  Room         Room?         @relation(fields: [roomId], references: [id])
+  // Room         Room?         @relation(fields: [roomId], references: [id])
+}
+
+type ReadMessage {
+  operator    String
+  lastReadSeq Int
+}
+
+type MediaMessage {
+  url       String
+  width     Float
+  height    Float
+  thumbnail String
+  extension String
+  name      String
+  size      Float
+  fileType  String?
+  duration  String?
+}
+
+type TextMessage {
+  text    String
+  methion String[]
+}

@@ -7,6 +7,7 @@ import {
 } from "@/interfaces/IMessage";
 import { USER } from "@/interfaces/IUser";
 import { ROOM } from "./interfaces/IRoom";
+import { Room } from "db";
 
 const { toast } = createStandaloneToast();
 
@@ -132,7 +133,7 @@ const Api = {
       url: "/room/" + id,
       method: "delete",
     }),
-  editRoom: (data: Partial<IRoom>) =>
+  editRoom: (data: Partial<Room>) =>
     request<IRoom>({
       url: "/room",
       method: "patch",
@@ -156,7 +157,7 @@ const Api = {
       url: "/room/message",
       method: "delete",
     }),
-  addFriend: (data: { _id: string }) =>
+  addFriend: (data: { id: string }) =>
     request({
       url: "/friend",
       method: "post",

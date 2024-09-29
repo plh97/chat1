@@ -2,12 +2,11 @@
   "compilerOptions": {
     "target": "esnext",
     "useDefineForClassFields": true,
-    "module": "ESNext",
     "lib": ["ESNext", "dom"],
     "skipLibCheck": true,
-
     /* Bundler mode */
-    "moduleResolution": "Node",
+    "module": "preserve",
+    "moduleResolution": "Bundler",
     // "resolveJsonModule": true,
     "isolatedModules": true,
     "allowSyntheticDefaultImports": true,

@@ -31,7 +31,6 @@ export const Component = ({ message }: { message: IMessage }) => {
 };
 
 export const MediaMsg = (message: IMessage) => {
-  console.log(message.mediaMessage?.extension);
   const getPreview = () => {
     const type = message.mediaMessage?.fileType?.split("/")[0];
     return (

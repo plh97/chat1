@@ -1,16 +1,33 @@
 version: "3.7"
 
 services:
-    mongodb:
+    mongodb_container:
+        image: prismagraphql/mongo-single-replica:5.0.3
+        # image: mongo
+        environment:
+            MONGO_INITDB_ROOT_USERNAME: root
+            MONGO_INITDB_ROOT_PASSWORD: prisma
+            INIT_WAIT_SEC: 3
         # command: 
         #     - '--logpath'
         #     - '/var/log/mongodb/mongod.log'
-        build:
-            context: "./mongodb"
-        logging:
-            driver: none
+        # build:
+        #     context: "./mongodb"
+        # logging:
+        #     driver: none
         ports: 
             - "27017:27017"
-        restart: always
-        volumes:
-            - ./mongodb/data:/data/db
+        # restart: always
+        # volumes:
+        #     - ./mongodb/data:/data/db
+
+    # postgres_db:
+    #     image: postgres
+    #     ports:
+    #         - 5432:5432
+    #     environment:
+    #         POSTGRES_DB: mydb
+    #         POSTGRES_USER: johndoe
+    #         POSTGRES_PASSWORD: randompassword
+    #     # volumes:
+    #     #     - ./mongodb:/var/lib/postgresql/data/

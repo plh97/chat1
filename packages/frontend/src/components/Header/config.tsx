@@ -8,7 +8,7 @@ import {
   DrawerOverlay,
   IconButton,
 } from "@chakra-ui/react";
-import { IChannelType } from "@chatroom/core";
+import { IChannelType } from "core";
 import { AddMember } from "./AddMemberDialog";
 import { FiSettings } from "react-icons/fi";
 
@@ -42,7 +42,7 @@ export function Config() {
             <div className="flex flex-row gap-2">
               <AvatarGroup size="md" max={9}>
                 {members?.map((m) => {
-                  return <Avatar key={m._id} src={m.image} name={m.username} />;
+                  return <Avatar key={m.id} src={m.image} name={m.username} />;
                 })}
               </AvatarGroup>
               <AddMember />

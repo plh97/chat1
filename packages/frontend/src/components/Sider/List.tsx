@@ -12,8 +12,8 @@ export const List = () => {
   const navigation = useNavigate();
   async function handleJoinDefaultRoom() {
     const { payload } = await dispatch<any>(joinRoomThunk({}));
-    if (payload._id) {
-      navigation(`/room/${payload._id}`);
+    if (payload.id) {
+      navigation(`/room/${payload.id}`);
     }
   }
   const user = useAppSelector((state) => {
@@ -45,12 +45,12 @@ export const List = () => {
   return (
     <ul className="flex-1 overflow-y-auto px-2">
       {myUserInfo.room?.map((room) => {
-        const draft = draftMap[room._id];
+        const draft = draftMap[room.id];
         return (
           <Item
             draft={draft}
-            active={room._id.toString() == id}
-            key={room._id.toString()}
+            active={room.id.toString() == id}
+            key={room.id.toString()}
             data={room}
           />
         );

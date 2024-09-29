@@ -1,7 +1,7 @@
 import { useAppSelector } from "@/hooks/app";
 import { scrollToEnd } from "@/store/reducer/room";
 import { sendMessageAction } from "@/store/action/message";
-import { IContentType, IMediaMessage } from "@chatroom/core";
+import { IMediaMessage } from "core";
 import { formatTime, getImgFromClip } from "@/utils";
 import { FiSend, FiPause } from "react-icons/fi";
 import { IconButton } from "@chakra-ui/react";
@@ -10,27 +10,27 @@ import { useRecord } from "@/hooks/useRecord";
 import { Input } from "./input";
 import { UploadFile } from "./UploadFile";
 import { useDraft } from "./useDraft";
+import { IContentType } from "db";
 
 const MAX_INPUT = 2000;
 const { toast } = createStandaloneToast();
 
 export function InputBox() {
   const { id = "" } = useParams();
-  const dispatch = useAppDispatch();
+  const dispatch = useThunkDispatch();
   const [text, setText] = useState("");
   const { startRecording, stopRecording, time } = useRecord();
   const { data: userInfo } = useAppSelector((state) => state.user);
   useDraft(text, setText);
-  const handleSendMedia = async (file: File, duration?: string) => {
-    await dispatch<any>(
+  const handleSendMedia = async (file: File, duration: string | null) => {
+    await dispatch(
       sendMessageAction({
         contentType: IContentType.MEDIA_MESSAGE,
-        user: userInfo._id,
+        user: userInfo.id,
         channelId: id,
         createdAt: new Date(),
         isRead: false,
         seq: 0,
-        readSeq: 0,
         mediaMessage: {
           file,
           duration,
@@ -45,16 +45,15 @@ export function InputBox() {
   };
   const handleSendText = async () => {
     const _text = text.trim();
-    if (!userInfo._id || !_text) return;
-    await dispatch<any>(
+    if (!userInfo.id || !_text) return;
+    await dispatch(
       sendMessageAction({
         contentType: IContentType.TEXT_MESSAGE,
-        user: userInfo._id,
+        user: userInfo.id,
         channelId: id,
         createdAt: new Date(),
         isRead: false,
         seq: 0,
-        readSeq: 0,
         textMessage: {
           text: _text,
           methion: [],
