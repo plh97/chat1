@@ -4,7 +4,7 @@ import { formatMessage } from "@/utils/formatMessage";
 import { addMessage, markReadMessage } from "../reducer/room";
 import { IMessage, IRoom } from "@/interfaces/IMessage";
 import { USER } from "@/interfaces/IUser";
-import { IContentType } from "core";
+import { IContentType } from "db";
 
 // 发送一条新消息
 export const sendMessageAction = createAsyncThunk<void, IMessage>(

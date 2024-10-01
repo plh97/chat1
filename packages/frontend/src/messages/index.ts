@@ -1,4 +1,4 @@
-import { IContentType } from "core";
+import { IContentType } from "db";
 import { TextMsg } from "./TextMsg";
 import { MediaMsg } from "./MediaMsg";
 import { IMessage } from "@/interfaces/IMessage";

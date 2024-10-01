@@ -2,10 +2,10 @@ import type { PayloadAction } from "@reduxjs/toolkit";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { IMessage, MESSAGE_REQUEST, IRoom } from "@/interfaces/IMessage";
 import { fetchUserInfoThunk } from "./user";
-import { ROOM } from "@/interfaces/IRoom";
-import { $Enums } from "db";
+// import { ROOM } from "@/interfaces/IRoom";
+import { IChannelType, Room } from "db";
 
-const { IChannelType, Room } = $Enums;
+// const { IChannelType, Room } = $Enums;
 
 import Api from "@/Api";
 import { AppThunk } from "@/hooks/app";

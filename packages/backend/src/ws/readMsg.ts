@@ -1,5 +1,5 @@
-import { IMessage } from "@/interface.js";
-import { RoomModel } from "@/model/room.js";
+import { IMessage } from "@/interface";
+import { RoomModel } from "@/model/room";
 
 export const handleReadMsg = async (data: IMessage) => {
   const room = await RoomModel.update(

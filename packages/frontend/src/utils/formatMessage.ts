@@ -1,11 +1,11 @@
 import Api from "@/Api";
-import { IMessage } from "@/interfaces/IMessage";
-import { IContentType, IMediaMessage, IMessageCore } from "core";
+import { IMessage } from "@/interfaces";
+import { IContentType, MediaMessage } from "db";
 
 const uploadFile = async (
   file: File,
   params?: { [key: string]: string }
-): Promise<IMediaMessage> => {
+): Promise<MediaMessage> => {
   const form = new FormData();
   form.append("file", file);
   if (params) {
@@ -20,7 +20,7 @@ const previewImage = (
   file: File,
   maxWidth = 70,
   maxHeight = 70
-): Promise<IMediaMessage> => {
+): Promise<MediaMessage> => {
   // get image thumbnail
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
@@ -62,7 +62,7 @@ const previewVideo = (
   file: File,
   maxWidth = 70,
   maxHeight = 70
-): Promise<IMediaMessage> => {
+): Promise<MediaMessage> => {
   // get image thumbnail
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
@@ -103,8 +103,8 @@ const previewVideo = (
 };
 
 const formatMediaMessage = async (
-  mediaMessage?: IMediaMessage
-): Promise<IMediaMessage | undefined> => {
+  mediaMessage?: MediaMessage
+): Promise<MediaMessage | undefined> => {
   if (!mediaMessage) return mediaMessage;
   const file = mediaMessage?.file as File;
   const fileType = file?.type;

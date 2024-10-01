@@ -9,7 +9,6 @@ import {
 import { USER } from "@/interfaces/IUser";
 import { modifyRoomThunk } from "@/store/reducer/room";
 import { IRoom } from "@/interfaces/IMessage";
-import { Types } from "mongoose";
 
 export function AddMember() {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -32,7 +31,7 @@ export function AddMember() {
     await dispatch(
       modifyRoomThunk({
         member: user,
-        id: new Types.ObjectId(roomInfo.id),
+        id: roomInfo.id,
       })
     );
     onClose();

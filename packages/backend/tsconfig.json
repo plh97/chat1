@@ -4,8 +4,8 @@
   },
   "compilerOptions": {
     "esModuleInterop": true,
-    "module": "preserve",
-    "moduleResolution": "Bundler",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "strict": true,
     "baseUrl": ".",
     "paths": {

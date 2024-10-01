@@ -1,5 +1,5 @@
-import { MessageModel } from "@/model/message.js";
-import { RoomModel } from "@/model/room.js";
+import { MessageModel } from "@/model/message";
+import { RoomModel } from "@/model/room";
 import { IContentType, Message, Room as IRoomCore } from "db";
 
 export const handleSendMsg = async (data: Message, room: IRoomCore) => {

@@ -1,7 +1,5 @@
 import { Dispatch } from "@reduxjs/toolkit";
-import { useDispatch, useSelector } from "react-redux";
-import { USER } from "@/interfaces/IUser";
-import { RootState } from "@/store/index";
+import { useDispatch } from "react-redux";
 import { joinRoomThunk } from "@/store/reducer/room";
 import { Item } from "./Item";
 import { Loading } from "./Loading";

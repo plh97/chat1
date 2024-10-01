@@ -8,7 +8,7 @@ import {
   DrawerOverlay,
   IconButton,
 } from "@chakra-ui/react";
-import { IChannelType } from "core";
+import { IChannelType } from "db";
 import { AddMember } from "./AddMemberDialog";
 import { FiSettings } from "react-icons/fi";
 

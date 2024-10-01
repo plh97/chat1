@@ -1,4 +1,11 @@
 {
+  "scripts": {
+    "dev": "nodemon ./src/index.ts",
+    "dev1": "vite-node -c vite.config.ts -w ./src/index.ts",
+    "lint:prettier": "prettier src --write",
+    "deploy": "ts-node ./src/index.ts",
+    "test": "pnpm jest --passWithNoTests"
+  },
   "imports": {
     "@/*": "./src/*"
   },
@@ -17,12 +24,6 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/plh2/chatroom.git"
-  },
-  "scripts": {
-    "dev": "vite-node -c vite.config.ts -w ./src/index.ts",
-    "lint:prettier": "prettier src --write",
-    "deploy": "ts-node ./src/index.ts",
-    "test": "pnpm jest --passWithNoTests"
   },
   "bugs": {
     "url": "https://github.com/plh2/chatroom/issues"

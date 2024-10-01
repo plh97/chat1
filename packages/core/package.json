@@ -1,6 +1,6 @@
 {
   "name": "core",
-  "type": "module",
+  "type": "commonjs",
   "private": true,
   "version": "0.0.0",
   "scripts": {
@@ -19,8 +19,9 @@
     }
   },
   "dependencies": {
-    "md5": "^2.3.0",
+    "@types/md5": "^2.3.2",
     "db": "workspace:*",
+    "md5": "^2.3.0",
     "mongoose": "^6.8.3",
     "nanoid": "^5.0.7",
     "ws": "^8.18.0"

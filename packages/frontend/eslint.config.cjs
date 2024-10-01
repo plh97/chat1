@@ -22,4 +22,9 @@ module.exports = {
     "react/jsx-no-undef": [0, { allowGlobals: true }],
   },
   ignorePatterns: ["node_modules/*"],
+  ignorePatterns: [
+    "node_modules",
+    ".eslintrc.cjs",
+    ".history"
+  ]
 };
