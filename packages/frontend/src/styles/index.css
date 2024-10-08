@@ -1,7 +1,7 @@
-/* @import "@fontsource/roboto/300.css";
+@import "@fontsource/roboto/300.css";
 @import "@fontsource/roboto/400.css";
 @import "@fontsource/roboto/500.css";
-@import "@fontsource/roboto/700.css"; */
+@import "@fontsource/roboto/700.css";
 
 /* @import "./reset.css"; */
 
@@ -25,7 +25,7 @@ body {
 }
 
 
-@layer base {
+/* @layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
@@ -93,4 +93,4 @@ body {
 
     font-feature-settings: "rlig" 1, "calt" 1;
   }
-}
+} */

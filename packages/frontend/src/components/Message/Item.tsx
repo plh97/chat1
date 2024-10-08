@@ -53,12 +53,12 @@ export function Item({ data: message }: IProps): JSX.Element {
     >
       <AvatarComponnet
         size="md"
-        name={message.user?.username}
-        src={message.user?.image}
+        name={message?.user?.username}
+        src={message?.user?.image}
       />
-      <span className="mx-2.5 max-w-[60%] rounded-lg whitespace-pre-wrap bg-gray-800 shadow-md">
+      <div className="mx-2.5 max-w-[60%] rounded-lg whitespace-pre-wrap bg-gray-800 shadow-md">
         {component}
-      </span>
+      </div>
     </div>
   );
 }

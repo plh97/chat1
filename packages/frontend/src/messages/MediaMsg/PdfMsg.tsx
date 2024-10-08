@@ -1,7 +1,8 @@
 import { IconButton } from "@chakra-ui/react";
 import { IMediaMessage } from "core";
+import { PiEyesFill } from "react-icons/pi";
+import { HiOutlineDocumentSearch } from "react-icons/hi";
 import {
-  FaDownload,
   FaFileAlt,
   FaFileCsv,
   FaFileExcel,
@@ -35,13 +36,29 @@ const FileIcon = ({ type, ...args }: { type: string; className?: string }) => {
 
 export const PdfMsg = ({ message }: { message: IMediaMessage }) => {
   return (
-    <div className="w-[300px] gap-2 box-content p-2.5 h-10 overflow-hidden select-none flex items-start justify-center">
+    <div
+      style={{
+        width: "300px",
+      }}
+      className="w-[300px] gap-2 box-content p-2.5 h-10 overflow-hidden select-none flex items-start justify-center"
+    >
       <FileIcon
         type={message.extension}
-        className="h-10 flex-initial text-4xl"
+        className="h-10 w-10 flex-initial text-5xl"
       />
-      <div className="flex-1 text-xs w-[calc(100%-100px)]">
-        <div className="text-base font-blod overflow-hidden truncate">
+      <div
+        className="h-full flex flex-col text-nowrap justify-between flex-1 text-xs truncate"
+        style={{
+          width: "calc(100% - 100px)",
+          textWrap: "nowrap",
+        }}
+      >
+        <div
+          style={{
+            lineHeight: "1em",
+          }}
+          className="text-lg font-blod overflow-hidden text-nowrap text-ellipsis"
+        >
           {message.name}
         </div>
         <div className="text-xs text-slate-300">
@@ -51,7 +68,7 @@ export const PdfMsg = ({ message }: { message: IMediaMessage }) => {
       <IconButton
         onClick={() => open(message.url)}
         aria-label="download button"
-        icon={<FaDownload />}
+        icon={<HiOutlineDocumentSearch className="text-2xl" />}
       />
     </div>
   );

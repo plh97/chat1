@@ -1,4 +1,4 @@
-import { MediaMessage, Message, Room } from "db";
+import { MediaMessage, Message, Room, User } from "db";
 import { USER } from "./IUser";
 
 export interface IMediaMessage extends MediaMessage {
@@ -13,6 +13,7 @@ export interface IMediaMessage extends MediaMessage {
 
 export interface IMessage extends Omit<Message, "mediaMessage"> {
   mediaMessage?: IMediaMessage;
+  user: User;
 }
 
 export interface MESSAGE_RESPONSE

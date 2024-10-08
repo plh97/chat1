@@ -1,6 +1,7 @@
 export enum MINE {
   "text/javascript" = "js",
   "image/png" = "png",
+  "image/jpeg" = "jpeg",
   "text/xml" = "xml",
   "text/vnd.in3d.3dml" = "3dml",
   "video/3gpp2" = "3g2",
