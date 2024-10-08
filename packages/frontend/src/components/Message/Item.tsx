@@ -29,18 +29,19 @@ export function Item({ data: message }: IProps): JSX.Element {
   useEffect(() => {
     if (!isIntersecting) return;
     // if i am sender
-    if (message.user.id === user.id) return;
-    if (room.readSeq?.[user?.id] !== undefined) {
-      if (message.seq <= room.readSeq?.[user?.id]) return;
-    }
-    console.log(message.textMessage?.text);
-    dispatch(markReadMessageThunk({ message, user }));
+    if (message?.user?.id === user?.id) return;
+    // if (room.readSeq?.[user?.id] !== undefined) {
+    //   if (message.seq <= room.readSeq?.[user?.id]) return;
+    // }
+    // console.log(message.textMessage?.text);
+    // dispatch(markReadMessageThunk({ message, user }));
   }, [isIntersecting]);
   const myUserInfo = useSelector<RootState, Partial<USER>>((state) => {
     return state.user.data;
   });
-  const isMe = myUserInfo?.id === message.user?.id;
+  const isMe = myUserInfo?.id === message?.user?.id;
   const temp = MessageTemplate[message.contentType];
+  if (!temp) return <></>;
   const { component } = temp(message);
   return (
     <div

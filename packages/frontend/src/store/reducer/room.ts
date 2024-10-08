@@ -2,7 +2,7 @@ import type { PayloadAction } from "@reduxjs/toolkit";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { IMessage, MESSAGE_REQUEST, IRoom } from "@/interfaces/IMessage";
 import { fetchUserInfoThunk } from "./user";
-// import { ROOM } from "@/interfaces/IRoom";
+import { ROOM } from "@/interfaces/IRoom";
 import { IChannelType, Room } from "db";
 
 // const { IChannelType, Room } = $Enums;
@@ -28,7 +28,6 @@ const initialState: IState = {
   data: {
     id: "",
     message: [],
-    messageId: [],
     totalCount: 0,
     member: [],
     image: "",

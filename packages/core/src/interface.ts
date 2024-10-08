@@ -1,6 +1,5 @@
-import type { IChannelType, IContentType } from "db";
+import type { IChannelType, IContentType, MediaMessage, Message, ReadMessage, Room } from "db";
 import { WebSocket, WebSocketServer } from "ws";
-import { Types } from "mongoose";
 import { WS_EVENT } from "./constants";
 
 export type CB = (...arg: unknown[]) => void;
@@ -35,33 +34,31 @@ export interface ITextMessage {
   methion: string[];
 }
 
-export interface IMediaMessage {
+export interface IMediaMessage extends MediaMessage {
   file?: File;
-  url: string;
-  width?: number;
-  height?: number;
-  thumbnail?: string;
   extension: string;
-  fileType?: string;
-  name?: string;
-  size?: number;
-  duration?: string;
+  // url: string;
+  // thumbnail?: string;
+  // fileType?: string;
+  // name?: string;
+  // size?: number;
+  // duration?: string;
 }
-export interface IReadMessage {
-  lastReadSeq: number;
-  operator: string;
+export interface IReadMessage extends ReadMessage {
+  // lastReadSeq: number;
+  // operator: string;
 }
 
-export interface IMessageCore {
-  id?: Types.ObjectId;
-  user: unknown;
+export interface IMessageCore extends Message {
+  // id: string;
+  // user: unknown;
   createdAt: Date;
   isRead: boolean;
   seq: number;
   contentType: IContentType;
-  textMessage?: ITextMessage;
-  mediaMessage?: IMediaMessage;
-  readMessage?: IReadMessage;
+  textMessage: ITextMessage | null;
+  mediaMessage: IMediaMessage | null;
+  readMessage: IReadMessage | null;
   channelId: string;
 }
 
@@ -72,12 +69,12 @@ export interface IWsData<T = any> {
   code: number;
 }
 
-export interface IRoomCore {
-  id?: Types.ObjectId;
+export interface IRoomCore extends Room {
+  // id?: Types.ObjectId;
   name: string;
   image: string;
   channelType: IChannelType;
-  creater: Types.ObjectId;
+  // creater: Types.ObjectId;
   admin: string[];
   member: string[];
   createdAt: Date;

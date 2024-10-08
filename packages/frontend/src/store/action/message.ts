@@ -7,7 +7,7 @@ import { USER } from "@/interfaces/IUser";
 import { IContentType } from "db";
 
 // 发送一条新消息
-export const sendMessageAction = createAsyncThunk<void, IMessage>(
+export const sendMessageAction = createAsyncThunk<void, Partial<IMessage>>(
   `sendMessage`,
   async (data, { dispatch }) => {
     const formatMsg = await formatMessage(data);

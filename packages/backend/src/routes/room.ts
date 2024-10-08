@@ -10,11 +10,18 @@ export const getRoom = async (ctx: Context) => {
   const pageSize = +(ctx.request.query.pageSize ?? "20");
   const data = await RoomModel.findUnique({
     where: { id },
+    include: {
+      message: {
+        include: {
+          user: true,
+        }
+      },
+    },
   });
   // .populate({ path: "member creater" })
   // .populate({ path: "message", populate: { path: "user" } });
-  let message = data?.messageId ?? [];
-  const totalCount = data?.messageId?.length ?? 0;
+  let message = data?.message ?? [];
+  const totalCount = data?.message?.length ?? 0;
   if (start) {
     const begin = totalCount - +start - pageSize;
     const end = totalCount - +start;
@@ -36,15 +43,17 @@ export const getRoom = async (ctx: Context) => {
 };
 
 export const addRoom = async (ctx: Context) => {
-  const body: { member: string[] } = ctx.request.body;
+  const body: { member: string[]; name: string } = ctx.request.body;
   const cookie = ctx.cookies.get("token") ?? "";
   const userIdFromToken = verify(cookie, privateKey) as string;
   const roomResponse = await RoomModel.create({
-    ...body,
-    // @ts-ignore
-    creater: userIdFromToken,
-    member: [userIdFromToken, ...body.member],
-    manager: userIdFromToken,
+    data: {
+      ...body,
+      name: body.name ?? "Default Room Name", // Add a default name or get it from the body
+      creater: userIdFromToken,
+      member: [userIdFromToken, ...body.member],
+      admin: [userIdFromToken],
+    },
   });
   ctx.body = {
     code: 0,

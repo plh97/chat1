@@ -31,49 +31,67 @@ enum IContentType {
   RECALL_MESSAGE @map("5")
 }
 
+model User1 {
+  id          String   @id @default(uuid()) @map("_id")
+  userId      String[] @unique
+  successor   User1[]  @relation("BlogOwnerHistory", fields: [userId], references: [id])
+  predecessor User1[]  @relation("BlogOwnerHistory", fields: [userId], references: [id])
+}
+
 model User {
-  id         String   @id @default(uuid()) @map("_id")
-  createdAt  DateTime @default(now())
-  username   String   @unique
-  password   String
-  bio        String?
-  qq         String?
-  wechat     String?
-  github     String?
-  permission String?
-  friend     String[]
-  image      String?
-  // roomId     String?  @db.ObjectId
+  id          String    @id @default(uuid()) @map("_id")
+  createdAt   DateTime  @default(now())
+  username    String    @unique
+  password    String
+  bio         String?
+  qq          String?
+  wechat      String?
+  github      String?
+  permission  String?
+  image       String    @default("")
+  message     Message[]
+  // friend
+  friendId    String[]
+  friend      User[]    @relation("friend", fields: [friendId], references: [id])
+  predecessor User[]    @relation("friend", fields: [friendId], references: [id])
+  // 
+  room        Room?     @relation(fields: [roomId], references: [id])
+  roomId      String?
 }
 
 model Room {
-  id          String       @id @default(uuid()) @map("_id") @db.ObjectId
-  name        String       @unique
+  id          String       @id @default(uuid()) @map("_id")
+  name        String
   image       String?
-  creater     String
   channelType IChannelType @default(GROUP)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @default(now())
   member      String[]
   admin       String[]
+  readSeq     Json         @default("{}")
   message     Message[]
-  messageId   String[]
-  readSeq     Json
+  creater     String
+
+  User User[]
 }
 
 model Message {
-  id           String        @id @default(uuid()) @map("_id") @db.ObjectId
+  id           String        @id @default(uuid()) @map("_id")
   createdAt    DateTime      @default(now())
-  user         String
   seq          Int
   contentType  IContentType  @default(TEXT_MESSAGE)
   channelId    String
   textMessage  TextMessage?
   mediaMessage MediaMessage?
   readMessage  ReadMessage?
-  roomId       String?       @db.ObjectId
-  Room         Room?         @relation(fields: [roomId], references: [id])
-  // Room         Room?         @relation(fields: [roomId], references: [id])
+  room         Room?         @relation(fields: [roomId], onDelete: Cascade, references: [id])
+  user         User?          @relation(fields: [userId], onDelete: Cascade, references: [id])
+
+  roomId String?
+  userId String?
+
+  @@index([roomId])
+  @@index([userId])
 }
 
 type ReadMessage {
@@ -83,13 +101,13 @@ type ReadMessage {
 
 type MediaMessage {
   url       String
-  width     Float
-  height    Float
-  thumbnail String
+  width     Float?
+  height    Float?
+  thumbnail String?
   extension String
   name      String
   size      Float
-  fileType  String?
+  fileType  String
   duration  String?
 }
 

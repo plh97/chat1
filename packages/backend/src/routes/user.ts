@@ -3,7 +3,6 @@ import jwt from "jsonwebtoken";
 import { privateKey } from "@/config";
 import { RoomModel } from "@/model/room";
 import { UserModel } from "@/model/user";
-import { isValidObjectId } from "mongoose";
 import { getVerifiedToken } from "@/utils/token";
 import { IChannelType } from "db";
 
@@ -14,15 +13,13 @@ import { IChannelType } from "db";
 export async function GetUserInfo(ctx: Context) {
   const cookie = ctx.cookies.get("token") ?? "";
   const id = jwt.verify(cookie, privateKey) as string;
-  const _userinfo = await UserModel.findUnique({ where: { id } });
-  const userinfo = {
-    ..._userinfo,
-    friend: await UserModel.findMany({
-      where: {
-        id: { in: _userinfo?.friend },
-      },
-    }),
-  };
+  const userinfo = await UserModel.findUnique({
+    where: { id },
+    include: {
+      friend: true,
+      // room: true,
+    },
+  });
   if (userinfo) {
     const room = await RoomModel.findMany({
       orderBy: [
@@ -31,6 +28,9 @@ export async function GetUserInfo(ctx: Context) {
         },
       ],
       where: { member: { has: id } },
+      include: {
+        message: true,
+      },
     });
     // .sort("-updatedAt")
     // .populate("member")
@@ -42,8 +42,8 @@ export async function GetUserInfo(ctx: Context) {
         ...userinfo,
         room: room.map((r) => {
           return Object.assign(r, {
-            totalCount: r.messageId.length,
-            lastMsg: r.messageId[r.messageId.length - 1],
+            totalCount: r.message.length,
+            lastMsg: r.message[r.message.length - 1],
             message: undefined,
           });
         }),
@@ -69,17 +69,22 @@ export async function SetUserInfo(ctx: Context) {
     where: { id },
     data: { image },
   });
-  const _userinfo = await UserModel.findUnique({ where: { id } });
-  // .populate("friend")
+  const userinfo = await UserModel.findUnique({
+    where: { id },
+    include: {
+      friend: true,
+      // room: true,
+    },
+  });
   // .populate("room");
-  const userinfo = {
-    ..._userinfo,
-    friend: await UserModel.findMany({
-      where: {
-        id: { in: _userinfo?.friend },
-      },
-    }),
-  };
+  // const userinfo = {
+  //   ..._userinfo,
+  //   friend: await UserModel.findMany({
+  //     where: {
+  //       id: { in: _userinfo?.friend },
+  //     },
+  //   }),
+  // };
   if (userinfo) {
     ctx.body = {
       code: 0,
@@ -191,10 +196,6 @@ export async function Register(ctx: Context) {
         password,
       },
     });
-    // const userinfo = await UserModel.create({
-    //   username,
-    //   password,
-    // });
     const token = jwt.sign(String(userinfo.id), privateKey);
     ctx.cookies.set("token", token, {
       maxAge: 7 * 24 * 60 * 60 * 1000,
@@ -223,7 +224,7 @@ export async function Logout(ctx: Context) {
  */
 export async function AddFriend(ctx: Context) {
   const id = String(ctx.request.body.id) ?? "";
-  if (!id || !isValidObjectId(id)) {
+  if (!id) {
     ctx.body = {
       code: 1,
       message: "id incorrect",
@@ -244,7 +245,7 @@ export async function AddFriend(ctx: Context) {
   const isFriend = await UserModel.findUnique({
     where: {
       id: userIdFromToken,
-      friend: { has: id },
+      friendId: { has: id },
     },
   });
   if (isFriend) {
@@ -257,11 +258,11 @@ export async function AddFriend(ctx: Context) {
   // add friend
   const friend = await UserModel.update({
     where: { id: userIdFromToken },
-    data: { friend: { push: id } },
+    data: { friendId: { push: id } },
   });
   const me = await UserModel.update({
     where: { id: id },
-    data: { friend: { push: userIdFromToken } },
+    data: { friendId: { push: userIdFromToken } },
   });
   if (!friend || !me) {
     ctx.body = {

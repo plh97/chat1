@@ -1,9 +1,18 @@
-import { Message, Room } from "db";
+import { MediaMessage, Message, Room } from "db";
 import { USER } from "./IUser";
 
-export interface IMessage extends Omit<Message, "id" | "user"> {
-  user: USER;
-  id: string;
+export interface IMediaMessage extends MediaMessage {
+  file: File;
+  url: string;
+  // thumbnail: string | null;
+  fileType: string;
+  name: string;
+  size: number;
+  // duration: string | null;
+}
+
+export interface IMessage extends Omit<Message, "mediaMessage"> {
+  mediaMessage?: IMediaMessage;
 }
 
 export interface MESSAGE_RESPONSE

@@ -1,10 +1,11 @@
 {
   "name": "db",
   "scripts": {
-    "dev": "pnpm run db:generate",
+    "db:studio": "prisma studio",
     "db:generate": "prisma generate",
-    "postinstall": "prisma generate",
-    "db:push": "prisma db push --skip-generate"
+    "db:push": "prisma db push --skip-generate",
+    "dev": "pnpm db:generate",
+    "postinstall": "pnpm db:generate"
   },
   "devDependencies": {
     "@types/node": "^18.11.18",

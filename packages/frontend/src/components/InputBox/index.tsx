@@ -1,16 +1,16 @@
+import { IContentType } from "db";
 import { useAppSelector } from "@/hooks/app";
 import { scrollToEnd } from "@/store/reducer/room";
 import { sendMessageAction } from "@/store/action/message";
-import { IMediaMessage } from "core";
 import { formatTime, getImgFromClip } from "@/utils";
 import { FiSend, FiPause } from "react-icons/fi";
 import { IconButton } from "@chakra-ui/react";
 import { FaRecordVinyl } from "react-icons/fa";
 import { useRecord } from "@/hooks/useRecord";
 import { Input } from "./input";
+import { IMediaMessage } from "@/interfaces";
 import { UploadFile } from "./UploadFile";
 import { useDraft } from "./useDraft";
-import { IContentType } from "db";
 
 const MAX_INPUT = 2000;
 const { toast } = createStandaloneToast();
@@ -22,18 +22,17 @@ export function InputBox() {
   const { startRecording, stopRecording, time } = useRecord();
   const { data: userInfo } = useAppSelector((state) => state.user);
   useDraft(text, setText);
-  const handleSendMedia = async (file: File, duration: string | null) => {
+  const handleSendMedia = async (file: File, duration?: string) => {
     await dispatch(
       sendMessageAction({
         contentType: IContentType.MEDIA_MESSAGE,
-        user: userInfo.id,
+        userId: userInfo.id,
         channelId: id,
         createdAt: new Date(),
-        isRead: false,
         seq: 0,
         mediaMessage: {
           file,
-          duration,
+          duration: duration ?? null,
         } as IMediaMessage,
       })
     );
@@ -49,10 +48,9 @@ export function InputBox() {
     await dispatch(
       sendMessageAction({
         contentType: IContentType.TEXT_MESSAGE,
-        user: userInfo.id,
+        userId: userInfo.id,
         channelId: id,
         createdAt: new Date(),
-        isRead: false,
         seq: 0,
         textMessage: {
           text: _text,

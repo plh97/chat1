@@ -22,6 +22,7 @@ export function Config() {
     <>
       {isGroup && (
         <IconButton
+          key={1}
           ref={btnRef}
           onClick={onOpen}
           aria-label="config button"
@@ -29,6 +30,7 @@ export function Config() {
         />
       )}
       <Drawer
+        key={2}
         isOpen={isOpen}
         placement="right"
         onClose={onClose}

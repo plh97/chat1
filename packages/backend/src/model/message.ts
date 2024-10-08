@@ -1,6 +1,3 @@
-// import { Schema, Model } from "mongoose";
-// import { IMessage } from "@/interface";
-
 // const schema = new Schema<IMessage>({
 //   user: { type: Schema.Types.ObjectId, ref: "User" },
 //   createdAt: { type: Schema.Types.Date, default: Date.now },

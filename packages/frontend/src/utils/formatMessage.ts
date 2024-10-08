@@ -1,11 +1,8 @@
 import Api from "@/Api";
-import { IMessage } from "@/interfaces";
+import { IMediaMessage, IMessage } from "@/interfaces";
 import { IContentType, MediaMessage } from "db";
 
-const uploadFile = async (
-  file: File,
-  params?: { [key: string]: string }
-): Promise<MediaMessage> => {
+const uploadFile = async (file: File, params?: { [key: string]: string }) => {
   const form = new FormData();
   form.append("file", file);
   if (params) {
@@ -13,13 +10,15 @@ const uploadFile = async (
       form.append(key, params[key]);
     });
   }
-  return Api.upload(form);
+  return Api.upload(form) as Promise<MediaMessage>;
 };
 
 const previewImage = (
   file: File,
-  maxWidth = 70,
-  maxHeight = 70
+  maxWidth = 200,
+  maxHeight = 200,
+  minWidth = 40,
+  minHeight = 40
 ): Promise<MediaMessage> => {
   // get image thumbnail
   const canvas = document.createElement("canvas");
@@ -35,12 +34,21 @@ const previewImage = (
       const h = image.height;
       let thumbnailX = 0;
       let thumbnailY = 0;
-      if (w > h) {
+      if (w >= h && w > maxWidth) {
+        thumbnailX = maxWidth;
+        thumbnailY = (h / w) * maxWidth;
+      } else if (h >= w && h > maxHeight) {
+        thumbnailY = maxHeight;
+        thumbnailX = (w / h) * maxHeight;
+      } else if (w <= h && h < minHeight) {
+        thumbnailY = maxHeight;
+        thumbnailX = (w / h) * maxHeight;
+      } else if (w >= h && w < minWidth) {
         thumbnailX = maxWidth;
         thumbnailY = (h / w) * maxWidth;
       } else {
-        thumbnailY = maxHeight;
-        thumbnailX = (w / h) * maxHeight;
+        thumbnailX = w;
+        thumbnailY = h;
       }
       canvas.width = thumbnailX;
       canvas.height = thumbnailY;
@@ -103,7 +111,7 @@ const previewVideo = (
 };
 
 const formatMediaMessage = async (
-  mediaMessage?: MediaMessage
+  mediaMessage?: IMediaMessage
 ): Promise<MediaMessage | undefined> => {
   if (!mediaMessage) return mediaMessage;
   const file = mediaMessage?.file as File;

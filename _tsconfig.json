@@ -1,9 +1,0 @@
-{
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "core": ["packages/core/src"],
-      "db": ["packages/db/src"]
-    }
-  }
-}

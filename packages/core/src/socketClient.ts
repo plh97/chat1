@@ -29,7 +29,7 @@ export class SocketClient {
     // handle something else logic here
     // 0. add heart beat
     this.heartBeat();
-    this.socket.send("ping");
+    // this.socket.send("ping");
   };
 
   async login() {
@@ -52,7 +52,7 @@ export class SocketClient {
     await this.createWS(this.open, this.close, this.error);
   }
 
-  heartBeat = (t = 20000) => {
+  heartBeat = (t = 5000) => {
     this.socket.addEventListener("message", ({ data }) => {
       if (data === "pong") {
         setTimeout(() => {

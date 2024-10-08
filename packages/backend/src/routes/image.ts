@@ -16,7 +16,8 @@ export const Upload = async (ctx: Context) => {
     };
     return;
   }
-  const ext = mime.getType(file.type as MINE);
+  const fileType = file.type?.split(";")[0];
+  const ext = mime.getType(fileType);
   const name = `${Math.random().toString().replace(/0./, "")}.${ext}`;
   const newpath = path.resolve("static", name);
   const topath = fs.createWriteStream(newpath);
@@ -30,7 +31,7 @@ export const Upload = async (ctx: Context) => {
     code: 0,
     data: {
       name: file.name,
-      fileType: file.type,
+      fileType: fileType,
       duration,
       size: file.size,
       extension: ext,

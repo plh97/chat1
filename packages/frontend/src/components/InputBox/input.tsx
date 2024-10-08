@@ -13,9 +13,15 @@ export function Input({
   onChange,
   handleSendText,
 }: IProps) {
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const location = useLocation();
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, [location]);
   return (
     <div className="relative flex-1 flex">
       <Textarea
+        ref={inputRef}
         rows={1}
         onPaste={handlePaste}
         autoFocus
@@ -27,12 +33,14 @@ export function Input({
           onChange(res);
         }}
         onKeyDown={(e) => {
-          if (e.metaKey && e.key === "Enter") {
+          if (e.nativeEvent.isComposing) return;
+          if (!e.shiftKey && e.key === "Enter") {
+            e.preventDefault();
             handleSendText();
           }
         }}
         aria-label="maximum height"
-        placeholder="Command + Enter to send message"
+        placeholder="Press Enter to send message"
       />
       {maxLength && (
         <span className="absolute right-2 bottom-1">

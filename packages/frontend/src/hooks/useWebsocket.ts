@@ -7,9 +7,13 @@ import { useDispatch } from "react-redux";
 
 export type CHANNEL_TYPE = `room:${string}` | `userinfo:${string}`;
 
-export const ws = new SocketClient("/socket.io");
+export let ws: SocketClient;
 
 export default function useWebsocket() {
+  if (!ws) {
+    ws = new SocketClient("/socket.io");
+  }
+
   const dispatch = useDispatch();
   const room = useAppSelector((state) => state.room.data);
   const userinfo = useAppSelector((state) => state.user.data);
@@ -26,7 +30,6 @@ export default function useWebsocket() {
       dispatch(addMessage(msg));
       dispatch(scrollToEnd());
     }
-    // update this room to top
     const userInfo = {
       room: [
         {

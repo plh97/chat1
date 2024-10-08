@@ -1,5 +1,4 @@
 import { Message, Room, User } from "db";
-// import { Types } from "mongoose";
 
 export interface IUser extends User {
   // id: Types.ObjectId;

@@ -1,7 +1,7 @@
 import { IconButton, Image } from "@chakra-ui/react";
-import { IMediaMessage } from "core";
 import { FaDownload } from "react-icons/fa";
 import { ProgressImage } from "./ProgressImage";
+import { IMediaMessage } from "@/interfaces";
 
 const useFixedSize = (
   mediaMessage?: IMediaMessage,
@@ -47,7 +47,7 @@ const PreviewImage = ({
           <div className="max-w-[80vw] max-h-[80vh]">
             <Image
               src={url}
-              fallbackSrc={thumbnail}
+              fallbackSrc={thumbnail ?? ""}
               className="bg-contain bg-no-repeat bg-center object-contain"
               style={{
                 backgroundImage: `url(${thumbnail})`,
@@ -58,9 +58,7 @@ const PreviewImage = ({
             <IconButton
               className="!absolute bottom-[-50px] right-[50%]"
               style={{ transform: "translateX(50%)" }}
-              // bg="#000000"
               variant="solid"
-              // width={100}
               rounded="full"
               aria-label="Download Image"
               icon={<FaDownload className="text-xl" />}

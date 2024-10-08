@@ -8,7 +8,10 @@ import { IMessage } from "@/interface";
 
 export const onMsgReceive: IOnMsgReceive = async (objMsg, socket, ws) => {
   const { data, event } = objMsg as IWsData<IMessage>;
-  const room = await RoomModel.findUnique({ where: { id: data.channelId } });
+  const room = await RoomModel.findUnique({
+    where: { id: data.channelId },
+    include: { message: true },
+  });
   let broadcastData = null;
   if (event === WS_EVENT.READ_MSG) {
     broadcastData = await handleReadMsg(data);
