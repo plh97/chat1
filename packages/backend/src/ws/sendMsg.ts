@@ -1,19 +1,23 @@
+import { IMessage, IRoom } from "@/interface";
 import { MessageModel } from "@/model/message";
 import { RoomModel } from "@/model/room";
 import { UserModel } from "@/model/user";
-import { IContentType, Message, Room as IRoomCore } from "db";
+import { IContentType } from "db";
 
-export const handleSendMsg = async (data: Message, room: IRoomCore) => {
+export const handleSendMsg = async (data: IMessage, room: IRoom) => {
   if (
     data.contentType === IContentType.TEXT_MESSAGE ||
     data.contentType === IContentType.SYSTEM_MESSAGE ||
     data.contentType === IContentType.MEDIA_MESSAGE
   ) {
-    // const seq = room?.message.length;
+    // const seq = room?.messageId.length;
     // const message = await MessageModel.create({
-    //   data: { ...data, seq: seq ?? 0 + 1 },
+    //   data,
+    //   // data: { ...data, seq: seq ?? 0 + 1 },
     // });
     // await message.populate("user");
+    // console.log(1111, message);
+
     const newRoom = await RoomModel.update({
       where: { id: data.channelId },
       data: {

@@ -29,7 +29,7 @@ export const onMsgReceive: IOnMsgReceive = async (objMsg, socket, ws) => {
     );
     return;
   }
-  let broadcastUsers = room?.member ?? [];
+  let broadcastUsers = room?.memberId ?? [];
   ws.clients.forEach((client) => {
     try {
       const id = jwt.verify(client.protocol, privateKey) as string;

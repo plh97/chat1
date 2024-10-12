@@ -12,7 +12,7 @@ import {
 import { throttle } from "@/utils";
 import { Item } from "./Item";
 import { Top } from "./top";
-import { USER } from "@/interfaces/IUser";
+import { IUser } from "@/interfaces";
 import { Loader2 } from "lucide-react";
 
 export function Message() {
@@ -68,7 +68,7 @@ export function Message() {
     }
   }, [distanceToBottom]);
 
-  const myUserInfo = useAppSelector<Partial<USER>>((state) => {
+  const myUserInfo = useAppSelector<Partial<IUser>>((state) => {
     return state.user.data;
   });
   useEffect(() => {

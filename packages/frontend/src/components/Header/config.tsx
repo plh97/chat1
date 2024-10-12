@@ -41,9 +41,19 @@ export function Config() {
           <DrawerCloseButton />
           <DrawerHeader>Group Info</DrawerHeader>
           <DrawerBody>
+            <h3>Admin List</h3>
             <div className="flex flex-row gap-2">
               <AvatarGroup size="md" max={9}>
-                {members?.map((m) => {
+                {room.admin.map((m) => {
+                  return <Avatar key={m.id} src={m.image} name={m.username} />;
+                })}
+              </AvatarGroup>
+              <AddMember />
+            </div>
+            <h3>Member List</h3>
+            <div className="flex flex-row gap-2">
+              <AvatarGroup size="md" max={9}>
+                {room.member.map((m) => {
                   return <Avatar key={m.id} src={m.image} name={m.username} />;
                 })}
               </AvatarGroup>

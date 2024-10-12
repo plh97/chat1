@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { USER } from "@/interfaces/IUser";
+import { IUser } from "@/interfaces";
 import { MessageTemplate } from "@/messages";
 import { RootState } from "@/store";
 import classNames from "classnames";
@@ -36,7 +36,7 @@ export function Item({ data: message }: IProps): JSX.Element {
     // console.log(message.textMessage?.text);
     // dispatch(markReadMessageThunk({ message, user }));
   }, [isIntersecting]);
-  const myUserInfo = useSelector<RootState, Partial<USER>>((state) => {
+  const myUserInfo = useSelector<RootState, Partial<IUser>>((state) => {
     return state.user.data;
   });
   const isMe = myUserInfo?.id === message?.user?.id;

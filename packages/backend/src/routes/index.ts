@@ -17,7 +17,7 @@ import {
   addRoom,
   getRoom,
   deleteRoom,
-  modifyRoom,
+  updateRoom,
   deleteMessage,
   joinRoom,
 } from "./room";
@@ -40,7 +40,7 @@ export default router
   // room
   .post("/room", addRoom)
   .get("/room", getRoom)
-  .patch("/room", modifyRoom)
+  .patch("/room", updateRoom)
   .delete("/room", deleteRoom)
   .post("/joinRoom", joinRoom)
   .delete("/room/message", deleteMessage);

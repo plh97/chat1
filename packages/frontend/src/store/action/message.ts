@@ -2,8 +2,7 @@ import { createAsyncThunk } from "@reduxjs/toolkit";
 import { WS_EVENT } from "core";
 import { formatMessage } from "@/utils/formatMessage";
 import { addMessage, markReadMessage } from "../reducer/room";
-import { IMessage, IRoom } from "@/interfaces/IMessage";
-import { USER } from "@/interfaces/IUser";
+import { IMessage, IRoom, IUser } from "@/interfaces";
 import { IContentType } from "db";
 
 // 发送一条新消息
@@ -18,7 +17,7 @@ export const sendMessageAction = createAsyncThunk<void, Partial<IMessage>>(
 
 export const markReadMessageThunk = createAsyncThunk<
   void,
-  { message: IMessage; user: USER }
+  { message: IMessage; user: IUser }
 >(`markReadMessage`, async ({ message, user }, { dispatch }) => {
   if (!message.channelId) return;
   const readMessage: Partial<IMessage> = {

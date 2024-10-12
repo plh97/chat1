@@ -1,13 +1,15 @@
-import { IMessageCore, IRoomCore } from "core";
-import { USER } from "./IUser";
+import { IUser } from "./";
+import { Room } from "db";
+import { IMessage } from "./IMessage";
 
-export interface ROOM extends Omit<IRoomCore, "member" | "message"> {
-  name: string;
-  image: string;
-  member: USER[];
-  manager: USER[];
-  createdAt: Date;
-  updatedAt: Date;
-  message: IMessageCore[];
-  lastMsg?: IMessageCore;
+export interface IRoom extends Omit<Room, "member" | "message"> {
+  // name: string;
+  // image: string;
+  member: IUser[];
+  admin: IUser[];
+  // createdAt: Date;
+  // updatedAt: Date;
+  totalCount: 0,
+  message: IMessage[];
+  lastMsg?: IMessage;
 }

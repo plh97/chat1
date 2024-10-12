@@ -31,32 +31,25 @@ enum IContentType {
   RECALL_MESSAGE @map("5")
 }
 
-model User1 {
-  id          String   @id @default(uuid()) @map("_id")
-  userId      String[] @unique
-  successor   User1[]  @relation("BlogOwnerHistory", fields: [userId], references: [id])
-  predecessor User1[]  @relation("BlogOwnerHistory", fields: [userId], references: [id])
-}
-
 model User {
-  id          String    @id @default(uuid()) @map("_id")
-  createdAt   DateTime  @default(now())
-  username    String    @unique
+  id          String   @id @default(uuid()) @map("_id")
+  createdAt   DateTime @default(now())
+  username    String   @unique
   password    String
   bio         String?
   qq          String?
   wechat      String?
   github      String?
   permission  String?
-  image       String    @default("")
-  message     Message[]
-  // friend
+  image       String   @default("")
+  friend      User[]   @relation("friend-user", fields: friendId, references: id)
   friendId    String[]
-  friend      User[]    @relation("friend", fields: [friendId], references: [id])
-  predecessor User[]    @relation("friend", fields: [friendId], references: [id])
-  // 
-  room        Room?     @relation(fields: [roomId], references: [id])
-  roomId      String?
+  User        User[]   @relation("friend-user", fields: UserId, references: id)
+  Message     Message? @relation("message-user")
+  RoomMember  Room[]   @relation(name: "room-member-user", fields: UserId, references: id)
+  UserId      String[] @unique
+  RoomAdmin   Room[]   @relation(name: "room-admin-user", fields: UserId, references: id)
+  RoomCreater Room?    @relation(name: "room-creater-user")
 }
 
 model Room {
@@ -66,13 +59,15 @@ model Room {
   channelType IChannelType @default(GROUP)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @default(now())
-  member      String[]
-  admin       String[]
   readSeq     Json         @default("{}")
-  message     Message[]
-  creater     String
-
-  User User[]
+  message     Message[]    @relation("room-message")
+  // 
+  member      User[]       @relation("room-member-user", fields: memberId, references: id)
+  memberId    String[]
+  admin       User[]       @relation("room-admin-user", fields: adminId, references: id)
+  adminId     String[]
+  creater     User         @relation("room-creater-user", fields: createrId, references: id)
+  createrId   String       @unique
 }
 
 model Message {
@@ -84,14 +79,10 @@ model Message {
   textMessage  TextMessage?
   mediaMessage MediaMessage?
   readMessage  ReadMessage?
-  room         Room?         @relation(fields: [roomId], onDelete: Cascade, references: [id])
-  user         User?          @relation(fields: [userId], onDelete: Cascade, references: [id])
-
-  roomId String?
-  userId String?
-
-  @@index([roomId])
-  @@index([userId])
+  user         User?         @relation("message-user", fields: userId, references: id)
+  userId       String        @unique
+  Room         Room          @relation("room-message", fields: roomId, references: id)
+  roomId       String        @unique
 }
 
 type ReadMessage {

@@ -1,12 +1,8 @@
+import { IChannelType, Room } from "db";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { IMessage, MESSAGE_REQUEST, IRoom } from "@/interfaces/IMessage";
+import { IMessage, MESSAGE_REQUEST, IRoom } from "@/interfaces";
 import { fetchUserInfoThunk } from "./user";
-import { ROOM } from "@/interfaces/IRoom";
-import { IChannelType, Room } from "db";
-
-// const { IChannelType, Room } = $Enums;
-
 import Api from "@/Api";
 import { AppThunk } from "@/hooks/app";
 
@@ -29,16 +25,18 @@ const initialState: IState = {
     id: "",
     message: [],
     totalCount: 0,
-    member: [],
     image: "",
     name: "",
+    member: [],
+    memberId: [],
     channelType: IChannelType.PRIVATE,
     // lastMsg?: {},
-    creater: "",
-    admin: [],
+    createrId: "",
+    adminId: [],
     createdAt: new Date(),
     updatedAt: new Date(),
     readSeq: {},
+    admin: [],
   },
 };
 
@@ -75,32 +73,24 @@ export const loadRoomMoreMessageThunk = createAsyncThunk<
 });
 
 export const addRoomThunk = createAsyncThunk<
-  ROOM,
-  { member: string[]; name: string }
+  IRoom,
+  Partial<IRoom>
+  // { member: string[]; name: string }
 >(`addRoom`, async (data, { dispatch }) => {
   const res = await Api.addRoom(data);
   dispatch(fetchUserInfoThunk());
   return res;
 });
 
-export const modifyRoomThunk =
+export const updateRoomThunk =
   (data: Partial<Room>): AppThunk =>
   async (dispatch) => {
-    await Api.editRoom(data);
-    dispatch(getRoomInfoThunk(data.id?.toString() ?? ""));
+    const roominfo = await Api.updateRoom(data);
+    dispatch(initialMessage(roominfo));
   };
 
-// export const modifyRoomThunk = createAsyncThunk<IRoom, Partial<Room>>(
-//   `modifyRoom`,
-//   async (data, { dispatch }) => {
-//     const res = await Api.editRoom(data);
-//     dispatch(getRoomInfoThunk(data.id?.toString() ?? ""));
-//     return res;
-//   }
-// );
-
 export const joinRoomThunk = createAsyncThunk<
-  ROOM,
+  IRoom,
   { member?: string[]; name?: string }
 >("joinRoom", async (data, { dispatch }) => {
   const res = await Api.joinRoom(data);

@@ -1,7 +1,6 @@
 {
   "scripts": {
-    "dev": "nodemon ./src/index.ts",
-    "dev1": "vite-node -c vite.config.ts -w ./src/index.ts",
+    "dev": "npx nodemon ./src/index.ts",
     "lint:prettier": "prettier src --write",
     "deploy": "ts-node ./src/index.ts",
     "test": "pnpm jest --passWithNoTests"

@@ -1,5 +1,4 @@
-import { IMessage, IRoom } from "@/interfaces/IMessage";
-import { USER } from "@/interfaces/IUser";
+import { IMessage, IUser, IRoom } from "@/interfaces";
 import { addMessage, scrollToEnd } from "@/store/reducer/room";
 import { setUserInfo } from "@/store/reducer/user";
 import { IWsData, SocketClient, WS_EVENT } from "core";
@@ -18,7 +17,7 @@ export default function useWebsocket() {
   const room = useAppSelector((state) => state.room.data);
   const userinfo = useAppSelector((state) => state.user.data);
   const roomRef = useRef<IRoom>(room);
-  const userRef = useRef<USER>(userinfo);
+  const userRef = useRef<IUser>(userinfo);
   roomRef.current = room;
   userRef.current = userinfo;
   const onReceiveMsg = (data: IWsData<IMessage>) => {

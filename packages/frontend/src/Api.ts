@@ -3,11 +3,9 @@ import {
   ADD_MESSAGE_REQUEST,
   IMessage,
   IRoom,
+  IUser,
   MESSAGE_REQUEST,
-} from "@/interfaces/IMessage";
-import { USER } from "@/interfaces/IUser";
-import { ROOM } from "./interfaces/IRoom";
-import { Room } from "db";
+} from "@/interfaces";
 
 const { toast } = createStandaloneToast();
 
@@ -87,7 +85,7 @@ const Api = {
       method: "post",
     }),
   getMyUserInfo: () =>
-    request<USER>({
+    request<IUser>({
       url: "/userInfo",
       method: "get",
     }),
@@ -111,7 +109,7 @@ const Api = {
       },
     }),
   queryUser: (params: { username: string }) =>
-    request<USER[]>({
+    request<IUser[]>({
       url: "/user",
       method: "get",
       params,
@@ -122,8 +120,8 @@ const Api = {
       method: "get",
       params,
     }),
-  addRoom: (data: { name: string; member: string[] }) =>
-    request<ROOM>({
+  addRoom: (data: Partial<IRoom>) =>
+    request<IRoom>({
       url: "/room",
       method: "post",
       data,
@@ -133,14 +131,14 @@ const Api = {
       url: "/room/" + id,
       method: "delete",
     }),
-  editRoom: (data: Partial<Room>) =>
+  updateRoom: (data: Partial<IRoom>) =>
     request<IRoom>({
       url: "/room",
       method: "patch",
       data,
     }),
   joinRoom: (data: { name?: string; member?: string[] }) =>
-    request<ROOM>({
+    request<IRoom>({
       url: "/joinRoom",
       method: "post",
       data,

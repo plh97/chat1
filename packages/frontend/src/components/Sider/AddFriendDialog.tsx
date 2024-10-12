@@ -1,5 +1,5 @@
 import { FaPlus } from "react-icons/fa";
-import { USER } from "@/interfaces/IUser";
+import { IUser } from "@/interfaces";
 import { Form } from "react-router-dom";
 import { addRoomThunk } from "@/store/reducer/room";
 import { Button, IconButton } from "@chakra-ui/react";
@@ -42,7 +42,7 @@ export const AddFriendDialog = () => {
     }
   };
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [acc, setAcc] = useState<USER[]>([]);
+  const [acc, setAcc] = useState<IUser[]>([]);
   return (
     <>
       <Button colorScheme="grey" variant="outline" onClick={onOpen}>
@@ -67,7 +67,6 @@ export const AddFriendDialog = () => {
                   {acc.map((a) => {
                     return (
                       <div
-                        //  hover:bg-white/10
                         className="mt-2 rounded-lg border-2 border-slate-900 border-solid px-0 my-2 flex gap-2 items-center justify-between flex-row"
                         key={a.id}
                       >
@@ -93,7 +92,7 @@ export const AddFriendDialog = () => {
             </Form>
           </ModalBody>
           <ModalFooter>
-            <Button mr={3} onClick={onClose}>
+            <Button onClick={onClose}>
               CANCEL
             </Button>
           </ModalFooter>

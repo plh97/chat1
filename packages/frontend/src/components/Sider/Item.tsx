@@ -1,7 +1,6 @@
 import { AvatarComponnet } from "../Avatar";
 import { MessageTemplate } from "@/messages";
-import { IRoom, IMessage } from "@/interfaces/IMessage";
-import { USER } from "@/interfaces/IUser";
+import { IRoom, IUser, IMessage } from "@/interfaces";
 import { cn } from "@/utils";
 
 interface IProps {
@@ -11,7 +10,7 @@ interface IProps {
 }
 
 export function Item({ data, active, draft }: IProps) {
-  const myUserInfo = useAppSelector<Partial<USER>>((state) => {
+  const myUserInfo = useAppSelector<Partial<IUser>>((state) => {
     return state.user.data;
   });
   const textMemo = useMemo(() => {
@@ -31,7 +30,7 @@ export function Item({ data, active, draft }: IProps) {
       return "unknown message";
     }
   }, [data, draft]);
-  const readSeq = data.readSeq?.[myUserInfo?.id ?? ""] ?? 0;
+  const readSeq = data.readSeq?.[myUserInfo?.id!] ?? 0;
   const count = data.totalCount - readSeq;
   return (
     <li data-read-seq={readSeq} key={data.id}>
@@ -44,7 +43,7 @@ export function Item({ data, active, draft }: IProps) {
           }
         )}
       >
-        <AvatarComponnet name={data.name} src={data.image} count={count} />
+        <AvatarComponnet name={data.name} src={data.image!} count={count} />
         <span className="ml-2 flex-1 inline-flex flex-col leading-4 w-20">
           <span className="font-bold text-base break-all whitespace-nowrap text-ellipsis overflow-hidden leading-4">
             {data.name}

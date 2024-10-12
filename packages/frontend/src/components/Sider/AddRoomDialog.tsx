@@ -22,7 +22,14 @@ export const AddRoomDialog = () => {
       return;
     }
     const { payload } = await dispatch(
-      addRoomThunk({ name: roomName, member: [] })
+      addRoomThunk(
+        {
+          name: roomName, // Add a default name or get it from the body
+          createrId: myUserInfo?.id,
+          memberId: [myUserInfo?.id, ],
+          adminId: [myUserInfo?.id],
+        },
+      )
     );
     onClose();
     setRoomName("");
@@ -60,7 +67,7 @@ export const AddRoomDialog = () => {
               CANCEL
             </Button>
             <Button type="button" colorScheme="blue" onClick={handleAddRoom}>
-              JOIN
+              ADD
             </Button>
           </ModalFooter>
         </ModalContent>

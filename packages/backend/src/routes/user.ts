@@ -27,7 +27,7 @@ export async function GetUserInfo(ctx: Context) {
           updatedAt: "desc",
         },
       ],
-      where: { member: { has: id } },
+      where: { memberId: { has: id } },
       include: {
         message: true,
       },
@@ -278,8 +278,8 @@ export async function AddFriend(ctx: Context) {
     data: {
       // image,
       name: `PRIVATE_CHAT`,
-      member: [userIdFromToken, id],
-      creater: userIdFromToken,
+      memberId: [userIdFromToken, id],
+      createrId: userIdFromToken,
       channelType: IChannelType.PRIVATE,
       readSeq: {},
     },

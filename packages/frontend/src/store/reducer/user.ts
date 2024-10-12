@@ -1,12 +1,12 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import Api from "@/Api";
 import { STATUS } from "@/enum/common";
-import { USER } from "@/interfaces/IUser";
+import { IUser } from "@/interfaces";
 import { IMessage } from "@/interfaces/IMessage";
 
 export interface IState {
   error: string | null;
-  data: USER;
+  data: IUser;
   auth: boolean | null;
   draftMap: Record<string, Partial<IMessage>>;
 }
@@ -26,6 +26,8 @@ const initialState: IState = {
     wechat: "",
     github: "",
     permission: "",
+    friendId: [],
+    UserId: []
   },
 };
 

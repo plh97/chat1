@@ -6,14 +6,13 @@ import {
   IconButton,
   useDisclosure,
 } from "@chakra-ui/react";
-import { USER } from "@/interfaces/IUser";
-import { modifyRoomThunk } from "@/store/reducer/room";
-import { IRoom } from "@/interfaces/IMessage";
+import { updateRoomThunk } from "@/store/reducer/room";
+import { IRoom, IUser } from "@/interfaces";
 
 export function AddMember() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const roomInfo = useAppSelector<IRoom>((state) => state.room.data);
-  const userInfo = useAppSelector<USER>((state) => state.user.data);
+  const userInfo = useAppSelector<IUser>((state) => state.user.data);
   const [user, setUser] = useState<string[]>([]);
   const dispatch = useThunkDispatch();
   const toast = useToast();
@@ -29,15 +28,23 @@ export function AddMember() {
       return;
     }
     await dispatch(
-      modifyRoomThunk({
-        member: user,
-        id: roomInfo.id,
+      updateRoomThunk({
+        // @ts-ignore
+        data: {
+          member: {
+            connect: user.map((id) => ({ id })),
+          },
+        },
+        where: { id: roomInfo.id },
       })
     );
     onClose();
     setUser([]);
     onClose();
   };
+  const memberList = roomInfo.member
+    .map((m) => m.id)
+    .filter((m) => m !== userInfo.id);
   return (
     <>
       <IconButton
@@ -57,10 +64,9 @@ export function AddMember() {
                 <FormLabel>Name: </FormLabel>
                 <CheckboxGroup
                   colorScheme="green"
-                  defaultValue={[...(roomInfo.member?.map((m) => m.id) ?? [])]}
-                  onChange={(e) => {
-                    setUser(e as string[]);
-                    console.log("change", e);
+                  defaultValue={memberList}
+                  onChange={(id: string[]) => {
+                    setUser(id);
                   }}
                 >
                   <Stack spacing={[1, 5]} direction={["column", "row"]}>

@@ -2,6 +2,7 @@ import { Context } from "koa";
 import { verify } from "jsonwebtoken";
 import { privateKey } from "@/config";
 import { RoomModel } from "@/model/room";
+import { UserModel } from "@/model/user";
 
 export const getRoom = async (ctx: Context) => {
   const id = (ctx.request.query.id as string) ?? "";
@@ -14,12 +15,12 @@ export const getRoom = async (ctx: Context) => {
       message: {
         include: {
           user: true,
-        }
+        },
       },
+      member: true,
+      creater: true,
     },
   });
-  // .populate({ path: "member creater" })
-  // .populate({ path: "message", populate: { path: "user" } });
   let message = data?.message ?? [];
   const totalCount = data?.message?.length ?? 0;
   if (start) {
@@ -43,17 +44,9 @@ export const getRoom = async (ctx: Context) => {
 };
 
 export const addRoom = async (ctx: Context) => {
-  const body: { member: string[]; name: string } = ctx.request.body;
-  const cookie = ctx.cookies.get("token") ?? "";
-  const userIdFromToken = verify(cookie, privateKey) as string;
+  const body = ctx.request.body;
   const roomResponse = await RoomModel.create({
-    data: {
-      ...body,
-      name: body.name ?? "Default Room Name", // Add a default name or get it from the body
-      creater: userIdFromToken,
-      member: [userIdFromToken, ...body.member],
-      admin: [userIdFromToken],
-    },
+    data: body,
   });
   ctx.body = {
     code: 0,
@@ -62,15 +55,20 @@ export const addRoom = async (ctx: Context) => {
   };
 };
 
-export const modifyRoom = async (ctx: Context) => {
+export const updateRoom = async (ctx: Context) => {
   const body = ctx.request.body;
   const data = await RoomModel.update({
-    where: { id: body.id },
-    data: body,
+    ...body,
+    include: {
+      member: true,
+      creater: true,
+      admin: true,
+    },
   });
   ctx.body = {
     code: 0,
     data,
+    message: "update room success!"
   };
 };
 
@@ -87,7 +85,7 @@ export const joinRoom = async (ctx: Context) => {
       });
     }
     id = room.id;
-    if (room?.member?.includes(userIdFromToken)) {
+    if (room?.memberId?.includes(userIdFromToken)) {
       return (ctx.body = {
         code: 1,
         message: "you already joined this room!",
@@ -96,7 +94,7 @@ export const joinRoom = async (ctx: Context) => {
   }
   await RoomModel.update({
     where: { id: room?.id },
-    data: { member: { push: userIdFromToken } },
+    data: { memberId: { push: userIdFromToken } },
   });
   return (ctx.body = {
     code: 0,
@@ -125,7 +123,7 @@ export const deleteMessage = async (ctx: Context) => {
 export default {
   addRoom,
   getRoom,
-  modifyRoom,
+  updateRoom,
   deleteRoom,
   deleteMessage,
 };
