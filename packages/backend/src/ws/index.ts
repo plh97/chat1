@@ -7,6 +7,20 @@ import { handleSendMsg } from "./sendMsg";
 import { IMessage } from "@/interface";
 
 export const onMsgReceive: IOnMsgReceive = async (objMsg, socket, ws) => {
+  try {
+    jwt.verify(socket.protocol, privateKey) as string;
+  } catch (error) {
+    socket.send(
+      JSON.stringify({
+        code: 1,
+        message: "WebSocket token verify fail",
+        event: objMsg.event,
+        requestId: objMsg.requestId,
+        data: null,
+      })
+    );
+    return;
+  }
   const { data, event } = objMsg as IWsData<IMessage>;
   const room = await RoomModel.findUnique({
     where: { id: data.channelId },
@@ -43,7 +57,17 @@ export const onMsgReceive: IOnMsgReceive = async (objMsg, socket, ws) => {
         })
       );
     } catch (error) {
-      console.log(error);
+      if (error instanceof jwt.JsonWebTokenError) {
+        client.send(
+          JSON.stringify({
+            code: 1,
+            event,
+            message: "WebSocket token verify fail",
+            requestId: objMsg.requestId,
+            data: broadcastData,
+          })
+        );
+      }
     }
   });
 };

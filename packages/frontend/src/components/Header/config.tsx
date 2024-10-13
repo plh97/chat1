@@ -11,6 +11,7 @@ import {
 import { IChannelType } from "db";
 import { AddMember } from "./AddMemberDialog";
 import { FiSettings } from "react-icons/fi";
+import { AddAdmin } from "./AddAdminDialog";
 
 export function Config() {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -48,7 +49,7 @@ export function Config() {
                   return <Avatar key={m.id} src={m.image} name={m.username} />;
                 })}
               </AvatarGroup>
-              <AddMember />
+              <AddAdmin />
             </div>
             <h3>Member List</h3>
             <div className="flex flex-row gap-2">

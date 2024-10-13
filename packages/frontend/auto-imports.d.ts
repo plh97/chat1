@@ -36,6 +36,7 @@ declare global {
   const Spinner: typeof import("@chakra-ui/react")["Spinner"];
   const Stack: typeof import("@chakra-ui/react")["Stack"];
   const Textarea: typeof import("@chakra-ui/react")["Textarea"];
+  const cache: typeof import("./src/hooks/useWebsocket")["cache"];
   const classnames: typeof import("classnames")["default"];
   const common: typeof import("./src/interfaces/common")["default"];
   const createRef: typeof import("react")["createRef"];

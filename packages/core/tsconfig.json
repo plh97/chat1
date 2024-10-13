@@ -1,8 +1,14 @@
 {
   "compilerOptions": {
     "declaration": true,
+    "esModuleInterop": true,
     "module": "NodeNext",
-    "outDir": "dist"
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
   "include": ["src"]
 }

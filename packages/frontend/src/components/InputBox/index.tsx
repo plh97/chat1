@@ -16,20 +16,20 @@ const MAX_INPUT = 2000;
 const { toast } = createStandaloneToast();
 
 export function InputBox() {
-  const { id = "" } = useParams();
+  const room = useAppSelector((state) => state.room.data);
+  const userInfo = useAppSelector((state) => state.user.data);
   const dispatch = useThunkDispatch();
   const [text, setText] = useState("");
   const { startRecording, stopRecording, time } = useRecord();
-  const { data: userInfo } = useAppSelector((state) => state.user);
   useDraft(text, setText);
   const handleSendMedia = async (file: File, duration?: string) => {
     await dispatch(
       sendMessageAction({
         contentType: IContentType.MEDIA_MESSAGE,
         userId: userInfo.id,
-        channelId: id,
+        channelId: room.id,
         createdAt: new Date(),
-        seq: 0,
+        seq: room.totalCount + 1,
         mediaMessage: {
           file,
           duration: duration ?? null,
@@ -43,25 +43,26 @@ export function InputBox() {
     handleSendMedia(file);
   };
   const handleSendText = async () => {
-    const _text = text.trim();
-    if (!userInfo.id || !_text) return;
-    await dispatch(
+    const trimText = text.trim();
+    if (!userInfo.id || !trimText) return;
+    const { error } = await dispatch(
       sendMessageAction({
         contentType: IContentType.TEXT_MESSAGE,
         userId: userInfo.id,
-        channelId: id,
+        channelId: room.id,
         createdAt: new Date(),
-        seq: 0,
+        seq: room.totalCount + 1,
         textMessage: {
-          text: _text,
+          text: trimText,
           methion: [],
         },
       })
     );
+    if (error) return;
     setText("");
     dispatch(scrollToEnd());
   };
-  const UtilMome = useMemo(() => {
+  const utilMome = useMemo(() => {
     if (text) {
       return (
         <IconButton
@@ -132,7 +133,7 @@ export function InputBox() {
           aria-label="maximum height"
         />
       )}
-      {UtilMome}
+      {utilMome}
     </div>
   );
 }

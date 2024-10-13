@@ -24,27 +24,30 @@ export class SocketClient {
     });
   };
 
-  open = async () => {
+  private open = async () => {
     console.log("open");
     // handle something else logic here
     // 0. add heart beat
     this.heartBeat();
-    // this.socket.send("ping");
   };
 
-  async login() {
-    const reqId = generateTemplateId();
-    this.send({ event: WS_EVENT.LOGIN, data: getToken(), requestId: reqId });
-    return this.promisify(reqId);
+  destroy() {
+    // handle destroy logic
+    console.log("destroy");
+    this.socket.close();
+    this.socket.removeEventListener("message", this.heartBeatFn);
+    this.socket.removeEventListener("message", this.onMessageReceice);
+    // @ts-ignore
+    // this.socket = null;
   }
 
+  // handle close logic
   close() {
-    // handle close logic
     console.log("close");
   }
 
+  // handle reconect logic
   error() {
-    // handle reconect logic
     console.log("error");
   }
 
@@ -52,14 +55,15 @@ export class SocketClient {
     await this.createWS(this.open, this.close, this.error);
   }
 
-  heartBeat = (t = 5000) => {
-    this.socket.addEventListener("message", ({ data }) => {
-      if (data === "pong") {
-        setTimeout(() => {
-          this.send("ping");
-        }, t);
-      }
-    });
+  heartBeatFn = ({ data }: any) => {
+    if (data === "pong") {
+      setTimeout(() => {
+        this.send("ping");
+      }, 5000);
+    }
+  };
+  heartBeat = () => {
+    this.socket.addEventListener("message", this.heartBeatFn);
     this.send("ping");
   };
 
@@ -88,7 +92,7 @@ export class SocketClient {
     if (dataObj?.event === WS_EVENT.SEND_MSG) {
       // treat as a async request
       if (dataObj?.requestId && promisify) {
-        if (dataObj.code === 0) {
+        if (dataObj.code === 0 || dataObj.code === 1) {
           promisify?.resolve(dataObj);
         } else {
           promisify?.reject(dataObj);
@@ -99,31 +103,11 @@ export class SocketClient {
       this.eventEmitter.emit(WS_EVENT.SEND_MSG, dataObj);
       return;
     }
-    // TODO: need remove
-    if (dataObj?.event === WS_EVENT.SUBSCRIBE) {
-      this.eventEmitter.emit(WS_EVENT.SUBSCRIBE, dataObj);
-      return;
-    }
-    ///////////////// handle login
-    if (dataObj?.event === WS_EVENT.LOGIN) {
-      this.eventEmitter.emit(WS_EVENT.LOGIN, dataObj);
-      return;
-    }
-    ///////////////// handle login
     if (dataObj?.event === WS_EVENT.READ_MSG) {
       this.eventEmitter.emit(WS_EVENT.READ_MSG, dataObj);
       return;
     }
     console.error("unalbe handle", dataObj);
-  };
-
-  on = (channels: string[], cb: CB) => {
-    this.send({ channels, event: WS_EVENT.SUBSCRIBE });
-    cb();
-  };
-  off = (channels: string[], cb: CB) => {
-    this.send({ channels, event: WS_EVENT.UN_SUBSCRIBE });
-    cb();
   };
 
   send = (data: object | string) => {
@@ -133,14 +117,6 @@ export class SocketClient {
     } else {
       this.socket.send(data);
     }
-  };
-
-  subscribe = async ({ channels }: { channels: CHANNEL_TYPE[] }, cb: CB) => {
-    await this.login();
-    this.on(channels, cb);
-    return () => {
-      this.off(channels, cb);
-    };
   };
 
   sendMsg = <T>(msg: unknown, event = WS_EVENT.SEND_MSG) => {

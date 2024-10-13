@@ -4,12 +4,10 @@ import { setUserInfo } from "@/store/reducer/user";
 import { IWsData, SocketClient, WS_EVENT } from "core";
 import { useDispatch } from "react-redux";
 
-export type CHANNEL_TYPE = `room:${string}` | `userinfo:${string}`;
-
 export let ws: SocketClient;
 
 export default function useWebsocket() {
-  if (!ws) {
+  if (!ws?.socket || ws?.socket?.readyState === WebSocket.CLOSED || ws?.socket?.readyState === WebSocket.CLOSING) {
     ws = new SocketClient("/socket.io");
   }
 
@@ -46,8 +44,4 @@ export default function useWebsocket() {
       ws.eventEmitter.off(WS_EVENT.SEND_MSG, onReceiveMsg);
     };
   }, []);
-  return {
-    subscribe: ws.subscribe,
-    disconnect: ws.close,
-  };
 }

@@ -19,6 +19,7 @@ export const getRoom = async (ctx: Context) => {
       },
       member: true,
       creater: true,
+      admin: true,
     },
   });
   let message = data?.message ?? [];

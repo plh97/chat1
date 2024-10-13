@@ -1,7 +1,5 @@
 import { IMessage, IRoom } from "@/interface";
-import { MessageModel } from "@/model/message";
 import { RoomModel } from "@/model/room";
-import { UserModel } from "@/model/user";
 import { IContentType } from "db";
 
 export const handleSendMsg = async (data: IMessage, room: IRoom) => {
@@ -10,14 +8,6 @@ export const handleSendMsg = async (data: IMessage, room: IRoom) => {
     data.contentType === IContentType.SYSTEM_MESSAGE ||
     data.contentType === IContentType.MEDIA_MESSAGE
   ) {
-    // const seq = room?.messageId.length;
-    // const message = await MessageModel.create({
-    //   data,
-    //   // data: { ...data, seq: seq ?? 0 + 1 },
-    // });
-    // await message.populate("user");
-    // console.log(1111, message);
-
     const newRoom = await RoomModel.update({
       where: { id: data.channelId },
       data: {
@@ -25,9 +15,9 @@ export const handleSendMsg = async (data: IMessage, room: IRoom) => {
           create: [data],
         },
         updatedAt: new Date(),
-        // readSeq: {
-        //   [data.user.id]: data.seq,
-        // },
+        readSeq: {
+          [data.userId]: data.seq,
+        },
       },
       include: {
         message: {

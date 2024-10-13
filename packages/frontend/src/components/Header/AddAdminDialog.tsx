@@ -9,7 +9,7 @@ import {
 import { updateRoomThunk } from "@/store/reducer/room";
 import { IRoom, IUser } from "@/interfaces";
 
-export function AddMember() {
+export function AddAdmin() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const roomInfo = useAppSelector<IRoom>((state) => state.room.data);
   const userInfo = useAppSelector<IUser>((state) => state.user.data);
@@ -31,8 +31,8 @@ export function AddMember() {
       updateRoomThunk({
         // @ts-ignore
         data: {
-          member: {
-            contact: user.map((id) => ({ id })),
+          admin: {
+            upsert: user.map((id) => ({ id })),
           },
         },
         where: { id: roomInfo.id },
@@ -42,21 +42,19 @@ export function AddMember() {
     setUser([]);
     onClose();
   };
-  const memberList = roomInfo.member
-    .map((m) => m.id)
-    .filter((m) => m !== userInfo.id);
+  const users = roomInfo.admin.map((m) => m.id);
   return (
     <>
       <IconButton
-        aria-label="add member"
         size="lg"
-        icon={<FaPlus className="text-2xl" />}
         onClick={onOpen}
+        aria-label="add admin"
+        icon={<FaPlus className="text-2xl" />}
       />
       <Modal isOpen={isOpen} onClose={onClose}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Invite friend</ModalHeader>
+          <ModalHeader>Set Admin</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
             <Form onSubmit={handleAddFriend}>
@@ -64,20 +62,20 @@ export function AddMember() {
                 <FormLabel>Name: </FormLabel>
                 <CheckboxGroup
                   colorScheme="green"
-                  defaultValue={memberList}
+                  defaultValue={users}
                   onChange={(id: string[]) => {
                     setUser(id);
                   }}
                 >
                   <Stack spacing={[1, 5]} direction={["column", "row"]}>
-                    {userInfo.friend?.map((user) => {
-                      const isMember = !!roomInfo.member?.find(
+                    {roomInfo.member?.map((user) => {
+                      const isInvited = !!roomInfo.admin?.find(
                         (m) => user.id === m.id
                       );
                       return (
                         <Checkbox
-                          disabled={isMember}
-                          checked={isMember}
+                          disabled={isInvited}
+                          checked={isInvited}
                           key={user.id}
                           value={user.id}
                         >

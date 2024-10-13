@@ -5,12 +5,23 @@ import { addMessage, markReadMessage } from "../reducer/room";
 import { IMessage, IRoom, IUser } from "@/interfaces";
 import { IContentType } from "db";
 
+const { toast } = createStandaloneToast();
+
 // 发送一条新消息
 export const sendMessageAction = createAsyncThunk<void, Partial<IMessage>>(
   `sendMessage`,
   async (data, { dispatch }) => {
     const formatMsg = await formatMessage(data);
     const msg = await ws.sendMsg<IMessage>(formatMsg);
+    if (msg.code === 1) {
+      toast({
+        description: msg.message,
+        status: "error",
+        position: "top",
+        duration: 1000,
+      });
+      return;
+    }
     dispatch(addMessage(msg.data));
   }
 );

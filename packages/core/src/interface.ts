@@ -66,6 +66,7 @@ export interface IWsData<T = any> {
   event: WS_EVENT;
   data: T;
   requestId: string;
+  message: string;
   code: number;
 }
 
