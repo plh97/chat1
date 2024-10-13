@@ -101,7 +101,7 @@ export default defineConfig({
         secure: false,
         // rewrite: (path) => path.replace(/^\/api/, "/api"),
       },
-      "/socket.io": {
+      "/chat": {
         target: "ws://127.0.0.1:8080",
         changeOrigin: true,
         secure: false,

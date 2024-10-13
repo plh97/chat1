@@ -34,7 +34,7 @@ export class SocketServer {
     if (this.ws) return;
     this.ws = new WebSocketServer({
       server,
-      path: "/socket.io",
+      path: "/chat",
     });
     this.ws.on("connection", (socket) => {
       console.log("client connected");

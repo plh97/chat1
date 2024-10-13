@@ -7,8 +7,12 @@ import { useDispatch } from "react-redux";
 export let ws: SocketClient;
 
 export default function useWebsocket() {
-  if (!ws?.socket || ws?.socket?.readyState === WebSocket.CLOSED || ws?.socket?.readyState === WebSocket.CLOSING) {
-    ws = new SocketClient("/socket.io");
+  if (
+    !ws?.socket ||
+    ws?.socket?.readyState === WebSocket.CLOSED ||
+    ws?.socket?.readyState === WebSocket.CLOSING
+  ) {
+    ws = new SocketClient("/chat");
   }
 
   const dispatch = useDispatch();

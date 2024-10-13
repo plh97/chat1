@@ -5,8 +5,8 @@
   force = true # COMMENT: ensure that we always redirect
 
 [[redirects]]
-  from = "/socket.io/*"
-  to = "http://18.136.199.73:8080/socket.io/:splat"
+  from = "/chat/*"
+  to = "http://18.136.199.73:8080/chat/:splat"
   status = 200
   force = true # COMMENT: ensure that we always redirect
 

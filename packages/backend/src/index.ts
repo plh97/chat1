@@ -18,7 +18,7 @@ const whiteList = [
   "/api/register",
   "/api/userImage",
   "/api/upload",
-  "/socket.io",
+  "/chat",
 ];
 
 app
