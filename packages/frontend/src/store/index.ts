@@ -11,7 +11,7 @@ export const store = configureStore({
   },
 
   middleware: (getDefaultMiddleware) => {
-    return [thunk, logger as any]
+    return [thunk];
   },
 });
 

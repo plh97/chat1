@@ -1,76 +1,30 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
 import { useAppSelector } from "@/hooks/app";
-import useScroll from "@/hooks/useScroll";
 import {
+  scrollToEnd,
   getRoomInfoThunk,
   initialMessage,
-  IState,
-  loadMoreMessage,
-  loadRoomMoreMessageThunk,
-  scrollToEnd,
 } from "@/store/reducer/room";
-import { throttle } from "@/utils";
 import { Item } from "./Item";
 import { Top } from "./top";
-import { IUser } from "@/interfaces";
-import { Loader2 } from "lucide-react";
+import { useLoadMore } from "./hook";
 
 export function Message() {
-  const scrollEl = useRef<HTMLDivElement>(null);
-  const {
-    data: { message, totalCount },
-    loadingMessage,
-  } = useAppSelector<IState>((state) => state.room);
+  const { id = "" } = useParams();
+  const { loadingMessage } = useAppSelector((state) => state.room);
+  const { message, totalCount } = useAppSelector((state) => state.room.data);
   const hasMessage = totalCount > message.length;
   const dispatch = useThunkDispatch();
-  const { id = "" } = useParams();
-  const { getBottomSpace, getTopSpace } = useScroll(scrollEl);
-  const [distanceToBottom, setDistanceToBottom] = useState<number | null>(null);
+  const { scrollEl, loadMoreTriggerRef } = useLoadMore();
+  const myUserInfo = useAppSelector((state) => state.user.data);
+  // init message list
   useEffect(() => {
     if (!id) return;
     // 清空旧的信息
     dispatch(initialMessage({ message: [], totalCount: 0 }));
     dispatch(getRoomInfoThunk(id));
   }, [id]);
-  const handleScroll = async () => {
-    // 如果滚动到了顶部
-    if (
-      message.length > 0 &&
-      Number(scrollEl.current?.scrollTop) < 300 &&
-      !loadingMessage &&
-      hasMessage
-    ) {
-      const { payload } = await dispatch(
-        loadRoomMoreMessageThunk({
-          start: message?.length ?? 0,
-          pageSize: 20,
-          id: id,
-        })
-      );
-      const distanceToTop = getTopSpace();
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      dispatch(loadMoreMessage(payload));
-      if (Number(distanceToTop) === 0) {
-        setDistanceToBottom(getBottomSpace());
-      }
-    }
-  };
-
-  useLayoutEffect(() => {
-    if (
-      scrollEl.current?.scrollTop !== undefined &&
-      distanceToBottom !== null
-    ) {
-      scrollEl.current.scrollTop =
-        scrollEl.current.scrollHeight - distanceToBottom;
-      setDistanceToBottom(null);
-    }
-  }, [distanceToBottom]);
-
-  const myUserInfo = useAppSelector<Partial<IUser>>((state) => {
-    return state.user.data;
-  });
   useEffect(() => {
     if (myUserInfo?.id) {
       dispatch(scrollToEnd());
@@ -88,9 +42,9 @@ export function Message() {
     <div
       className="overflow-y-auto flex-1 relative px-3.5 py-0 overscroll-none"
       ref={scrollEl}
-      onScroll={throttle(handleScroll)}
     >
       <Top hasMessage={hasMessage} loadingMessage={loadingMessage} />
+      <div ref={loadMoreTriggerRef} />
       {message.map((msg) => (
         <Item key={msg.id} data={msg} />
       ))}

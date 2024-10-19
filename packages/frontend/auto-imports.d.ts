@@ -75,7 +75,6 @@ declare global {
   const useRequest: typeof import("./src/hooks/useRequest")["default"];
   const useResolvedPath: typeof import("react-router-dom")["useResolvedPath"];
   const useRoutes: typeof import("react-router-dom")["useRoutes"];
-  const useScroll: typeof import("./src/hooks/useScroll")["default"];
   const useSearchParams: typeof import("react-router-dom")["useSearchParams"];
   const useState: typeof import("react")["useState"];
   const useSyncExternalStore: typeof import("react")["useSyncExternalStore"];
