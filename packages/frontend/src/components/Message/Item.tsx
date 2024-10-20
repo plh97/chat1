@@ -1,10 +1,36 @@
-import { useSelector } from "react-redux";
-import { IUser } from "@/interfaces";
-import { MessageTemplate } from "@/messages";
-import { RootState } from "@/store";
 import classNames from "classnames";
+import {
+  CircularProgress,
+  SkeletonCircle,
+  SkeletonText,
+} from "@chakra-ui/react";
+import { MessageTemplate } from "@/messages";
 import { IMessage } from "@/interfaces/IMessage";
-import { SkeletonCircle, SkeletonText } from "@chakra-ui/react";
+
+const ReadIndicator = ({ message }: { message: IMessage }) => {
+  const myUserInfo = useAppSelector((state) => state.user.data);
+  const room = useAppSelector((state) => state.room.data);
+  const readSeq = room?.readSeq;
+  const readPrecent = useMemo(() => {
+    const totalUser = room?.member.filter((m) => m.id !== message?.userId);
+    const readUser = totalUser.filter((m) => {
+      // @ts-ignore
+      const userReadSeq = readSeq?.[m?.id];
+      return userReadSeq >= message.seq;
+    });
+    return 100 * (readUser.length / totalUser.length);
+  }, [readSeq]);
+  if (myUserInfo.id !== message?.userId) return <></>;
+  return <CircularProgress size={4} value={readPrecent} />;
+};
+
+const Indicator = ({ message }: { message: IMessage }) => {
+  return (
+    <div className="flex h-full self-end">
+      <ReadIndicator message={message} />
+    </div>
+  );
+};
 
 interface IProps {
   data: IMessage;
@@ -17,9 +43,7 @@ interface IProps {
  * @return {JSX.Element}
  */
 export function Item({ data: message }: IProps): JSX.Element {
-  const myUserInfo = useSelector<RootState, Partial<IUser>>((state) => {
-    return state.user.data;
-  });
+  const myUserInfo = useAppSelector((state) => state.user.data);
   const isMe = myUserInfo?.id === message?.user?.id;
   const temp = MessageTemplate[message.contentType];
   if (!temp) return <></>;
@@ -39,6 +63,7 @@ export function Item({ data: message }: IProps): JSX.Element {
       <div className="mx-2.5 max-w-[60%] rounded-lg overflow-hidden whitespace-pre-wrap bg-gray-800 shadow-md">
         {component}
       </div>
+      <Indicator message={message} />
     </div>
   );
 }
