@@ -5,8 +5,6 @@ import { RootState } from "@/store";
 import classNames from "classnames";
 import { IMessage } from "@/interfaces/IMessage";
 import { SkeletonCircle, SkeletonText } from "@chakra-ui/react";
-import { useIntersectionObserver } from "usehooks-ts";
-import { markReadMessageThunk } from "@/store/action/message";
 
 interface IProps {
   data: IMessage;
@@ -19,23 +17,6 @@ interface IProps {
  * @return {JSX.Element}
  */
 export function Item({ data: message }: IProps): JSX.Element {
-  const room = useAppSelector((state) => state.room.data);
-  const user = useAppSelector((state) => state.user.data);
-  const dispatch = useThunkDispatch();
-  const { isIntersecting, ref } = useIntersectionObserver({
-    threshold: 0.5,
-  });
-
-  useEffect(() => {
-    if (!isIntersecting) return;
-    // if i am sender
-    if (message?.user?.id === user?.id) return;
-    // if (room.readSeq?.[user?.id] !== undefined) {
-    //   if (message.seq <= room.readSeq?.[user?.id]) return;
-    // }
-    // console.log(message.textMessage?.text);
-    // dispatch(markReadMessageThunk({ message, user }));
-  }, [isIntersecting]);
   const myUserInfo = useSelector<RootState, Partial<IUser>>((state) => {
     return state.user.data;
   });
@@ -46,7 +27,6 @@ export function Item({ data: message }: IProps): JSX.Element {
   return (
     <div
       data-seq={message.seq}
-      ref={ref}
       className={classNames("relative flex flex-row items-start mb-2", {
         "flex-row-reverse": isMe,
       })}
@@ -56,7 +36,7 @@ export function Item({ data: message }: IProps): JSX.Element {
         name={message?.user?.username}
         src={message?.user?.image}
       />
-      <div className="mx-2.5 max-w-[60%] rounded-lg whitespace-pre-wrap bg-gray-800 shadow-md">
+      <div className="mx-2.5 max-w-[60%] rounded-lg overflow-hidden whitespace-pre-wrap bg-gray-800 shadow-md">
         {component}
       </div>
     </div>

@@ -1,6 +1,5 @@
 import CSS from "csstype";
-import { ChangeEvent, useState } from "react";
-import { useDispatch } from "react-redux";
+import { ChangeEvent } from "react";
 
 import { registerThunk } from "@/store/reducer/user";
 
@@ -35,7 +34,7 @@ export function RegisterPage() {
   useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const toast = useToast();
   async function handleRegister() {
     if (!username || !password) {

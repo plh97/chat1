@@ -60,15 +60,19 @@ declare global {
   const useImperativeHandle: typeof import("react")["useImperativeHandle"];
   const useInRouterContext: typeof import("react-router-dom")["useInRouterContext"];
   const useInsertionEffect: typeof import("react")["useInsertionEffect"];
+  const useIntersectionObserver: typeof import("usehooks-ts")["useIntersectionObserver"];
   const useLayoutEffect: typeof import("react")["useLayoutEffect"];
   const useLinkClickHandler: typeof import("react-router-dom")["useLinkClickHandler"];
+  const useLocalStorage: typeof import("usehooks-ts")["useLocalStorage"];
   const useLocation: typeof import("react-router-dom")["useLocation"];
+  const useMediaQuery: typeof import("usehooks-ts")["useMediaQuery"];
   const useMemo: typeof import("react")["useMemo"];
   const useNavigate: typeof import("react-router-dom")["useNavigate"];
   const useNavigationType: typeof import("react-router-dom")["useNavigationType"];
   const useOutlet: typeof import("react-router-dom")["useOutlet"];
   const useOutletContext: typeof import("react-router-dom")["useOutletContext"];
   const useParams: typeof import("react-router-dom")["useParams"];
+  const usePrevious: typeof import("usehooks-ts")["usePrevious"];
   const useRecord: typeof import("./src/hooks/useRecord")["useRecord"];
   const useReducer: typeof import("react")["useReducer"];
   const useRef: typeof import("react")["useRef"];
@@ -82,5 +86,6 @@ declare global {
   const useToast: typeof import("@chakra-ui/react")["useToast"];
   const useTransition: typeof import("react")["useTransition"];
   const useWebsocket: typeof import("./src/hooks/useWebsocket")["default"];
+  const useWindowSize: typeof import("usehooks-ts")["useWindowSize"];
   const ws: typeof import("./src/hooks/useWebsocket")["ws"];
 }

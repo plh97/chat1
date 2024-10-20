@@ -1,5 +1,4 @@
 import { AxiosRequestConfig } from "axios";
-import { useRef } from "react";
 import { request } from "@/Api";
 
 export default function useRequest() {

@@ -48,11 +48,22 @@ export default defineConfig({
     // }),
     react(),
     AutoImports({
-      include: [/\.*.$/],
+      dts: true, // or a custom path
+      include: [
+        // /\.*.$/,
+        /\.[tj]sx?$/, // .ts, .tsx, .js, .jsx
+      ],
       imports: [
         "react",
         "react-router-dom",
         {
+          "usehooks-ts": [
+            "useIntersectionObserver",
+            "useLocalStorage",
+            "useMediaQuery",
+            "usePrevious",
+            "useWindowSize",
+          ],
           "@chakra-ui/react": [
             "createStandaloneToast",
             "extendTheme",

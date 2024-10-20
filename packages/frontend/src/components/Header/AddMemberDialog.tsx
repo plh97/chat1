@@ -8,6 +8,7 @@ import {
 } from "@chakra-ui/react";
 import { updateRoomThunk } from "@/store/reducer/room";
 import { IRoom, IUser } from "@/interfaces";
+import { connect } from "http2";
 
 export function AddMember() {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -32,7 +33,7 @@ export function AddMember() {
         // @ts-ignore
         data: {
           member: {
-            contact: user.map((id) => ({ id })),
+            connect: user.map((id) => ({ id })),
           },
         },
         where: { id: roomInfo.id },

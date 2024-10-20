@@ -1,12 +1,10 @@
-import { Dispatch } from "@reduxjs/toolkit";
-import { useDispatch } from "react-redux";
 import { joinRoomThunk } from "@/store/reducer/room";
 import { Item } from "./Item";
 import { Loading } from "./Loading";
 
 export const List = () => {
   const { id = "" } = useParams();
-  const dispatch = useDispatch<Dispatch<any>>();
+  const dispatch = useAppDispatch();
   const navigation = useNavigate();
   async function handleJoinDefaultRoom() {
     const { payload } = await dispatch<any>(joinRoomThunk({}));

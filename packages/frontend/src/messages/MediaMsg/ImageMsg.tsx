@@ -39,7 +39,7 @@ const PreviewImage = ({
   // const { width, height } = useFixedSize(mediaMessage, 800, 600);
   return (
     <>
-      <div onClick={onOpen}>{children}</div>
+      {children}
       <Modal isCentered onClose={onClose} size={"xl"} isOpen={isOpen}>
         <ModalOverlay bg="none" backdropFilter="auto" backdropBlur="2px" />
         <ModalContent className="flex items-center justify-center !bg-black/0">
@@ -72,7 +72,8 @@ const PreviewImage = ({
 
 export const ImageMsg = ({ message }: { message: IMediaMessage }) => {
   const thumbnail = message?.thumbnail;
-  const { width, height } = useFixedSize(message);
+  const width = message?.width ?? 0;
+  const height = message?.height ?? 0;
   if (!thumbnail) return <div>Invalid Image</div>;
   return (
     <div

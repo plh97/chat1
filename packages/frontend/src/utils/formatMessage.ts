@@ -17,8 +17,8 @@ const previewImage = (
   file: File,
   maxWidth = 200,
   maxHeight = 200,
-  minWidth = 40,
-  minHeight = 40
+  minWidth = 5,
+  minHeight = 5
 ): Promise<MediaMessage> => {
   // get image thumbnail
   const canvas = document.createElement("canvas");
@@ -59,8 +59,8 @@ const previewImage = (
       resolve({
         ...fileInfo,
         thumbnail: base64,
-        width: w,
-        height: h,
+        width: w / 2,
+        height: h / 2,
       });
     };
   });

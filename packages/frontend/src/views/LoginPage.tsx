@@ -1,12 +1,7 @@
-import { Dispatch } from "@reduxjs/toolkit";
 import { Properties } from "csstype";
 import { ChangeEvent } from "react";
-import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
-
 import Api from "@/Api";
 import { loginThunk } from "@/store/reducer/user";
-import { Button } from "@chakra-ui/react";
 
 const style: { [key: string]: Properties } = {
   container: {
@@ -39,7 +34,7 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const navigate = useNavigate();
-  const dispatch = useDispatch<Dispatch<any>>();
+  const dispatch = useAppDispatch();
   const toast = useToast();
   useAuth();
   const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {

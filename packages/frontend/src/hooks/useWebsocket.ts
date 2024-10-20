@@ -2,7 +2,6 @@ import { IMessage, IUser, IRoom } from "@/interfaces";
 import { addMessage, scrollToEnd } from "@/store/reducer/room";
 import { setUserInfo } from "@/store/reducer/user";
 import { IWsData, SocketClient, WS_EVENT } from "core";
-import { useDispatch } from "react-redux";
 
 export let ws: SocketClient;
 
@@ -15,7 +14,7 @@ export default function useWebsocket() {
     ws = new SocketClient("/chat");
   }
 
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const room = useAppSelector((state) => state.room.data);
   const userinfo = useAppSelector((state) => state.user.data);
   const roomRef = useRef<IRoom>(room);

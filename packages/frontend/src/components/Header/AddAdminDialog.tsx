@@ -32,7 +32,7 @@ export function AddAdmin() {
         // @ts-ignore
         data: {
           admin: {
-            upsert: user.map((id) => ({ id })),
+            connect: user.map((id) => ({ id })),
           },
         },
         where: { id: roomInfo.id },

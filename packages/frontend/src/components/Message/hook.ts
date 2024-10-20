@@ -1,5 +1,3 @@
-import { RefObject, useEffect } from "react";
-import { useIntersectionObserver } from "usehooks-ts";
 import {
   IState,
   loadMoreMessage,
