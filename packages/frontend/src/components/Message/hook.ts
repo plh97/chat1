@@ -62,7 +62,6 @@ export const useLoadMore = () => {
       })
     );
     const distanceToTop = getTopSpace();
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     dispatch(loadMoreMessage(payload));
     if (Number(distanceToTop) === 0) {

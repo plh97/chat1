@@ -37,7 +37,6 @@ export class SocketClient {
     this.socket.close();
     this.socket.removeEventListener("message", this.heartBeatFn);
     this.socket.removeEventListener("message", this.onMessageReceice);
-    // @ts-ignore
     // this.socket = null;
   }
 

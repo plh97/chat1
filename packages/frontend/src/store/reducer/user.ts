@@ -111,16 +111,16 @@ export const userSlice = createSlice({
       }
     },
     // move room to top, update lastMsg
-    topUserRoom(state, action: PayloadAction<Partial<IMessage>>) {
+    topUserRoom(state, action: PayloadAction<IMessage>) {
       const msg = action.payload;
       const roomList = state.data.room ?? [];
       const room = state.data.room?.find(
         (room) => room.id === action.payload.channelId
       );
       state.data.room = [
+        // @ts-ignore
         {
           ...room,
-          // @ts-ignore
           lastMsg: msg,
         },
         ...(roomList?.filter((r) => r.id !== msg.channelId) ?? []),

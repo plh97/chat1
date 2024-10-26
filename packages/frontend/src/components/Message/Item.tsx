@@ -19,8 +19,8 @@ const useMsgWatch = (message: IMessage) => {
 
   const dispatch = useAppDispatch();
   useEffect(() => {
-    // @ts-ignore
-    const isRead = readSeq[myUserInfo.id] >= message.seq;
+    const readSeqMap = room.readSeq as Record<string, number>;
+    const isRead = readSeqMap[myUserInfo.id] >= message.seq;
     const isMyMsg = myUserInfo.id === message.userId;
     if (!isRead && isIntersecting && !isMyMsg) {
       dispatch(
