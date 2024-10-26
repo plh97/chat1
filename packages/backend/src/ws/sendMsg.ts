@@ -8,16 +8,28 @@ export const handleSendMsg = async (data: IMessage, room: IRoom) => {
     data.contentType === IContentType.SYSTEM_MESSAGE ||
     data.contentType === IContentType.MEDIA_MESSAGE
   ) {
-    const newRoom = await RoomModel.update({
+    const room = await RoomModel.findUnique({
       where: { id: data.channelId },
+      include: {
+        message: true,
+      },
+    });
+    const msg = {
+      ...data,
+      seq: room?.message.length! + 1,
+    };
+    const readSeq = room?.readSeq ?? {};
+    Object.assign(readSeq, {
+      [msg.userId]: msg.seq,
+    });
+    const newRoom = await RoomModel.update({
+      where: { id: msg.channelId },
       data: {
         message: {
-          create: [data],
+          create: [msg],
         },
         updatedAt: new Date(),
-        readSeq: {
-          [data.userId]: data.seq,
-        },
+        readSeq,
       },
       include: {
         message: {

@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import Api from "@/Api";
 import { STATUS } from "@/enum/common";
-import { IUser } from "@/interfaces";
+import { IRoom, IUser } from "@/interfaces";
 import { IMessage } from "@/interfaces/IMessage";
 
 export interface IState {
@@ -17,7 +17,7 @@ const initialState: IState = {
   draftMap: {},
   data: {
     id: "",
-    room: null,
+    room: [],
     friend: [],
     image: "",
     username: "",
@@ -27,7 +27,7 @@ const initialState: IState = {
     github: "",
     permission: "",
     friendId: [],
-    UserId: []
+    UserId: [],
   },
 };
 
@@ -100,10 +100,42 @@ export const userSlice = createSlice({
         state.draftMap[action.payload.channelId] = action.payload;
       }
     },
+    // update room readSeq
+    updateUserRoomReadSeq(state, action: PayloadAction<Partial<IRoom>>) {
+      const room = action.payload;
+      if (room.id) {
+        const _room = state.data.room?.find((r) => r.id === room.id);
+        if (room?.readSeq && _room?.readSeq) {
+          Object.assign(_room.readSeq, room.readSeq);
+        }
+      }
+    },
+    // move room to top, update lastMsg
+    topUserRoom(state, action: PayloadAction<Partial<IMessage>>) {
+      const msg = action.payload;
+      const roomList = state.data.room ?? [];
+      const room = state.data.room?.find(
+        (room) => room.id === action.payload.channelId
+      );
+      state.data.room = [
+        {
+          ...room,
+          // @ts-ignore
+          lastMsg: msg,
+        },
+        ...(roomList?.filter((r) => r.id !== msg.channelId) ?? []),
+      ];
+    },
   },
 });
 
-export const { logout, setUserInfo, updateUserRoomMessage, setDraft } =
-  userSlice.actions;
+export const {
+  logout,
+  setUserInfo,
+  updateUserRoomMessage,
+  setDraft,
+  updateUserRoomReadSeq,
+  topUserRoom,
+} = userSlice.actions;
 
 export const userReducer = userSlice.reducer;

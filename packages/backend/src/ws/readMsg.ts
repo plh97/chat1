@@ -1,17 +1,28 @@
 import { IMessage } from "@/interface";
 import { RoomModel } from "@/model/room";
 
-export const handleReadMsg = async (data: IMessage) => {
-  const room = await RoomModel.update(
-    {
-      where: { id: data.channelId },
-      data: {
-        readSeq: {
-          [data.readMessage?.operator ?? ""]: data.readMessage?.lastReadSeq,
-        },
-      },
-    }
-  );
-  console.log(room);
+export const handleReadMsg = async (message: IMessage) => {
+  if (!message.readMessage?.lastReadSeq || !message?.readMessage?.operator)
+    return;
+  const _room = await RoomModel.findUnique({
+    where: { id: message.channelId },
+  });
+  if (!_room) return;
+  const readSeq: any = _room?.readSeq ?? {};
+  if (
+    readSeq[message?.readMessage?.operator] === undefined ||
+    readSeq[message?.readMessage?.operator] < message.readMessage.lastReadSeq
+  ) {
+    Object.assign(readSeq, {
+      ...readSeq,
+      [message?.readMessage?.operator]: message.readMessage?.lastReadSeq,
+    });
+  }
+  const room = await RoomModel.update({
+    where: { id: message.channelId },
+    data: {
+      readSeq: readSeq,
+    },
+  });
   return room;
 };

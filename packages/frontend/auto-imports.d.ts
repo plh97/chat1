@@ -51,6 +51,7 @@ declare global {
   const useAuth: typeof import("./src/hooks/useAuth")["default"];
   const useCallback: typeof import("react")["useCallback"];
   const useContext: typeof import("react")["useContext"];
+  const useDebounceDispatch: typeof import("./src/hooks/app")["useDebounceDispatch"];
   const useDebugValue: typeof import("react")["useDebugValue"];
   const useDeferredValue: typeof import("react")["useDeferredValue"];
   const useDisclosure: typeof import("@chakra-ui/react")["useDisclosure"];

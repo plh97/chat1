@@ -125,7 +125,10 @@ export const roomSlice = createSlice({
       state.data = { ...state.data, ...action.payload };
     },
     // sync method, just modify state
-    markReadMessage(state, action: PayloadAction<IRoom>) {
+    markReadMessage(
+      state,
+      action: PayloadAction<Pick<IRoom, "id" | "readSeq">>
+    ) {
       const room = action.payload;
       if (room.id === state.id) {
         Object.assign(state.data.readSeq ?? {}, room.readSeq);

@@ -42,11 +42,14 @@ export const List = () => {
     <ul className="flex-1 overflow-y-auto px-2">
       {myUserInfo.room?.map((room) => {
         const draft = draftMap[room.id];
+        const readSeq = room.readSeq?.[myUserInfo.id] ?? 0;
+        const unreadCount = room.lastMsg?.seq! - readSeq;
         return (
           <Item
+            unreadCount={unreadCount}
             draft={draft}
-            active={room.id.toString() == id}
-            key={room.id.toString()}
+            active={room.id == id}
+            key={room.id}
             data={room}
           />
         );

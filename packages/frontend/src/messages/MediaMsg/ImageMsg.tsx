@@ -20,16 +20,14 @@ const PreviewImage = ({
         {children}
       </div>
       <Modal isCentered onClose={onClose} size={"xl"} isOpen={isOpen}>
-        <ModalOverlay bg="none" backdropFilter="auto" backdropBlur="2px" />
+        <ModalOverlay backdropFilter="auto" backdropBlur="2px" />
         <ModalContent className="flex items-center justify-center">
           <ModalCloseButton />
-          <div className="max-w-[80vw] max-h-[80vh]">
-            <Image
-              src={url}
-              fallbackSrc={thumbnail ?? ""}
-              className="bg-contain bg-no-repeat bg-center object-contain max-w-[70vw] max-h-[70vh]"
-            />
-          </div>
+          <Image
+            src={url}
+            fallbackSrc={thumbnail ?? ""}
+            className="max-w-[70vw] max-h-[70vh]"
+          />
           <a href={url} target="_blank" rel="noreferrer" download="3223.png">
             <IconButton
               className="!absolute bottom-[-50px] right-[50%]"

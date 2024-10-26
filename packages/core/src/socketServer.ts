@@ -19,11 +19,9 @@ export class SocketServer {
     try {
       const objMsg: IWsData = JSON.parse(msg);
       if (objMsg?.event === WS_EVENT.SEND_MSG) {
-        // @ts-ignore
-        cb(objMsg, socket, this.ws);
+        cb(objMsg, socket, this.ws!);
       } else if (objMsg?.event === WS_EVENT.READ_MSG) {
-        // @ts-ignore
-        cb(objMsg, socket, this.ws);
+        cb(objMsg, socket, this.ws!);
       }
     } catch (error) {
       console.error(error);

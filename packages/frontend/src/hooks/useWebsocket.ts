@@ -1,7 +1,7 @@
-import { IMessage, IUser, IRoom } from "@/interfaces";
-import { addMessage, scrollToEnd } from "@/store/reducer/room";
-import { setUserInfo } from "@/store/reducer/user";
 import { IWsData, SocketClient, WS_EVENT } from "core";
+import { IMessage, IRoom } from "@/interfaces";
+import { updateUserRoomReadSeq, topUserRoom } from "@/store/reducer/user";
+import { addMessage, markReadMessage, scrollToEnd } from "@/store/reducer/room";
 
 export let ws: SocketClient;
 
@@ -16,35 +16,41 @@ export default function useWebsocket() {
 
   const dispatch = useAppDispatch();
   const room = useAppSelector((state) => state.room.data);
-  const userinfo = useAppSelector((state) => state.user.data);
   const roomRef = useRef<IRoom>(room);
-  const userRef = useRef<IUser>(userinfo);
   roomRef.current = room;
-  userRef.current = userinfo;
   const onReceiveMsg = (data: IWsData<IMessage>) => {
     const msg = data.data;
     const room = roomRef.current;
-    const user = userRef.current;
-    const currentRoom = user.room?.find((r) => r.id === msg.channelId);
     if (msg?.channelId === room.id) {
       dispatch(addMessage(msg));
       dispatch(scrollToEnd());
     }
-    const userInfo = {
-      room: [
-        {
-          ...currentRoom,
-          lastMsg: msg,
-        },
-        ...(user.room?.filter((r) => r.id !== msg.channelId) ?? []),
-      ],
-    };
-    dispatch(setUserInfo(userInfo));
+    dispatch(topUserRoom(msg));
   };
   useEffect(() => {
     ws.eventEmitter.on(WS_EVENT.SEND_MSG, onReceiveMsg);
     return () => {
       ws.eventEmitter.off(WS_EVENT.SEND_MSG, onReceiveMsg);
+    };
+  }, []);
+  const onReceiveRead = ({ data }: IWsData<IRoom>) => {
+    dispatch(
+      markReadMessage({
+        id: data.id,
+        readSeq: data.readSeq,
+      })
+    );
+    dispatch(
+      updateUserRoomReadSeq({
+        id: data.id,
+        readSeq: data.readSeq,
+      })
+    );
+  };
+  useEffect(() => {
+    ws.eventEmitter.on(WS_EVENT.READ_MSG, onReceiveRead);
+    return () => {
+      ws.eventEmitter.off(WS_EVENT.READ_MSG, onReceiveRead);
     };
   }, []);
 }

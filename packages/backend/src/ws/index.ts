@@ -1,10 +1,10 @@
+import jwt from "jsonwebtoken";
+import { IOnMsgReceive, IWsData, WS_EVENT } from "core";
+import { IMessage } from "@/interface";
 import { privateKey } from "@/config";
 import { RoomModel } from "@/model/room";
-import { IOnMsgReceive, IWsData, WS_EVENT } from "core";
-import jwt from "jsonwebtoken";
 import { handleReadMsg } from "./readMsg";
 import { handleSendMsg } from "./sendMsg";
-import { IMessage } from "@/interface";
 
 export const onMsgReceive: IOnMsgReceive = async (objMsg, socket, ws) => {
   try {

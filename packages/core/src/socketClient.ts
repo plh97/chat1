@@ -104,6 +104,14 @@ export class SocketClient {
       return;
     }
     if (dataObj?.event === WS_EVENT.READ_MSG) {
+      if (dataObj?.requestId && promisify) {
+        if (dataObj.code === 0 || dataObj.code === 1) {
+          promisify?.resolve(dataObj);
+        } else {
+          promisify?.reject(dataObj);
+        }
+        return;
+      }
       this.eventEmitter.emit(WS_EVENT.READ_MSG, dataObj);
       return;
     }

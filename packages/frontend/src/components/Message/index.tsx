@@ -10,8 +10,8 @@ import { useLoadMore } from "./hook";
 
 export function Message() {
   const { id = "" } = useParams();
-  const { loadingMessage } = useAppSelector((state) => state.room);
-  const { message, totalCount } = useAppSelector((state) => state.room.data);
+  const { loadingMessage, data } = useAppSelector((state) => state.room);
+  const { message, totalCount } = data;
   const hasMessage = totalCount > message.length;
   const dispatch = useThunkDispatch();
   const { scrollEl, loadMoreTriggerRef } = useLoadMore();
