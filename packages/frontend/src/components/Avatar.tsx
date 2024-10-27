@@ -24,10 +24,10 @@ export const AvatarComponnet = ({
   ...args
 }: IProps) => {
   const countMemo = useMemo(() => {
-    let c = count.toString();
-    if (count < 1) {
+    if (count < 1 || isNaN(count)) {
       return null;
     }
+    let c = count.toString();
     if (count > 99) {
       c = "99+";
     }

@@ -89,6 +89,14 @@ export const userSlice = createSlice({
         },
       });
     },
+    shiftRoom(state, action: PayloadAction<IRoom>) {
+      Object.assign(state.data, {
+        room: [
+          action.payload,
+          ...(state.data.room ?? []),
+        ]
+      });
+    },
     logout(state) {
       Object.assign(state, {
         auth: false,
@@ -98,6 +106,11 @@ export const userSlice = createSlice({
     setDraft(state, action: PayloadAction<Partial<IMessage>>) {
       if (action.payload.channelId) {
         state.draftMap[action.payload.channelId] = action.payload;
+      }
+    },
+    removeDraft(state, action: PayloadAction<string>) {
+      if (action.payload) {
+        delete state.draftMap[action.payload];
       }
     },
     // update room readSeq
@@ -134,8 +147,10 @@ export const {
   setUserInfo,
   updateUserRoomMessage,
   setDraft,
+  removeDraft,
   updateUserRoomReadSeq,
   topUserRoom,
+  shiftRoom,
 } = userSlice.actions;
 
 export const userReducer = userSlice.reducer;

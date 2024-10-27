@@ -29,14 +29,12 @@ const ItemOriginal = ({ data, active, draft, unreadCount }: IProps) => {
     }
   }, [data, draft]);
   return (
-    <li data-read-seq={JSON.stringify(data.readSeq)} key={data.id}>
+    <li key={data.id}>
       <NavLink
         to={"/room/" + data.id}
         className={cn(
           "flex flex-row items-center overflow-hidden rounded-lg px-2 py-1",
-          {
-            "bg-white/10": active,
-          }
+          { "bg-white/10": active }
         )}
       >
         <AvatarComponnet

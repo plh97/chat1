@@ -1,10 +1,10 @@
 import { IChannelType, Room } from "db";
+import Api from "@/Api";
+import { AppThunk } from "@/hooks/app";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { IMessage, MESSAGE_REQUEST, IRoom } from "@/interfaces";
-import { fetchUserInfoThunk } from "./user";
-import Api from "@/Api";
-import { AppThunk } from "@/hooks/app";
+import { fetchUserInfoThunk, shiftRoom } from "./user";
 
 export interface IState {
   id: string;
@@ -72,15 +72,14 @@ export const loadRoomMoreMessageThunk = createAsyncThunk<
   return res.message;
 });
 
-export const addRoomThunk = createAsyncThunk<
-  IRoom,
-  Partial<IRoom>
-  // { member: string[]; name: string }
->(`addRoom`, async (data, { dispatch }) => {
-  const res = await Api.addRoom(data);
-  dispatch(fetchUserInfoThunk());
-  return res;
-});
+export const addRoomThunk = createAsyncThunk<IRoom, Partial<IRoom>>(
+  `addRoom`,
+  async (data, { dispatch }) => {
+    const res = await Api.addRoom(data);
+    dispatch(shiftRoom(res));
+    return res;
+  }
+);
 
 export const updateRoomThunk =
   (data: Partial<Room>): AppThunk =>

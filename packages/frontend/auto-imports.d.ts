@@ -41,10 +41,12 @@ declare global {
   const common: typeof import("./src/interfaces/common")["default"];
   const createRef: typeof import("react")["createRef"];
   const createStandaloneToast: typeof import("@chakra-ui/react")["createStandaloneToast"];
+  const dayjs: typeof import("dayjs")["default"];
   const extendTheme: typeof import("@chakra-ui/react")["extendTheme"];
   const forwardRef: typeof import("react")["forwardRef"];
   const lazy: typeof import("react")["lazy"];
   const memo: typeof import("react")["memo"];
+  const moment: typeof import("moment")["default"];
   const startTransition: typeof import("react")["startTransition"];
   const useAppDispatch: typeof import("./src/hooks/app")["useAppDispatch"];
   const useAppSelector: typeof import("./src/hooks/app")["useAppSelector"];

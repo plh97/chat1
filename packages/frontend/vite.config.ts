@@ -57,6 +57,9 @@ export default defineConfig({
         "react",
         "react-router-dom",
         {
+          moment: [["default", "moment"]],
+        },
+        {
           "usehooks-ts": [
             "useIntersectionObserver",
             "useLocalStorage",

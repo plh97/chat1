@@ -4,8 +4,7 @@
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
     "db:push": "prisma db push --skip-generate",
-    "dev": "pnpm db:generate",
-    "postinstall": "pnpm db:generate"
+    "dev": "pnpm db:generate"
   },
   "devDependencies": {
     "@types/node": "^18.11.18",

@@ -1,6 +1,9 @@
-import { setDraft } from "@/store/reducer/user";
+import { removeDraft, setDraft } from "@/store/reducer/user";
 
-export const useDraft = (text: string, setText: React.Dispatch<React.SetStateAction<string>>) => {
+export const useDraft = (
+  text: string,
+  setText: React.Dispatch<React.SetStateAction<string>>
+) => {
   const { draftMap } = useAppSelector((state) => state.user);
   const dispatch = useThunkDispatch();
   const afterRoute = useRef("");
@@ -23,6 +26,8 @@ export const useDraft = (text: string, setText: React.Dispatch<React.SetStateAct
           },
         })
       );
+    } else {
+      dispatch(removeDraft(afterRoute.current));
     }
     afterRoute.current = id;
   }, [id]);

@@ -16,6 +16,8 @@ const MAX_INPUT = 2000;
 const { toast } = createStandaloneToast();
 
 export function InputBox() {
+  const { draftMap } = useAppSelector((state) => state.user);
+  console.log(draftMap);
   const room = useAppSelector((state) => state.room.data);
   const userInfo = useAppSelector((state) => state.user.data);
   const dispatch = useThunkDispatch();
