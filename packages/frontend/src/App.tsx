@@ -4,7 +4,6 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { store } from "./store";
 import theme from "./theme";
 
-
 export function App() {
   const router = createBrowserRouter([
     {

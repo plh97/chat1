@@ -92,9 +92,7 @@ export const AddFriendDialog = () => {
             </Form>
           </ModalBody>
           <ModalFooter>
-            <Button onClick={onClose}>
-              CANCEL
-            </Button>
+            <Button onClick={onClose}>CANCEL</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

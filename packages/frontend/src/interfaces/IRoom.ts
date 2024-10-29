@@ -9,7 +9,7 @@ export interface IRoom extends Omit<Room, "member" | "message"> {
   admin: IUser[];
   // createdAt: Date;
   // updatedAt: Date;
-  totalCount: 0,
+  totalCount: 0;
   message: IMessage[];
   lastMsg?: IMessage;
 }

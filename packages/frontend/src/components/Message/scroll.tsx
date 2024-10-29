@@ -7,7 +7,6 @@ import { Loader2 } from "lucide-react";
 import { useLoadMore } from "./hook";
 import { PropsWithChildren } from "react";
 
-
 export const Top = () => {
   const { loadingMessage, data } = useAppSelector((state) => state.room);
   const { message, totalCount } = data;
@@ -32,7 +31,6 @@ export const Top = () => {
     </>
   );
 };
-
 
 export function Scroll({ children }: PropsWithChildren) {
   const dispatch = useThunkDispatch();

@@ -52,7 +52,7 @@ export const useLoadMore = () => {
   const [distanceToBottom, setDistanceToBottom] = useState<number | null>(null);
   const { isIntersecting, ref } = useIntersectionObserver({
     threshold: 0.5,
-    rootMargin: '200%',
+    rootMargin: "200%",
   });
   const requestMore = async () => {
     const { payload } = await dispatch(

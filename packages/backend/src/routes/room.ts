@@ -69,7 +69,7 @@ export const updateRoom = async (ctx: Context) => {
   ctx.body = {
     code: 0,
     data,
-    message: "update room success!"
+    message: "update room success!",
   };
 };
 

@@ -91,10 +91,7 @@ export const userSlice = createSlice({
     },
     shiftRoom(state, action: PayloadAction<IRoom>) {
       Object.assign(state.data, {
-        room: [
-          action.payload,
-          ...(state.data.room ?? []),
-        ]
+        room: [action.payload, ...(state.data.room ?? [])],
       });
     },
     logout(state) {

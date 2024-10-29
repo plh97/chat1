@@ -29,7 +29,7 @@ export function useRecord() {
           stream.getTracks().forEach((track) => track.stop());
         };
         setAudio(mediaRecorder);
-      })
+      });
   };
   const stopRecording = () => {
     if (audio) {

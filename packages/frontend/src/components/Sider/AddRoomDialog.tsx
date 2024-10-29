@@ -22,14 +22,12 @@ export const AddRoomDialog = () => {
       return;
     }
     const { payload } = await dispatch(
-      addRoomThunk(
-        {
-          name: roomName, // Add a default name or get it from the body
-          createrId: myUserInfo?.id,
-          memberId: [myUserInfo?.id, ],
-          adminId: [myUserInfo?.id],
-        },
-      )
+      addRoomThunk({
+        name: roomName, // Add a default name or get it from the body
+        createrId: myUserInfo?.id,
+        memberId: [myUserInfo?.id],
+        adminId: [myUserInfo?.id],
+      })
     );
     onClose();
     setRoomName("");
