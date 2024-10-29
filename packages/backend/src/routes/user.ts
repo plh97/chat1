@@ -30,12 +30,11 @@ export async function GetUserInfo(ctx: Context) {
       where: { memberId: { has: id } },
       include: {
         message: true,
+        member: true,
       },
     });
     // .sort("-updatedAt")
-    // .populate("member")
     // .populate("admin")
-    // .populate("message");
     ctx.body = {
       code: 0,
       data: {
@@ -271,8 +270,6 @@ export async function AddFriend(ctx: Context) {
     };
     return;
   }
-  console.log(friend, me);
-
   // create room
   const roomResponse = await RoomModel.create({
     data: {

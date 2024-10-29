@@ -3,22 +3,27 @@ import { Config } from "./config";
 import { Loading } from "./Loading";
 
 export function Content() {
-  const { id = "" } = useParams();
-  const room = useAppSelector((state) => state.user.data.room);
-  const currentRoom = room?.find((item) => item.id === id);
-  if (!currentRoom) {
+  const room = useAppSelector((state) => state.room.data);
+  const userinfo = useAppSelector((state) => state.user.data);
+  if (!room?.id) {
     return <Loading />;
+  }
+  let name = room.name;
+  let image = room.image!;
+  if (room.channelType === "PRIVATE") {
+    const user = room.member?.find((u) => u.id !== userinfo.id);
+    if (user) {
+      name = user.username;
+      image = user.image;
+    }
   }
   return (
     <div className="flex items-center">
       <WrapItem>
-        <AvatarComponnet
-          name={currentRoom.image ? undefined : currentRoom.name}
-          src={currentRoom.image ?? ''}
-        />
+        <AvatarComponnet name={name} src={image} />
       </WrapItem>
       <div className="ml-2">
-        <p className="text-lg font-semibold">{currentRoom.name}</p>
+        <p className="text-lg font-semibold">{name}</p>
         <p className="text-sm text-gray-400">Active now</p>
       </div>
     </div>

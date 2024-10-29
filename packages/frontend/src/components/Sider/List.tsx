@@ -48,11 +48,12 @@ export const List = () => {
         const unreadCount = room.lastMsg?.seq! - readSeq;
         return (
           <Item
+            myId={myId}
             unreadCount={unreadCount}
             draft={draft}
             active={room.id == id}
             key={room.id}
-            data={room}
+            room={room}
           />
         );
       })}
