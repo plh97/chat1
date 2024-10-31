@@ -41,13 +41,11 @@ export function Scroll({ children }: PropsWithChildren) {
   useEffect(() => {
     if (!id) return;
     // 清空旧的信息
-    console.log("清空旧的信息");
     dispatch(initialMessage({ message: [], totalCount: 0 }));
     dispatch(getRoomInfoThunk(id));
   }, [id]);
   useEffect(() => {
     if (myUserInfo?.id) {
-      console.log("清空旧的信息, myUserInfo");
       dispatch(scrollToEnd());
     }
   }, [myUserInfo?.id]);

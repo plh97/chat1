@@ -2,7 +2,7 @@
 
 ## Architecture
 
-- Development(lerna)
+- Development
   - datebase
     - mongodb
   - ansible

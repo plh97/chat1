@@ -10,12 +10,12 @@
     "db": "docker compose -f ./docker-compose.dev.yml up -d",
     "db:down": "docker compose -f ./docker-compose.dev.yml down",
     "bootstrap": "pnpm i",
-    "dev": "pnpm db && lerna run dev",
-    "build": "lerna run build",
-    "lint:eslint": "lerna run lint:eslint",
+    "dev": "pnpm db && pnpm -F backend -F frontend -F db dev",
+    "build": "pnpm -F frontend build",
+    "lint:eslint": "pnpm -F frontend -F backend lint:eslint",
     "commit": "cz",
-    "lint:prettier": "lerna run lint:prettier",
-    "test": "lerna run test",
+    "lint:prettier": "pnpm -F frontend -F backend lint:prettier",
+    "test": "pnpm -F frontend -F backend test",
     "down": "docker compose down",
     "deploy": "docker compose up --build -d",
     "postinstall": "npx simple-git-hooks"
@@ -30,17 +30,11 @@
   ],
   "devDependencies": {
     "commitizen": "^4.2.6",
-    "husky": "^8.0.3",
-    "lerna": "^7.1.1",
     "lint-staged": "^13.2.2",
     "stylelint": "^15.6.2",
     "stylelint-config-standard": "^33.0.0",
+    "simple-git-hooks": "^2.11.1",
     "stylelint-config-standard-scss": "^9.0.0"
-  },
-  "husky": {
-    "hooks": {
-      "prepare-commit-msg": "exec < /dev/tty && npx cz --hook || true"
-    }
   },
   "simple-git-hooks": {
     "pre-commit": "npx lint-staged",
