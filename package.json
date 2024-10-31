@@ -18,7 +18,7 @@
     "test": "lerna run test",
     "down": "docker compose down",
     "deploy": "docker compose up --build -d",
-    "prepare": "npx husky install"
+    "postinstall": "npx simple-git-hooks"
   },
   "config": {
     "commitizen": {
