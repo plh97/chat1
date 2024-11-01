@@ -8,7 +8,7 @@ import { IRoom } from "@/interfaces";
 export const MessageTemplate: Record<
   IContentType,
   (
-          message: IMessage,
+    message: IMessage,
     room?: IRoom
   ) => { Component: () => JSX.Element; preview?: JSX.Element }
 > = {
