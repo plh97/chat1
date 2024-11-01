@@ -1,6 +1,6 @@
 import { AvatarComponnet } from "../Avatar";
 import { MessageTemplate } from "@/messages";
-import { IRoom, IMessage, IChannelType } from "@/interfaces";
+import { IRoom, IMessage } from "@/interfaces";
 import { cn } from "@/utils";
 
 interface IProps {

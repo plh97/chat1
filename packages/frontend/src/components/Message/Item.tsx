@@ -4,6 +4,7 @@ import { MessageTemplate } from "@/messages";
 import { IMessage } from "@/interfaces/IMessage";
 import { Indicator } from "./Indicator";
 import { markReadMessageThunk } from "@/store/action/message";
+import { IContentType } from "db";
 
 interface IProps {
   data: IMessage;
@@ -51,11 +52,15 @@ const useMsgWatch = (message: IMessage) => {
 
 export function Item({ data: message }: IProps): JSX.Element {
   const myUserInfo = useAppSelector((state) => state.user.data);
+  const room = useAppSelector((state) => state.room.data);
   const isMe = myUserInfo?.id === message?.user?.id;
   const temp = MessageTemplate[message.contentType];
   if (!temp) return <></>;
-  const { component } = temp(message);
+  const { Component } = temp(message, room);
   const ref = useMsgWatch(message);
+  if (message.contentType === IContentType.SYSTEM_MESSAGE) {
+    return <Component />;
+  }
   return (
     <div
       ref={ref}
@@ -70,7 +75,7 @@ export function Item({ data: message }: IProps): JSX.Element {
         src={message?.user?.image}
       />
       <div className="mx-2.5 max-w-[60%] rounded-lg overflow-hidden whitespace-pre-wrap bg-gray-800 shadow-md">
-        {component}
+        <Component />
       </div>
       <Indicator message={message} />
     </div>

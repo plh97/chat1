@@ -7,6 +7,7 @@ export {
   $Enums,
   IChannelType,
   IContentType,
+  ISystemActionType,
   User,
   Room,
   MediaMessage,

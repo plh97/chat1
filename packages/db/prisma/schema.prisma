@@ -71,18 +71,19 @@ model Room {
 }
 
 model Message {
-  id           String        @id @default(uuid()) @map("_id")
-  createdAt    DateTime      @default(now())
-  seq          Int
-  contentType  IContentType  @default(TEXT_MESSAGE)
-  channelId    String
-  textMessage  TextMessage?
-  mediaMessage MediaMessage?
-  readMessage  ReadMessage?
-  user         User?         @relation("message-user", fields: userId, references: id)
-  userId       String        @unique
-  Room         Room          @relation("room-message", fields: roomId, references: id)
-  roomId       String        @unique
+  id            String         @id @default(uuid()) @map("_id")
+  createdAt     DateTime       @default(now())
+  seq           Int
+  contentType   IContentType   @default(TEXT_MESSAGE)
+  channelId     String
+  textMessage   TextMessage?
+  mediaMessage  MediaMessage?
+  readMessage   ReadMessage?
+  systemMessage SystemMessage?
+  user          User?          @relation("message-user", fields: userId, references: id)
+  userId        String         @unique
+  Room          Room           @relation("room-message", fields: roomId, references: id)
+  roomId        String         @unique
 }
 
 type ReadMessage {
@@ -105,4 +106,19 @@ type MediaMessage {
 type TextMessage {
   text    String
   methion String[]
+}
+
+enum ISystemActionType {
+  ADD_MEMBER    @map("0")
+  REMOVE_MEMBER @map("1")
+  ADD_ADMIN     @map("2")
+  REMOVE_ADMIN  @map("3")
+  CREATE_ROOM   @map("4")
+  REMOVE_ROOM   @map("5")
+}
+
+type SystemMessage {
+  operator   String
+  targetList String[]
+  actionType ISystemActionType
 }

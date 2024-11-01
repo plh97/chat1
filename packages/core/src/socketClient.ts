@@ -1,6 +1,6 @@
 import { WS_EVENT } from "./constants";
 import { EventEmitter } from "./eventEmitter";
-import { CB, CHANNEL_TYPE, IWsData } from "./interface";
+import { CB, IWsData } from "./interface";
 import { generateTemplateId, getToken } from "./utils";
 
 type Promisify = {
@@ -88,33 +88,15 @@ export class SocketClient {
     const dataObj = JSON.parse(data) as IWsData<unknown>;
     ///////////////// handle promisify
     const promisify = this.promiseMap[dataObj?.requestId];
-    if (dataObj?.event === WS_EVENT.SEND_MSG) {
-      // treat as a async request
-      if (dataObj?.requestId && promisify) {
-        if (dataObj.code === 0 || dataObj.code === 1) {
-          promisify?.resolve(dataObj);
-        } else {
-          promisify?.reject(dataObj);
-        }
-        return;
+    if (dataObj?.requestId && promisify) {
+      if (dataObj.code === 0 || dataObj.code === 1) {
+        promisify?.resolve(dataObj);
+      } else {
+        promisify?.reject(dataObj);
       }
-      // treat as a normal message push
-      this.eventEmitter.emit(WS_EVENT.SEND_MSG, dataObj);
       return;
     }
-    if (dataObj?.event === WS_EVENT.READ_MSG) {
-      if (dataObj?.requestId && promisify) {
-        if (dataObj.code === 0 || dataObj.code === 1) {
-          promisify?.resolve(dataObj);
-        } else {
-          promisify?.reject(dataObj);
-        }
-        return;
-      }
-      this.eventEmitter.emit(WS_EVENT.READ_MSG, dataObj);
-      return;
-    }
-    console.error("unalbe handle", dataObj);
+    this.eventEmitter.emit(WS_EVENT.READ_MSG, dataObj);
   };
 
   send = (data: object | string) => {

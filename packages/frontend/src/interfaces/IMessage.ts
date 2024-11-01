@@ -14,6 +14,7 @@ export interface IMediaMessage extends MediaMessage {
 export interface IMessage extends Omit<Message, "mediaMessage"> {
   mediaMessage?: IMediaMessage;
   user: User;
+  member?: IUser[];
 }
 
 export interface MESSAGE_RESPONSE

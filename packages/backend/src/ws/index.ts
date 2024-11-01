@@ -30,7 +30,7 @@ export const onMsgReceive: IOnMsgReceive = async (objMsg, socket, ws) => {
   if (event === WS_EVENT.READ_MSG) {
     broadcastData = await handleReadMsg(data);
   } else if (event === WS_EVENT.SEND_MSG) {
-    broadcastData = await handleSendMsg(data, room!);
+    broadcastData = await handleSendMsg(data);
   }
   if (!broadcastData) {
     socket.send(

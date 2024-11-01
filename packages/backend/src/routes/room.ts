@@ -2,7 +2,8 @@ import { Context } from "koa";
 import { verify } from "jsonwebtoken";
 import { privateKey } from "@/config";
 import { RoomModel } from "@/model/room";
-import { UserModel } from "@/model/user";
+import { handleSendMsg } from "@/ws/sendMsg";
+import { IContentType, ISystemActionType } from "db";
 
 export const getRoom = async (ctx: Context) => {
   const id = (ctx.request.query.id as string) ?? "";
@@ -46,19 +47,34 @@ export const getRoom = async (ctx: Context) => {
 
 export const addRoom = async (ctx: Context) => {
   const body = ctx.request.body;
-  const roomResponse = await RoomModel.create({
+  const newRoom = await RoomModel.create({
     data: body,
+    include: {
+      message: true,
+      creater: true,
+    },
+  });
+  // @ts-ignore
+  handleSendMsg({
+    contentType: IContentType.SYSTEM_MESSAGE,
+    userId: newRoom.createrId,
+    channelId: newRoom.id,
+    systemMessage: {
+      targetList: [newRoom.createrId],
+      operator: newRoom.createrId,
+      actionType: ISystemActionType.CREATE_ROOM,
+    },
   });
   ctx.body = {
     code: 0,
     message: "Create room success",
-    data: roomResponse,
+    data: newRoom,
   };
 };
 
 export const updateRoom = async (ctx: Context) => {
   const body = ctx.request.body;
-  const data = await RoomModel.update({
+  const room = await RoomModel.update({
     ...body,
     include: {
       member: true,
@@ -66,9 +82,42 @@ export const updateRoom = async (ctx: Context) => {
       admin: true,
     },
   });
+  const memberList = (
+    body?.data?.member?.connect ??
+    body?.data?.member ??
+    []
+  ).map((e: any) => e.id);
+  const adminList = (body?.data?.admin?.connect ?? body?.data?.admin ?? []).map(
+    (e: any) => e.id
+  );
+  if (memberList?.length > 0) {
+    // @ts-ignore
+    handleSendMsg({
+      contentType: IContentType.SYSTEM_MESSAGE,
+      userId: room.createrId,
+      channelId: room.id,
+      systemMessage: {
+        targetList: memberList,
+        operator: room.createrId,
+        actionType: ISystemActionType.ADD_MEMBER,
+      },
+    });
+  } else if (adminList?.length > 0) {
+    // @ts-ignore
+    handleSendMsg({
+      contentType: IContentType.SYSTEM_MESSAGE,
+      userId: room.createrId,
+      channelId: room.id,
+      systemMessage: {
+        targetList: adminList,
+        operator: room.createrId,
+        actionType: ISystemActionType.ADD_ADMIN,
+      },
+    });
+  }
   ctx.body = {
     code: 0,
-    data,
+    data: room,
     message: "update room success!",
   };
 };

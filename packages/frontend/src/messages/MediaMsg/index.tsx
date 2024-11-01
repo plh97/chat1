@@ -41,6 +41,6 @@ export const MediaMsg = (message: IMessage) => {
   };
   return {
     preview: getPreview(),
-    component: <Component message={message} />,
+    Component: () => <Component message={message} />,
   };
 };

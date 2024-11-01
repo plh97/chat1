@@ -2,7 +2,7 @@ import { IMessage, IRoom } from "@/interface";
 import { RoomModel } from "@/model/room";
 import { IContentType } from "db";
 
-export const handleSendMsg = async (data: IMessage, room: IRoom) => {
+export const handleSendMsg = async (data: IMessage) => {
   if (
     data.contentType === IContentType.TEXT_MESSAGE ||
     data.contentType === IContentType.SYSTEM_MESSAGE ||
@@ -18,10 +18,6 @@ export const handleSendMsg = async (data: IMessage, room: IRoom) => {
       ...data,
       seq: room?.message.length! + 1,
     };
-    const readSeq = room?.readSeq ?? {};
-    Object.assign(readSeq, {
-      [msg.userId]: msg.seq,
-    });
     const newRoom = await RoomModel.update({
       where: { id: msg.channelId },
       data: {
@@ -29,7 +25,9 @@ export const handleSendMsg = async (data: IMessage, room: IRoom) => {
           create: [msg],
         },
         updatedAt: new Date(),
-        readSeq,
+        readSeq: {
+          [msg.userId]: msg.seq,
+        },
       },
       include: {
         message: {

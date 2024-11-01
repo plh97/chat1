@@ -28,8 +28,6 @@ export function InputBox() {
         contentType: IContentType.MEDIA_MESSAGE,
         userId: userInfo.id,
         channelId: room.id,
-        createdAt: new Date(),
-        seq: room.totalCount + 1,
         mediaMessage: {
           file,
           duration: duration ?? null,
@@ -50,8 +48,6 @@ export function InputBox() {
         contentType: IContentType.TEXT_MESSAGE,
         userId: userInfo.id,
         channelId: room.id,
-        createdAt: new Date(),
-        seq: room.totalCount + 1,
         textMessage: {
           text: trimText,
           methion: [],
