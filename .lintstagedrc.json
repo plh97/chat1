@@ -1,6 +1,6 @@
 {
   "**/*.{json,md,html}": ["prettier --write"],
-  "**/frontend/*.{js,ts,tsx}": ["prettier --write", "eslint --fix"],
+  "**/frontend/*.{js,ts,tsx}": ["prettier --write"],
   "**/backend/*.{js,ts,tsx}": ["prettier --write"],
   "**/*.css": "stylelint",
   "**/*.scss": ["lint:prettier --write", "stylelint --customSyntax=post-scss"]
