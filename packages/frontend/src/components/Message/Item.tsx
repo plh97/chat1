@@ -9,6 +9,16 @@ interface IProps {
   data: IMessage;
 }
 
+let timer: NodeJS.Timeout;
+const debounce = (fn: Function, delay = 100) => {
+  return (...args: any) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn(...args);
+    }, delay);
+  };
+};
+
 const useMsgWatch = (message: IMessage) => {
   const myUserInfo = useAppSelector((state) => state.user.data);
   const room = useAppSelector((state) => state.room.data);
@@ -16,9 +26,8 @@ const useMsgWatch = (message: IMessage) => {
   const { isIntersecting, ref } = useIntersectionObserver({
     threshold: 0.5,
   });
-
   const dispatch = useAppDispatch();
-  useEffect(() => {
+  const debounceRead = debounce(() => {
     const readSeqMap = room.readSeq as Record<string, number>;
     const isRead = readSeqMap[myUserInfo.id] >= message.seq;
     const isMyMsg = myUserInfo.id === message.userId;
@@ -33,6 +42,9 @@ const useMsgWatch = (message: IMessage) => {
         })
       );
     }
+  }, 100);
+  useEffect(() => {
+    debounceRead();
   }, [readSeq, isIntersecting]);
   return ref;
 };

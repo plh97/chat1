@@ -52,7 +52,7 @@ ansible-playbook cicd.yml
 
 ## TODO
 
-- [] send image message
-- [] send gif message
-- [] send audio message
-- [] send video message
+- [ ] send system message
+  - [ ] send add new member system message
+  - [ ] send create new friend system message
+- [ ] recall message
