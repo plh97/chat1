@@ -52,11 +52,15 @@ ansible-playbook cicd.yml
 
 ## TODO
 
-- [ ] send system message
+- [x] send system message
   - [x] send add new member system message
   - [x] send create new friend system message
   - [x] broadcast ws to all channal member
-  - [ ] add member should be reduce
+  - [x] add member should be reduce
 - [ ] recall message
+- [ ] change room name
+- [ ] change room avatar
+- [ ] remove room admin/member
+- [ ] transfer room owner
 - [ ] virtual scroll
 - [ ] make simple-git-hooks can work
