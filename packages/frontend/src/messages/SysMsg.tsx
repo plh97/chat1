@@ -9,8 +9,11 @@ export const getContent = ({
   room?: IRoom;
 }) => {
   const sysMsg = message.systemMessage;
-  const member = room?.member;
-  const operator = message.user.username;
+  const member = room?.member ?? [];
+  const operator =
+    member.find((m) => m.id === sysMsg?.operator)?.username ??
+    sysMsg?.operator ??
+    "operator";
   const getDefailtContent = () => {
     if (
       sysMsg?.actionType === "ADD_ADMIN" ||
@@ -34,7 +37,9 @@ export const getContent = ({
       .map((targetId) => {
         return member?.find((m) => m.id === targetId)?.username;
       })
-      .join(", ") || getDefailtContent();
+      .join(", ") ||
+    JSON.stringify(sysMsg?.targetList) ||
+    "???";
   if (!sysMsg) return "un-reconized system message";
   const actionType = sysMsg?.actionType;
   switch (actionType) {

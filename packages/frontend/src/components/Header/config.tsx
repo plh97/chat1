@@ -18,7 +18,6 @@ export function Config() {
   const btnRef = useRef<HTMLButtonElement>(null);
   const room = useAppSelector((state) => state.room.data);
   const isGroup = room?.channelType === IChannelType.GROUP;
-  const members = room?.member;
   return (
     <>
       {isGroup && (
@@ -42,24 +41,30 @@ export function Config() {
           <DrawerCloseButton />
           <DrawerHeader>Group Info</DrawerHeader>
           <DrawerBody>
-            <h3>Admin List</h3>
-            <div className="flex flex-row gap-2">
-              <AvatarGroup size="md" max={9}>
-                {room.admin.map((m) => {
-                  return <Avatar key={m.id} src={m.image} name={m.username} />;
-                })}
-              </AvatarGroup>
-              <AddAdmin />
-            </div>
-            <h3>Member List</h3>
-            <div className="flex flex-row gap-2">
-              <AvatarGroup size="md" max={9}>
-                {room.member.map((m) => {
-                  return <Avatar key={m.id} src={m.image} name={m.username} />;
-                })}
-              </AvatarGroup>
-              <AddMember />
-            </div>
+            <form>
+              <FormControl>
+                <FormLabel>Admin List</FormLabel>
+                <div className="flex flex-row gap-2">
+                  <AvatarGroup size="md" max={4}>
+                    {room.admin.map((m) => (
+                      <Avatar key={m.id} src={m.image} name={m.username} />
+                    ))}
+                  </AvatarGroup>
+                  <AddAdmin />
+                </div>
+              </FormControl>
+              <FormControl>
+                <FormLabel>Member List</FormLabel>
+                <div className="flex flex-row gap-2">
+                  <AvatarGroup size="md" max={4}>
+                    {room.member.map((m) => (
+                      <Avatar key={m.id} src={m.image} name={m.username} />
+                    ))}
+                  </AvatarGroup>
+                  <AddMember />
+                </div>
+              </FormControl>
+            </form>
           </DrawerBody>
         </DrawerContent>
       </Drawer>

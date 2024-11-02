@@ -1,5 +1,8 @@
 import md5 from "md5";
-// import { nanoid } from 'nanoid'
+let nanoid: () => string;
+import("nanoid").then((module) => {
+  nanoid = module.nanoid;
+});
 
 export function parseCookie() {
   const cookie = document.cookie;
@@ -17,8 +20,7 @@ export function getToken(): string | undefined {
 
 export function generateTemplateId() {
   if (typeof window === "undefined") {
-    // nodejs
-    return Math.random() + md5("navigator.userAgent");
+    return Math.random() + nanoid();
   }
   return Math.random() + md5(navigator.userAgent);
 }

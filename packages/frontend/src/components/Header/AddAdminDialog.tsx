@@ -7,12 +7,10 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { updateRoomThunk } from "@/store/reducer/room";
-import { IRoom, IUser } from "@/interfaces";
 
 export function AddAdmin() {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const roomInfo = useAppSelector<IRoom>((state) => state.room.data);
-  const userInfo = useAppSelector<IUser>((state) => state.user.data);
+  const roomInfo = useAppSelector((state) => state.room.data);
   const [user, setUser] = useState<string[]>([]);
   const dispatch = useThunkDispatch();
   const toast = useToast();
@@ -27,15 +25,13 @@ export function AddAdmin() {
       });
       return;
     }
+    const invitedList = user.filter(
+      (u) => !roomInfo.admin?.find((m) => m.id === u)
+    );
     await dispatch(
       updateRoomThunk({
-        // @ts-ignore
-        data: {
-          admin: {
-            connect: user.map((id) => ({ id })),
-          },
-        },
-        where: { id: roomInfo.id },
+        id: roomInfo.id,
+        adminId: invitedList,
       })
     );
     onClose();
@@ -75,7 +71,7 @@ export function AddAdmin() {
                       return (
                         <Checkbox
                           disabled={isInvited}
-                          checked={isInvited}
+                          // checked={isInvited}
                           key={user.id}
                           value={user.id}
                         >

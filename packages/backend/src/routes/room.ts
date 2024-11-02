@@ -1,12 +1,11 @@
-import jwt from "jsonwebtoken";
 import { Context } from "koa";
 import { verify } from "jsonwebtoken";
 import { WebSocketServer } from "ws";
-import { WS_EVENT, generateTemplateId } from "core";
 import { IContentType, ISystemActionType } from "db";
 import { RoomModel } from "@/model/room";
 import { privateKey } from "@/config";
 import { handleSendMsg } from "@/ws/sendMsg";
+import { sendWs } from "@/utils/sendWs";
 
 export const getRoom = async (ctx: Context) => {
   const id = (ctx.request.query.id as string) ?? "";
@@ -76,81 +75,48 @@ export const addRoom = async (ctx: Context) => {
 };
 
 export const updateRoom = async (ctx: Context) => {
-  const sendWs = async (data: any) => {
-    let broadcastUsers = room?.memberId ?? [];
-    ws.clients.forEach((client) => {
-      try {
-        const id = jwt.verify(client.protocol, privateKey) as string;
-        if (!broadcastUsers.includes(id)) return;
-        client.send(
-          JSON.stringify({
-            code: 0,
-            event: WS_EVENT.SEND_MSG,
-            requestId: generateTemplateId(),
-            data,
-          })
-        );
-      } catch (error) {
-        if (error instanceof jwt.JsonWebTokenError) {
-          client.send(
-            JSON.stringify({
-              code: 1,
-              event: WS_EVENT.SEND_MSG,
-              message: "WebSocket token verify fail",
-              requestId: generateTemplateId(),
-              data,
-            })
-          );
-        } else {
-          console.log(111, error);
-        }
-      }
-    });
-  };
   const body = ctx.request.body;
   const ws: WebSocketServer = ctx.ws;
+  const { id, memberId, adminId, ...data } = body;
   const room = await RoomModel.update({
-    ...body,
+    where: { id },
+    data: {
+      ...data,
+      memberId: memberId && { push: memberId },
+      adminId: adminId && { push: adminId },
+    },
     include: {
       member: true,
       creater: true,
       admin: true,
     },
   });
-  const memberList = (
-    body?.data?.member?.connect ??
-    body?.data?.member ??
-    []
-  ).map((e: any) => e.id);
-  const adminList = (body?.data?.admin?.connect ?? body?.data?.admin ?? []).map(
-    (e: any) => e.id
-  );
-  if (memberList?.length > 0) {
+  if (memberId?.length > 0) {
     // @ts-ignore
     const broadcastData = await handleSendMsg({
       contentType: IContentType.SYSTEM_MESSAGE,
-      userId: room.createrId,
+      userId: "System-message",
       channelId: room.id,
       systemMessage: {
-        targetList: memberList,
+        targetList: memberId,
         operator: room.createrId,
         actionType: ISystemActionType.ADD_MEMBER,
       },
     });
-    sendWs(broadcastData);
-  } else if (adminList?.length > 0) {
+    sendWs(broadcastData, ws, room);
+  } else if (adminId?.length > 0) {
     // @ts-ignore
     const broadcastData = await handleSendMsg({
       contentType: IContentType.SYSTEM_MESSAGE,
-      userId: room.createrId,
+      userId: "System-message",
       channelId: room.id,
       systemMessage: {
-        targetList: adminList,
+        targetList: adminId,
         operator: room.createrId,
         actionType: ISystemActionType.ADD_ADMIN,
       },
     });
-    sendWs(broadcastData);
+    sendWs(broadcastData, ws, room);
   }
   ctx.body = {
     code: 0,

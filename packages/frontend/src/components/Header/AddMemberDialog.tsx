@@ -8,7 +8,6 @@ import {
 } from "@chakra-ui/react";
 import { updateRoomThunk } from "@/store/reducer/room";
 import { IRoom, IUser } from "@/interfaces";
-import { connect } from "http2";
 
 export function AddMember() {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -28,15 +27,13 @@ export function AddMember() {
       });
       return;
     }
+    const invitedList = user.filter(
+      (u) => !roomInfo.member?.find((m) => m.id === u)
+    );
     await dispatch(
       updateRoomThunk({
-        // @ts-ignore
-        data: {
-          member: {
-            connect: user.map((id) => ({ id })),
-          },
-        },
-        where: { id: roomInfo.id },
+        id: roomInfo.id,
+        memberId: invitedList,
       })
     );
     onClose();
@@ -78,7 +75,7 @@ export function AddMember() {
                       return (
                         <Checkbox
                           disabled={isMember}
-                          checked={isMember}
+                          // checked={isMember}
                           key={user.id}
                           value={user.id}
                         >

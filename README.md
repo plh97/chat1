@@ -59,3 +59,4 @@ ansible-playbook cicd.yml
   - [ ] add member should be reduce
 - [ ] recall message
 - [ ] virtual scroll
+- [ ] make simple-git-hooks can work

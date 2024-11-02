@@ -51,15 +51,19 @@ const useMsgWatch = (message: IMessage) => {
 };
 
 export function Item({ data: message }: IProps): JSX.Element {
+  const ref = useMsgWatch(message);
   const myUserInfo = useAppSelector((state) => state.user.data);
   const room = useAppSelector((state) => state.room.data);
   const isMe = myUserInfo?.id === message?.user?.id;
   const temp = MessageTemplate[message.contentType];
   if (!temp) return <></>;
   const { Component } = temp(message, room);
-  const ref = useMsgWatch(message);
   if (message.contentType === IContentType.SYSTEM_MESSAGE) {
-    return <Component />;
+    return (
+      <div ref={ref}>
+        <Component />
+      </div>
+    );
   }
   return (
     <div
