@@ -65,7 +65,7 @@ export function Item({ data: message }: IProps): JSX.Element {
     <div
       ref={ref}
       data-seq={message.seq}
-      className={classNames("relative flex flex-row items-start mb-2", {
+      className={classNames("group relative flex flex-row items-start mb-2", {
         "flex-row-reverse": isMe,
       })}
     >

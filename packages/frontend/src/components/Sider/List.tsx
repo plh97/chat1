@@ -12,13 +12,9 @@ export const List = () => {
       navigation(`/room/${payload.id}`);
     }
   }
-  const user = useAppSelector((state) => {
-    return state.user;
-  });
-  const myUserInfo = useAppSelector((state) => {
-    return state.user.data;
-  });
-  if (myUserInfo.room === null) {
+  const draftMap = useAppSelector((state) => state.user.draftMap);
+  const myUserInfo = useAppSelector((state) => state.user.data);
+  if (!myUserInfo.id) {
     return <Loading />;
   }
   if (myUserInfo.room?.length === 0) {
@@ -37,7 +33,7 @@ export const List = () => {
       </ul>
     );
   }
-  const draftMap = user.draftMap;
+  // const draftMap = user.draftMap;
   return (
     <ul className="flex-1 overflow-y-auto px-2">
       {myUserInfo.room?.map((room) => {

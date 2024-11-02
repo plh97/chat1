@@ -16,5 +16,9 @@ export function getToken(): string | undefined {
 }
 
 export function generateTemplateId() {
+  if (typeof window === "undefined") {
+    // nodejs
+    return Math.random() + md5("navigator.userAgent");
+  }
   return Math.random() + md5(navigator.userAgent);
 }

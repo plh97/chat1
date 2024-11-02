@@ -53,6 +53,9 @@ ansible-playbook cicd.yml
 ## TODO
 
 - [ ] send system message
-  - [ ] send add new member system message
-  - [ ] send create new friend system message
+  - [x] send add new member system message
+  - [x] send create new friend system message
+  - [x] broadcast ws to all channal member
+  - [ ] add member should be reduce
 - [ ] recall message
+- [ ] virtual scroll

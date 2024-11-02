@@ -1,9 +1,12 @@
+import jwt from "jsonwebtoken";
 import { Context } from "koa";
 import { verify } from "jsonwebtoken";
-import { privateKey } from "@/config";
-import { RoomModel } from "@/model/room";
-import { handleSendMsg } from "@/ws/sendMsg";
+import { WebSocketServer } from "ws";
+import { WS_EVENT, generateTemplateId } from "core";
 import { IContentType, ISystemActionType } from "db";
+import { RoomModel } from "@/model/room";
+import { privateKey } from "@/config";
+import { handleSendMsg } from "@/ws/sendMsg";
 
 export const getRoom = async (ctx: Context) => {
   const id = (ctx.request.query.id as string) ?? "";
@@ -73,7 +76,39 @@ export const addRoom = async (ctx: Context) => {
 };
 
 export const updateRoom = async (ctx: Context) => {
+  const sendWs = async (data: any) => {
+    let broadcastUsers = room?.memberId ?? [];
+    ws.clients.forEach((client) => {
+      try {
+        const id = jwt.verify(client.protocol, privateKey) as string;
+        if (!broadcastUsers.includes(id)) return;
+        client.send(
+          JSON.stringify({
+            code: 0,
+            event: WS_EVENT.SEND_MSG,
+            requestId: generateTemplateId(),
+            data,
+          })
+        );
+      } catch (error) {
+        if (error instanceof jwt.JsonWebTokenError) {
+          client.send(
+            JSON.stringify({
+              code: 1,
+              event: WS_EVENT.SEND_MSG,
+              message: "WebSocket token verify fail",
+              requestId: generateTemplateId(),
+              data,
+            })
+          );
+        } else {
+          console.log(111, error);
+        }
+      }
+    });
+  };
   const body = ctx.request.body;
+  const ws: WebSocketServer = ctx.ws;
   const room = await RoomModel.update({
     ...body,
     include: {
@@ -92,7 +127,7 @@ export const updateRoom = async (ctx: Context) => {
   );
   if (memberList?.length > 0) {
     // @ts-ignore
-    handleSendMsg({
+    const broadcastData = await handleSendMsg({
       contentType: IContentType.SYSTEM_MESSAGE,
       userId: room.createrId,
       channelId: room.id,
@@ -102,9 +137,10 @@ export const updateRoom = async (ctx: Context) => {
         actionType: ISystemActionType.ADD_MEMBER,
       },
     });
+    sendWs(broadcastData);
   } else if (adminList?.length > 0) {
     // @ts-ignore
-    handleSendMsg({
+    const broadcastData = await handleSendMsg({
       contentType: IContentType.SYSTEM_MESSAGE,
       userId: room.createrId,
       channelId: room.id,
@@ -114,6 +150,7 @@ export const updateRoom = async (ctx: Context) => {
         actionType: ISystemActionType.ADD_ADMIN,
       },
     });
+    sendWs(broadcastData);
   }
   ctx.body = {
     code: 0,

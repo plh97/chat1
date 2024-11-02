@@ -96,7 +96,7 @@ export class SocketClient {
       }
       return;
     }
-    this.eventEmitter.emit(WS_EVENT.READ_MSG, dataObj);
+    this.eventEmitter.emit(dataObj.event, dataObj);
   };
 
   send = (data: object | string) => {

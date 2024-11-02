@@ -14,6 +14,7 @@ const ReadIndicator = ({ message }: { message: IMessage }) => {
     });
     return 100 * (readUser.length / totalUser.length);
   }, [readSeq]);
+  if (!(room?.member.length > 1)) return <></>;
   if (myUserInfo.id !== message?.userId) return <></>;
   return <CircularProgress size={4} value={readPrecent} />;
 };
@@ -26,7 +27,7 @@ const formatTime = (t: Date): string => {
 export const Indicator = ({ message }: { message: IMessage }) => {
   return (
     <div className="flex h-full self-end flex-col items-end">
-      <span className="text-xs">{formatTime(message.createdAt)}</span>
+      <span className="text-gray-400	opacity-0 group-hover:opacity-100 text-xs">{formatTime(message.createdAt)}</span>
       <ReadIndicator message={message} />
     </div>
   );

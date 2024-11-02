@@ -8,7 +8,7 @@ const socketServer = new SocketServer();
 export default function socket(server: HttpServer) {
   socketServer.init(server, onMsgReceive);
   return async function socket(ctx: Context, next: () => Promise<void>) {
-    ctx.getWS = socketServer.ws;
+    ctx.ws = socketServer.ws;
     await next();
   };
 }
