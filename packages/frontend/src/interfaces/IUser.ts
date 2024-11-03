@@ -1,5 +1,5 @@
 import { IRoom } from "./";
-import { User } from "db";
+import type { User } from "db";
 
 export interface IUser extends Omit<User, "friend" | "password" | "createdAt"> {
   id: string;

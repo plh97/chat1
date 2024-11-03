@@ -4,9 +4,9 @@ import { IContentType } from "db";
 
 export const handleSendMsg = async (data: IMessage) => {
   if (
-    data.contentType === IContentType.TEXT_MESSAGE ||
-    data.contentType === IContentType.SYSTEM_MESSAGE ||
-    data.contentType === IContentType.MEDIA_MESSAGE
+    data.contentType === "TEXT_MESSAGE" ||
+    data.contentType === "SYSTEM_MESSAGE" ||
+    data.contentType === "MEDIA_MESSAGE"
   ) {
     const room = await RoomModel.findUnique({
       where: { id: data.channelId },

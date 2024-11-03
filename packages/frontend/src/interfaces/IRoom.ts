@@ -1,5 +1,5 @@
 import { IUser } from "./";
-import { Room } from "db";
+import type { Room } from "db";
 import { IMessage } from "./IMessage";
 
 export interface IRoom extends Omit<Room, "member" | "message"> {

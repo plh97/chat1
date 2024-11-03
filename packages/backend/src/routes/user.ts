@@ -277,7 +277,7 @@ export async function AddFriend(ctx: Context) {
       name: `PRIVATE_CHAT`,
       memberId: [userIdFromToken, id],
       createrId: userIdFromToken,
-      channelType: IChannelType.PRIVATE,
+      channelType: "PRIVATE",
       readSeq: {},
     },
   });

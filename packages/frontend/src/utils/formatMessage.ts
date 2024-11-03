@@ -1,6 +1,6 @@
 import Api from "@/Api";
 import { IMediaMessage, IMessage } from "@/interfaces";
-import { IContentType, MediaMessage } from "db";
+import type { IContentType, MediaMessage } from "db";
 
 const uploadFile = async (file: File, params?: { [key: string]: string }) => {
   const form = new FormData();
@@ -139,7 +139,7 @@ export const formatMessage = async (message: Partial<IMessage>) => {
     //       content: message.textMessage?.content,
     //     },
     //   };
-    case IContentType.MEDIA_MESSAGE: {
+    case "MEDIA_MESSAGE": {
       return {
         ...message,
         mediaMessage: await formatMediaMessage(message.mediaMessage),

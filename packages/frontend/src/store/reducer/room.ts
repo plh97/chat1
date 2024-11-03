@@ -1,4 +1,4 @@
-import { IChannelType, Room } from "db";
+import type { Room } from "db";
 import Api from "@/Api";
 import { AppThunk } from "@/hooks/app";
 import type { PayloadAction } from "@reduxjs/toolkit";
@@ -29,7 +29,7 @@ const initialState: IState = {
     name: "",
     member: [],
     memberId: [],
-    channelType: IChannelType.PRIVATE,
+    channelType: "PRIVATE",
     // lastMsg?: {},
     createrId: "",
     adminId: [],

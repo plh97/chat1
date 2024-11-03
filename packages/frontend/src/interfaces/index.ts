@@ -1,5 +1,4 @@
 export type {
-  $Enums,
   IChannelType,
   IContentType,
   Message,

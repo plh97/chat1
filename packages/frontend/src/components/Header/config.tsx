@@ -8,7 +8,6 @@ import {
   DrawerOverlay,
   IconButton,
 } from "@chakra-ui/react";
-import { IChannelType } from "db";
 import { AddMember } from "./AddMemberDialog";
 import { FiSettings } from "react-icons/fi";
 import { AddAdmin } from "./AddAdminDialog";
@@ -17,7 +16,7 @@ export function Config() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const btnRef = useRef<HTMLButtonElement>(null);
   const room = useAppSelector((state) => state.room.data);
-  const isGroup = room?.channelType === IChannelType.GROUP;
+  const isGroup = room?.channelType === "GROUP";
   return (
     <>
       {isGroup && (

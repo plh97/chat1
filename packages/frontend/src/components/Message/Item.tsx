@@ -4,7 +4,6 @@ import { MessageTemplate } from "@/messages";
 import { IMessage } from "@/interfaces/IMessage";
 import { Indicator } from "./Indicator";
 import { markReadMessageThunk } from "@/store/action/message";
-import { IContentType } from "db";
 
 interface IProps {
   data: IMessage;
@@ -58,7 +57,7 @@ export function Item({ data: message }: IProps): JSX.Element {
   const temp = MessageTemplate[message.contentType];
   if (!temp) return <></>;
   const { Component } = temp(message, room);
-  if (message.contentType === IContentType.SYSTEM_MESSAGE) {
+  if (message.contentType === "SYSTEM_MESSAGE") {
     return (
       <div ref={ref}>
         <Component />

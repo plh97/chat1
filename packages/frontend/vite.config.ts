@@ -5,12 +5,12 @@ import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 import viteCompression from "vite-plugin-compression";
 
-const PROT = Number(process.env.PORT ?? 9001);
+const PROT = +(process.env.PORT ?? 9001);
 
 export default defineConfig({
   build: {
     sourcemap: true,
-    // target: "modules",
+    target: "modules",
   },
   preview: {
     port: PROT,

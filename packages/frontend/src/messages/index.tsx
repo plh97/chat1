@@ -1,4 +1,4 @@
-import { IContentType } from "db";
+import type { IContentType } from "db";
 import { TextMsg } from "./TextMsg";
 import { MediaMsg } from "./MediaMsg";
 import { IMessage } from "@/interfaces/IMessage";
@@ -8,16 +8,16 @@ import { IRoom } from "@/interfaces";
 export const MessageTemplate: Record<
   IContentType,
   (
-            message: IMessage,
+    message: IMessage,
     room?: IRoom
   ) => { Component: () => JSX.Element; preview?: JSX.Element }
 > = {
-  [IContentType.TEXT_MESSAGE]: TextMsg,
-  [IContentType.MEDIA_MESSAGE]: MediaMsg,
-  [IContentType.SYSTEM_MESSAGE]: SysMsg,
-  [IContentType.CALL_MESSAGE]: MediaMsg,
-  [IContentType.RECALL_MESSAGE]: MediaMsg,
-  [IContentType.READ_MESSAGE]: () => ({
+  ["TEXT_MESSAGE"]: TextMsg,
+  ["MEDIA_MESSAGE"]: MediaMsg,
+  ["SYSTEM_MESSAGE"]: SysMsg,
+  ["CALL_MESSAGE"]: MediaMsg,
+  ["RECALL_MESSAGE"]: MediaMsg,
+  ["READ_MESSAGE"]: () => ({
     preview: <></>,
     Component: () => <></>,
   }),

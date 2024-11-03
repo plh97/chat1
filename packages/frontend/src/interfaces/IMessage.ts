@@ -1,4 +1,4 @@
-import { MediaMessage, Message, Room, User } from "db";
+import type { MediaMessage, Message, Room, User } from "db";
 import { IUser } from "./";
 
 export interface IMediaMessage extends MediaMessage {

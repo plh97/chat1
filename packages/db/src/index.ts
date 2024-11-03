@@ -3,8 +3,7 @@ declare global {
 }
 
 import { PrismaClient } from "@prisma/client";
-export {
-  $Enums,
+export type {
   IChannelType,
   IContentType,
   ISystemActionType,
@@ -15,6 +14,7 @@ export {
   ReadMessage,
   TextMessage,
 } from "@prisma/client";
+// export * from "@prisma/client";
 
 export let prisma: PrismaClient;
 

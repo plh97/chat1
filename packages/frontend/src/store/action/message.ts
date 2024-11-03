@@ -3,7 +3,6 @@ import { WS_EVENT } from "core";
 import { formatMessage } from "@/utils/formatMessage";
 import { addMessage, markReadMessage } from "../reducer/room";
 import { IMessage, IRoom } from "@/interfaces";
-import { IContentType } from "db";
 import { topUserRoom, updateUserRoomReadSeq } from "../reducer/user";
 
 const { toast } = createStandaloneToast();
@@ -46,7 +45,7 @@ export const markReadMessageThunk = createAsyncThunk<void, Partial<IMessage>>(
     if (!message.channelId) return;
     const readMessage: Partial<IMessage> = {
       ...message,
-      contentType: IContentType.READ_MESSAGE,
+      contentType: "READ_MESSAGE",
     };
     const wsRes = await ws.sendMsg<IRoom>(readMessage, WS_EVENT.READ_MSG);
     if (wsRes.code === 1) {

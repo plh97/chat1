@@ -1,4 +1,3 @@
-import { IContentType } from "db";
 import { useAppSelector } from "@/hooks/app";
 import { scrollToEnd } from "@/store/reducer/room";
 import { sendMessageAction } from "@/store/action/message";
@@ -25,7 +24,7 @@ export function InputBox() {
   const handleSendMedia = async (file: File, duration?: string) => {
     await dispatch(
       sendMessageAction({
-        contentType: IContentType.MEDIA_MESSAGE,
+        contentType: "MEDIA_MESSAGE",
         userId: userInfo.id,
         channelId: room.id,
         mediaMessage: {
@@ -45,7 +44,7 @@ export function InputBox() {
     if (!userInfo.id || !trimText) return;
     const { error } = await dispatch(
       sendMessageAction({
-        contentType: IContentType.TEXT_MESSAGE,
+        contentType: "TEXT_MESSAGE",
         userId: userInfo.id,
         channelId: room.id,
         textMessage: {

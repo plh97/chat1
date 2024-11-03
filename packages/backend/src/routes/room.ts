@@ -58,13 +58,13 @@ export const addRoom = async (ctx: Context) => {
   });
   // @ts-ignore
   handleSendMsg({
-    contentType: IContentType.SYSTEM_MESSAGE,
+    contentType: "SYSTEM_MESSAGE",
     userId: newRoom.createrId,
     channelId: newRoom.id,
     systemMessage: {
       targetList: [newRoom.createrId],
       operator: newRoom.createrId,
-      actionType: ISystemActionType.CREATE_ROOM,
+      actionType: "CREATE_ROOM",
     },
   });
   ctx.body = {
@@ -94,26 +94,26 @@ export const updateRoom = async (ctx: Context) => {
   if (memberId?.length > 0) {
     // @ts-ignore
     const broadcastData = await handleSendMsg({
-      contentType: IContentType.SYSTEM_MESSAGE,
+      contentType: "SYSTEM_MESSAGE",
       userId: "System-message",
       channelId: room.id,
       systemMessage: {
         targetList: memberId,
         operator: room.createrId,
-        actionType: ISystemActionType.ADD_MEMBER,
+        actionType: "ADD_MEMBER",
       },
     });
     sendWs(broadcastData, ws, room);
   } else if (adminId?.length > 0) {
     // @ts-ignore
     const broadcastData = await handleSendMsg({
-      contentType: IContentType.SYSTEM_MESSAGE,
+      contentType: "SYSTEM_MESSAGE",
       userId: "System-message",
       channelId: room.id,
       systemMessage: {
         targetList: adminId,
         operator: room.createrId,
-        actionType: ISystemActionType.ADD_ADMIN,
+        actionType: "ADD_ADMIN",
       },
     });
     sendWs(broadcastData, ws, room);
