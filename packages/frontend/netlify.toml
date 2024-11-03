@@ -16,3 +16,6 @@
   to = "index.html"
   status = 200
 
+[build]
+  command = "pnpm -F frontend run build"
+  publish = "dist"
