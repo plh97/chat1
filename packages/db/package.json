@@ -1,11 +1,10 @@
 {
   "name": "db",
   "scripts": {
-    "prisma:inline": "cp ./node_modules/.prisma/client/*.js ./node_modules/@prisma/client",
     "db:studio": "prisma studio",
     "db:push": "prisma db push --skip-generate",
     "dev": "prisma generate",
-    "postinstall": "prisma generate && prisma:inline"
+    "postinstall": "prisma generate"
   },
   "devDependencies": {
     "@types/node": "22.8.5",
