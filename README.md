@@ -1,4 +1,4 @@
-# [Chatroom](http://plhh.xyz/) &middot; [![Github Action Status](https://github.com/plh2/chatroom/actions/workflows/github-CICD-actions.yml/badge.svg)](https://github.com/plh2/chatroom/actions) [![Github Action Status](https://github.com/plh2/chatroom/actions/workflows/main.yml/badge.svg)](https://github.com/plh2/chatroom/actions) [![Netlify Status](https://api.netlify.com/api/v1/badges/12d2c466-96f3-49a6-91f1-af835e81396a/deploy-status)](https://app.netlify.com/sites/plh-chat/deploys)
+# [Chatroom](http://plhh.xyz/) &middot; [![Github Action Status](https://github.com/plh2/chatroom/actions/workflows/github-CICD-actions.yml/badge.svg)](https://github.com/plh2/chatroom/actions) [![Github Action Status](https://github.com/plh2/chatroom/actions/workflows/main.yml/badge.svg)](https://github.com/plh2/chatroom/actions) [![Netlify Status](https://api.netlify.com/api/v1/badges/591b7e3b-bff0-4b20-899c-396d25bd75dd/deploy-status)](https://app.netlify.com/sites/plh-chat-private/deploys)
 
 ## Architecture
 
