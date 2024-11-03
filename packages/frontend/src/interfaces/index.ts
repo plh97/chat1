@@ -1,6 +1,6 @@
 export type {
-  IChannelType,
-  IContentType,
+  ChannelType,
+  ContentType,
   Message,
   MediaMessage,
   TextMessage,

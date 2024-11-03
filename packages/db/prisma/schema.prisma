@@ -9,14 +9,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum IChannelType {
+enum ChannelType {
   // PRIVATE: 0,
   // GROUP = 1,
   PRIVATE @map("0")
   GROUP   @map("1")
 }
 
-enum IContentType {
+enum ContentType {
   // TEXT_MESSAGE = 0,
   // MEDIA_MESSAGE = 1,
   // SYSTEM_MESSAGE = 2,
@@ -53,28 +53,28 @@ model User {
 }
 
 model Room {
-  id          String       @id @default(uuid()) @map("_id")
+  id          String      @id @default(uuid()) @map("_id")
   name        String
   image       String?
-  channelType IChannelType @default(GROUP)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @default(now())
-  readSeq     Json         @default("{}")
-  message     Message[]    @relation("room-message")
+  channelType ChannelType @default(GROUP)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @default(now())
+  readSeq     Json        @default("{}")
+  message     Message[]   @relation("room-message")
   // 
-  member      User[]       @relation("room-member-user", fields: memberId, references: id)
+  member      User[]      @relation("room-member-user", fields: memberId, references: id)
   memberId    String[]
-  admin       User[]       @relation("room-admin-user", fields: adminId, references: id)
+  admin       User[]      @relation("room-admin-user", fields: adminId, references: id)
   adminId     String[]
-  creater     User         @relation("room-creater-user", fields: createrId, references: id)
-  createrId   String       @unique
+  creater     User        @relation("room-creater-user", fields: createrId, references: id)
+  createrId   String      @unique
 }
 
 model Message {
   id            String         @id @default(uuid()) @map("_id")
   createdAt     DateTime       @default(now())
   seq           Int
-  contentType   IContentType   @default(TEXT_MESSAGE)
+  contentType   ContentType    @default(TEXT_MESSAGE)
   channelId     String
   textMessage   TextMessage?
   mediaMessage  MediaMessage?
@@ -108,7 +108,7 @@ type TextMessage {
   methion String[]
 }
 
-enum ISystemActionType {
+enum SystemActionType {
   ADD_MEMBER    @map("0")
   REMOVE_MEMBER @map("1")
   ADD_ADMIN     @map("2")
@@ -120,5 +120,5 @@ enum ISystemActionType {
 type SystemMessage {
   operator   String
   targetList String[]
-  actionType ISystemActionType
+  actionType SystemActionType
 }

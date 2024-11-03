@@ -7,7 +7,7 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { updateRoomThunk } from "@/store/reducer/room";
-import { IRoom, IUser } from "@/interfaces";
+import type { IRoom, IUser } from "@/interfaces";
 
 export function AddMember() {
   const { isOpen, onOpen, onClose } = useDisclosure();

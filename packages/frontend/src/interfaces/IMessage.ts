@@ -1,5 +1,5 @@
+import type { IUser } from "@/interfaces";
 import type { MediaMessage, Message, Room, User } from "db";
-import { IUser } from "./";
 
 export interface IMediaMessage extends MediaMessage {
   file: File;

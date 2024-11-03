@@ -1,4 +1,11 @@
-import type { IChannelType, IContentType, MediaMessage, Message, ReadMessage, Room } from "db";
+import type {
+  ChannelType,
+  ContentType,
+  MediaMessage,
+  Message,
+  ReadMessage,
+  Room,
+} from "db";
 import { WebSocket, WebSocketServer } from "ws";
 import { WS_EVENT } from "./constants";
 
@@ -11,23 +18,6 @@ export type IOnMsgReceive = (
 ) => Promise<void>;
 
 export type CHANNEL_TYPE = `room:${string}` | `userinfo:${string}`;
-
-// export { IChannelType, IContentType } from "db";
-
-// export type IChannelType = IChannelType;
-
-// export enum IChannelType {
-//   PRIVATE = "0",
-//   GROUP = "1",
-// }
-// export enum IContentType {
-//   TEXT_MESSAGE = "0",
-//   MEDIA_MESSAGE = "1",
-//   SYSTEM_MESSAGE = "2",
-//   CALL_MESSAGE = "3",
-//   READ_MESSAGE = "4",
-//   RECALL_MESSAGE = "5",
-// }
 
 export interface ITextMessage {
   text: string;
@@ -55,7 +45,7 @@ export interface IMessageCore extends Message {
   createdAt: Date;
   isRead: boolean;
   seq: number;
-  contentType: IContentType;
+  contentType: ContentType;
   textMessage: ITextMessage | null;
   mediaMessage: IMediaMessage | null;
   readMessage: IReadMessage | null;
@@ -74,7 +64,7 @@ export interface IRoomCore extends Room {
   // id?: Types.ObjectId;
   name: string;
   image: string;
-  channelType: IChannelType;
+  channelType: ChannelType;
   // creater: Types.ObjectId;
   admin: string[];
   member: string[];

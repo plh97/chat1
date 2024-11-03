@@ -1,20 +1,20 @@
+import { PrismaClient } from "@prisma/client";
+
 declare global {
   var prisma: PrismaClient;
 }
 
-import { PrismaClient } from "@prisma/client";
 export type {
-  IChannelType,
-  IContentType,
-  ISystemActionType,
   User,
   Room,
   MediaMessage,
   Message,
   ReadMessage,
   TextMessage,
+  ChannelType,
+  ContentType,
+  SystemActionType,
 } from "@prisma/client";
-// export * from "@prisma/client";
 
 export let prisma: PrismaClient;
 
@@ -25,7 +25,6 @@ if (typeof window === "undefined") {
     if (!global.prisma) {
       global.prisma = new PrismaClient();
     }
-
     prisma = global.prisma;
   }
 }

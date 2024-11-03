@@ -1,7 +1,6 @@
 import { Context } from "koa";
 import { verify } from "jsonwebtoken";
 import { WebSocketServer } from "ws";
-import { IContentType, ISystemActionType } from "db";
 import { RoomModel } from "@/model/room";
 import { privateKey } from "@/config";
 import { handleSendMsg } from "@/ws/sendMsg";

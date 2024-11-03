@@ -1,6 +1,5 @@
-import { IUser } from "./";
 import type { Room } from "db";
-import { IMessage } from "./IMessage";
+import type { IMessage, IUser } from "@/interfaces";
 
 export interface IRoom extends Omit<Room, "member" | "message"> {
   // name: string;

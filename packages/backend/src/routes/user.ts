@@ -4,7 +4,6 @@ import { privateKey } from "@/config";
 import { RoomModel } from "@/model/room";
 import { UserModel } from "@/model/user";
 import { getVerifiedToken } from "@/utils/token";
-import { IChannelType } from "db";
 
 /**
  * get user info through cookie

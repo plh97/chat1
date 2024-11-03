@@ -1,6 +1,5 @@
 import { IMessage, IRoom } from "@/interface";
 import { RoomModel } from "@/model/room";
-import { IContentType } from "db";
 
 export const handleSendMsg = async (data: IMessage) => {
   if (

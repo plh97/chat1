@@ -1,4 +1,4 @@
-import type { IContentType } from "db";
+import type { ContentType } from "db";
 import { TextMsg } from "./TextMsg";
 import { MediaMsg } from "./MediaMsg";
 import { IMessage } from "@/interfaces/IMessage";
@@ -6,7 +6,7 @@ import { SysMsg } from "./SysMsg";
 import { IRoom } from "@/interfaces";
 
 export const MessageTemplate: Record<
-  IContentType,
+  ContentType,
   (
     message: IMessage,
     room?: IRoom
