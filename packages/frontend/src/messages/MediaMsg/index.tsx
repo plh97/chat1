@@ -31,16 +31,11 @@ export const Component = ({ message }: { message: IMessage }) => {
 };
 
 export const MediaMsg = (message: IMessage) => {
-  const getPreview = () => {
-    const type = message.mediaMessage?.fileType?.split("/")[0];
-    return (
-      <span className="mt-2 text-xs font-normal text-stone-400">
-        {`[${type?.toUpperCase() ?? ""}]`}
-      </span>
-    );
-  };
   return {
-    preview: getPreview(),
+    Preview: () => {
+      const type = message.mediaMessage?.fileType?.split("/")[0];
+      return <>{`[${type ?? "Unknow Media"}]`}</>;
+    },
     Component: () => <Component message={message} />,
   };
 };

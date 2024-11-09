@@ -79,6 +79,7 @@ model Message {
   textMessage   TextMessage?
   mediaMessage  MediaMessage?
   readMessage   ReadMessage?
+  recallMessage RecallMessage?
   systemMessage SystemMessage?
   user          User?          @relation("message-user", fields: userId, references: id)
   userId        String         @unique
@@ -121,4 +122,9 @@ type SystemMessage {
   operator   String
   targetList String[]
   actionType SystemActionType
+}
+
+type RecallMessage {
+  operator String
+  recallMsgId String
 }

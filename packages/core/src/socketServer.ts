@@ -18,11 +18,7 @@ export class SocketServer {
   onMsgReceive(msg: string, socket: WebSocket, cb: IOnMsgReceive) {
     try {
       const objMsg: IWsData = JSON.parse(msg);
-      if (objMsg?.event === WS_EVENT.SEND_MSG) {
-        cb(objMsg, socket, this.ws!);
-      } else if (objMsg?.event === WS_EVENT.READ_MSG) {
-        cb(objMsg, socket, this.ws!);
-      }
+      cb(objMsg, socket, this.ws!);
     } catch (error) {
       console.error(error);
     }

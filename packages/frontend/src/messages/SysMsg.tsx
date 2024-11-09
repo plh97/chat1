@@ -1,33 +1,19 @@
 import { IRoom } from "@/interfaces";
 import { IMessage } from "@/interfaces/IMessage";
 
-export const getContent = ({
-  message,
-  room,
-}: {
-  message: IMessage;
-  room?: IRoom;
-}) => {
+const Component = ({ message, room }: { message: IMessage; room?: IRoom }) => {
+  const myUserInfo = useAppSelector((state) => state.user.data);
   const sysMsg = message.systemMessage;
   const member = room?.member ?? [];
-  const operator =
-    member.find((m) => m.id === sysMsg?.operator)?.username ??
-    sysMsg?.operator ??
-    "operator";
-  const getDefailtContent = () => {
-    if (
-      sysMsg?.actionType === "ADD_ADMIN" ||
-      sysMsg?.actionType === "REMOVE_ADMIN"
-    ) {
-      return `admin`;
+  const getOperator = () => {
+    if (sysMsg?.operator === myUserInfo.id) {
+      return `You`;
     }
-    if (
-      sysMsg?.actionType === "ADD_MEMBER" ||
-      sysMsg?.actionType === "REMOVE_MEMBER"
-    ) {
-      return `member`;
+    const username = member.find((m) => m.id === sysMsg?.operator)?.username;
+    if (username) {
+      return `"${username}"`;
     }
-    return "";
+    return sysMsg?.operator ?? "Operator";
   };
   const targetListContent =
     sysMsg?.targetList
@@ -44,17 +30,17 @@ export const getContent = ({
   const actionType = sysMsg?.actionType;
   switch (actionType) {
     case "CREATE_ROOM":
-      return `"${operator}" create room success`;
+      return `${getOperator()} create room success`;
     case "REMOVE_ROOM":
-      return `"${operator}" remove room success`;
+      return `${getOperator()} remove room success`;
     case "ADD_ADMIN":
-      return `"${operator}" add ${targetListContent} as admin`;
+      return `${getOperator()} add ${targetListContent} as admin`;
     case "REMOVE_ADMIN":
-      return `"${operator}" remove ${targetListContent} as admin`;
+      return `${getOperator()} remove ${targetListContent} as admin`;
     case "ADD_MEMBER":
-      return `"${operator}" add ${targetListContent} as member`;
+      return `${getOperator()} add ${targetListContent} as member`;
     case "REMOVE_MEMBER":
-      return `"${operator}" remove ${targetListContent} as member`;
+      return `${getOperator()} remove ${targetListContent} as member`;
     default:
       return `System message`;
   }
@@ -62,10 +48,10 @@ export const getContent = ({
 
 export const SysMsg = (message: IMessage, room?: IRoom) => {
   return {
-    preview: <>[System]</>,
+    Preview: () => <Component message={message} room={room} />,
     Component: () => (
       <div className="text-sm text-gray-400 text-center box-content p-2.5">
-        {getContent({ message, room })}
+        <Component message={message} room={room} />
       </div>
     ),
   };

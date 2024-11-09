@@ -136,6 +136,16 @@ export const userSlice = createSlice({
         ...(roomList?.filter((r) => r.id !== msg.channelId) ?? []),
       ];
     },
+    // update room readSeq
+    updateUserLastMsg(state, action: PayloadAction<Partial<IMessage>>) {
+      const message = action.payload;
+      if (message.id) {
+        const room = state.data.room?.find((r) => r.id === message.channelId);
+        if (room?.lastMsg?.id && room?.lastMsg?.id === message.id) {
+          Object.assign(room?.lastMsg, message);
+        }
+      }
+    },
   },
 });
 
@@ -148,6 +158,7 @@ export const {
   updateUserRoomReadSeq,
   topUserRoom,
   shiftRoom,
+  updateUserLastMsg,
 } = userSlice.actions;
 
 export const userReducer = userSlice.reducer;

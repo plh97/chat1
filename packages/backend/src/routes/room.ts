@@ -77,6 +77,8 @@ export const updateRoom = async (ctx: Context) => {
   const body = ctx.request.body;
   const ws: WebSocketServer = ctx.ws;
   const { id, memberId, adminId, ...data } = body;
+  const cookie = ctx.cookies.get("token") ?? "";
+  const userIdFromToken = verify(cookie, privateKey) as string;
   const room = await RoomModel.update({
     where: { id },
     data: {
@@ -98,7 +100,7 @@ export const updateRoom = async (ctx: Context) => {
       channelId: room.id,
       systemMessage: {
         targetList: memberId,
-        operator: room.createrId,
+        operator: userIdFromToken,
         actionType: "ADD_MEMBER",
       },
     });
@@ -111,7 +113,7 @@ export const updateRoom = async (ctx: Context) => {
       channelId: room.id,
       systemMessage: {
         targetList: adminId,
-        operator: room.createrId,
+        operator: userIdFromToken,
         actionType: "ADD_ADMIN",
       },
     });

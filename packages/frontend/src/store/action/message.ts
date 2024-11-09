@@ -1,9 +1,9 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { WS_EVENT } from "core";
 import { formatMessage } from "@/utils/formatMessage";
-import { addMessage, markReadMessage } from "../reducer/room";
+import { addMessage, markReadMessage, recallExistMessage, updateRecallMessage } from "../reducer/room";
 import { IMessage, IRoom } from "@/interfaces";
-import { topUserRoom, updateUserRoomReadSeq } from "../reducer/user";
+import { topUserRoom, updateUserLastMsg, updateUserRoomReadSeq } from "../reducer/user";
 
 const { toast } = createStandaloneToast();
 
@@ -12,7 +12,7 @@ export const sendMessageAction = createAsyncThunk<void, Partial<IMessage>>(
   `sendMessage`,
   async (data, { dispatch }) => {
     const formatMsg = await formatMessage(data);
-    const wsRes = await ws.sendMsg<IMessage>(formatMsg);
+    const wsRes = await ws.sendMsgPromise<IMessage>(formatMsg);
     if (wsRes.code === 1) {
       toast({
         description: wsRes.message,
@@ -47,7 +47,7 @@ export const markReadMessageThunk = createAsyncThunk<void, Partial<IMessage>>(
       ...message,
       contentType: "READ_MESSAGE",
     };
-    const wsRes = await ws.sendMsg<IRoom>(readMessage, WS_EVENT.READ_MSG);
+    const wsRes = await ws.sendMsgPromise<IRoom>(readMessage, WS_EVENT.READ_MSG);
     if (wsRes.code === 1) {
       toast({
         description: wsRes.message,
@@ -62,5 +62,30 @@ export const markReadMessageThunk = createAsyncThunk<void, Partial<IMessage>>(
     dispatch(markReadMessage(msg));
     // sync set user room lisst read seq
     dispatch(updateUserRoomReadSeq(msg));
+  }
+);
+
+
+export const recallMessageThunk = createAsyncThunk<void, Partial<IMessage>>(
+  `recallMessage`,
+  async (message, { dispatch }) => {
+    if (!message.channelId) return;
+    const recallMessage: Partial<IMessage> = {
+      ...message,
+      contentType: "RECALL_MESSAGE",
+    };
+    const wsRes = await ws.sendMsgPromise<IMessage>(recallMessage, WS_EVENT.RECALL_MSG);
+    if (wsRes.code === 1) {
+      toast({
+        description: wsRes.message,
+        status: "error",
+        position: "top",
+        duration: 1000,
+      });
+      return;
+    }
+    const msg = wsRes.data;
+    dispatch(recallExistMessage(msg));
+    dispatch(updateUserLastMsg(msg));
   }
 );

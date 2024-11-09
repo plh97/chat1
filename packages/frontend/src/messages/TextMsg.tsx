@@ -6,7 +6,7 @@ export const Component = ({ message }: { message: IMessage }) => {
 
 export const TextMsg = (message: IMessage) => {
   return {
-    preview: <>{message.textMessage?.text}</>,
+    Preview: () => <>{message.textMessage?.text}</>,
     Component: () => <Component message={message} />,
   };
 };

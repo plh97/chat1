@@ -57,7 +57,8 @@ ansible-playbook cicd.yml
   - [x] send create new friend system message
   - [x] broadcast ws to all channal member
   - [x] add member should be reduce
-- [ ] recall message
+  - [ ] add member/admin should also update opposite user room info
+- [x] recall message
 - [ ] change room name
 - [ ] change room avatar
 - [ ] remove room admin/member

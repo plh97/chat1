@@ -4,21 +4,18 @@ import { MediaMsg } from "./MediaMsg";
 import { IMessage } from "@/interfaces/IMessage";
 import { SysMsg } from "./SysMsg";
 import { IRoom } from "@/interfaces";
+import { RecallMsg } from "./RecallMsg";
 
-export const MessageTemplate: Record<
-  ContentType,
-  (
-    message: IMessage,
-    room?: IRoom
-  ) => { Component: () => JSX.Element; preview?: JSX.Element }
-> = {
+const DefaultMsg = (message: IMessage, room?: IRoom) => ({
+  Preview: () => <></>,
+  Component: () => <></>,
+});
+
+export const MessageTemplate: Record<ContentType, typeof DefaultMsg> = {
   ["TEXT_MESSAGE"]: TextMsg,
   ["MEDIA_MESSAGE"]: MediaMsg,
   ["SYSTEM_MESSAGE"]: SysMsg,
-  ["CALL_MESSAGE"]: MediaMsg,
-  ["RECALL_MESSAGE"]: MediaMsg,
-  ["READ_MESSAGE"]: () => ({
-    preview: <></>,
-    Component: () => <></>,
-  }),
+  ["RECALL_MESSAGE"]: RecallMsg,
+  ["CALL_MESSAGE"]: DefaultMsg,
+  ["READ_MESSAGE"]: DefaultMsg,
 };

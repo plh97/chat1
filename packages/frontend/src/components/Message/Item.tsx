@@ -1,55 +1,19 @@
 import classNames from "classnames";
-import { SkeletonCircle, SkeletonText } from "@chakra-ui/react";
+// import { SkeletonCircle, SkeletonText } from "@chakra-ui/react";
 import { MessageTemplate } from "@/messages";
 import { IMessage } from "@/interfaces/IMessage";
 import { Indicator } from "./Indicator";
-import { markReadMessageThunk } from "@/store/action/message";
+import { MouseEventHandler } from "react";
+import { useMsgWatch } from "./hook";
+import { updateRecallMessage } from "@/store/reducer/room";
 
 interface IProps {
   data: IMessage;
+  setIsOpen: (isOpen: boolean) => void;
 }
 
-let timer: NodeJS.Timeout;
-const debounce = (fn: Function, delay = 100) => {
-  return (...args: any) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      fn(...args);
-    }, delay);
-  };
-};
-
-const useMsgWatch = (message: IMessage) => {
-  const myUserInfo = useAppSelector((state) => state.user.data);
-  const room = useAppSelector((state) => state.room.data);
-  const readSeq = room?.readSeq;
-  const { isIntersecting, ref } = useIntersectionObserver({
-    threshold: 0.5,
-  });
-  const dispatch = useAppDispatch();
-  const debounceRead = debounce(() => {
-    const readSeqMap = room.readSeq as Record<string, number>;
-    const isRead = readSeqMap[myUserInfo.id] >= message.seq;
-    const isMyMsg = myUserInfo.id === message.userId;
-    if (!isRead && isIntersecting && !isMyMsg) {
-      dispatch(
-        markReadMessageThunk({
-          channelId: room.id,
-          readMessage: {
-            operator: myUserInfo.id,
-            lastReadSeq: message.seq,
-          },
-        })
-      );
-    }
-  }, 100);
-  useEffect(() => {
-    debounceRead();
-  }, [readSeq, isIntersecting]);
-  return ref;
-};
-
-export function Item({ data: message }: IProps): JSX.Element {
+export function Item({ data: message, setIsOpen }: IProps): JSX.Element {
+  const dispatch = useThunkDispatch();
   const ref = useMsgWatch(message);
   const myUserInfo = useAppSelector((state) => state.user.data);
   const room = useAppSelector((state) => state.room.data);
@@ -64,6 +28,32 @@ export function Item({ data: message }: IProps): JSX.Element {
       </div>
     );
   }
+  if (message.contentType === "RECALL_MESSAGE") {
+    return (
+      <div ref={ref}>
+        <Component />
+      </div>
+    );
+  }
+  const onContextMenu: MouseEventHandler<HTMLDivElement> = (e) => {
+    if (!isMe) return;
+    e.preventDefault();
+    setIsOpen(true);
+    const menu = document.querySelector("[role=menu]")!;
+    const popper = menu.parentElement!;
+    const pageW = window.innerWidth;
+    // const pageH = window.screen.height;
+    let x = e.clientX;
+    const y = e.clientY;
+    if (x + menu.clientWidth > pageW) {
+      x -= menu.clientWidth
+    }
+    Object.assign(popper.style, {
+      top: `${y}px`,
+      left: `${x}px`,
+    });
+    dispatch(updateRecallMessage(message));
+  };
   return (
     <div
       ref={ref}
@@ -77,7 +67,10 @@ export function Item({ data: message }: IProps): JSX.Element {
         name={message?.user?.username}
         src={message?.user?.image}
       />
-      <div className="mx-2.5 max-w-[60%] rounded-lg overflow-hidden whitespace-pre-wrap bg-gray-800 shadow-md">
+      <div
+        onContextMenu={onContextMenu}
+        className="mx-2.5 max-w-[60%] rounded-lg overflow-hidden whitespace-pre-wrap bg-gray-800 shadow-md"
+      >
         <Component />
       </div>
       <Indicator message={message} />
@@ -85,23 +78,24 @@ export function Item({ data: message }: IProps): JSX.Element {
   );
 }
 
-export function SkeletonItem({ isMe = false }: { isMe?: boolean }) {
-  return (
-    <div
-      className={classNames("relative flex flex-row items-start mb-2", {
-        "flex-row-reverse": isMe,
-      })}
-    >
-      <SkeletonCircle size="10" />
-      <span className="mx-2.5 max-w-[60%] rounded-lg whitespace-pre-wrap shadow-md">
-        <SkeletonText
-          className="flex-1 w-[200px] text-right rounded-lg overflow-hidden"
-          mr="2"
-          noOfLines={1}
-          spacing="2"
-          skeletonHeight="10"
-        />
-      </span>
-    </div>
-  );
-}
+// TODO: TBC
+// export function SkeletonItem({ isMe = false }: { isMe?: boolean }) {
+//   return (
+//     <div
+//       className={classNames("relative flex flex-row items-start mb-2", {
+//         "flex-row-reverse": isMe,
+//       })}
+//     >
+//       <SkeletonCircle size="10" />
+//       <span className="mx-2.5 max-w-[60%] rounded-lg whitespace-pre-wrap shadow-md">
+//         <SkeletonText
+//           className="flex-1 w-[200px] text-right rounded-lg overflow-hidden"
+//           mr="2"
+//           noOfLines={1}
+//           spacing="2"
+//           skeletonHeight="10"
+//         />
+//       </span>
+//     </div>
+//   );
+// }

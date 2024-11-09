@@ -3,7 +3,8 @@ import {
   loadMoreMessage,
   loadRoomMoreMessageThunk,
 } from "@/store/reducer/room";
-import { IRoom } from "@/interfaces";
+import { IMessage, IRoom } from "@/interfaces";
+import { markReadMessageThunk } from "@/store/action/message";
 
 export const useScroll = () => {
   const scrollEl = useRef<HTMLDivElement>(null);
@@ -90,4 +91,45 @@ export const useLoadMore = () => {
     scrollEl,
     loadMoreTriggerRef: ref,
   };
+};
+
+let timer: NodeJS.Timeout;
+const debounce = (fn: Function, delay = 100) => {
+  return (...args: any) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn(...args);
+    }, delay);
+  };
+};
+
+
+export const useMsgWatch = (message: IMessage) => {
+  const myUserInfo = useAppSelector((state) => state.user.data);
+  const room = useAppSelector((state) => state.room.data);
+  const readSeq = room?.readSeq;
+  const { isIntersecting, ref } = useIntersectionObserver({
+    threshold: 0.5,
+  });
+  const dispatch = useAppDispatch();
+  const debounceRead = debounce(() => {
+    const readSeqMap = room.readSeq as Record<string, number>;
+    const isRead = readSeqMap[myUserInfo.id] >= message.seq;
+    const isMyMsg = myUserInfo.id === message.userId;
+    if (!isRead && isIntersecting && !isMyMsg) {
+      dispatch(
+        markReadMessageThunk({
+          channelId: room.id,
+          readMessage: {
+            operator: myUserInfo.id,
+            lastReadSeq: message.seq,
+          },
+        })
+      );
+    }
+  }, 100);
+  useEffect(() => {
+    debounceRead();
+  }, [readSeq, isIntersecting]);
+  return ref;
 };

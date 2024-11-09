@@ -102,13 +102,17 @@ export class SocketClient {
   send = (data: object | string) => {
     if (typeof data === "object") {
       this.socket.send(JSON.stringify(data));
-      // this.socket.
     } else {
       this.socket.send(data);
     }
   };
 
   sendMsg = <T>(msg: unknown, event = WS_EVENT.SEND_MSG) => {
+    const reqId = generateTemplateId();
+    this.send({ event, data: msg, requestId: reqId });
+  };
+
+  sendMsgPromise = <T>(msg: unknown, event = WS_EVENT.SEND_MSG) => {
     const reqId = generateTemplateId();
     this.send({ event, data: msg, requestId: reqId });
     return this.promisify(reqId) as Promise<IWsData<T>>;

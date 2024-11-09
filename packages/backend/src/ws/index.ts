@@ -5,6 +5,7 @@ import { privateKey } from "@/config";
 import { RoomModel } from "@/model/room";
 import { handleReadMsg } from "./readMsg";
 import { handleSendMsg } from "./sendMsg";
+import { handleRecallMsg } from "./recallMsg";
 
 export const onMsgReceive: IOnMsgReceive = async (objMsg, socket, ws) => {
   try {
@@ -29,8 +30,12 @@ export const onMsgReceive: IOnMsgReceive = async (objMsg, socket, ws) => {
   let broadcastData = null;
   if (event === WS_EVENT.READ_MSG) {
     broadcastData = await handleReadMsg(data);
-  } else if (event === WS_EVENT.SEND_MSG) {
+  }
+  if (event === WS_EVENT.SEND_MSG) {
     broadcastData = await handleSendMsg(data);
+  }
+  if (event === WS_EVENT.RECALL_MSG) {
+    broadcastData = await handleRecallMsg(data);
   }
   if (!broadcastData) {
     socket.send(

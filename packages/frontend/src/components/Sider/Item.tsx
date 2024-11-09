@@ -24,7 +24,9 @@ const ItemOriginal = ({ myId, room, active, draft, unreadCount }: IProps) => {
     try {
       const msg = room.lastMsg;
       if (!msg) return "-";
-      return MessageTemplate[msg.contentType](msg)?.preview ?? "-";
+      const Preview = MessageTemplate[msg.contentType](msg, room)?.Preview;
+      if (!Preview) return "-";
+      return <Preview />;
     } catch (error) {
       return "unknown message";
     }
