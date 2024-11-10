@@ -24,11 +24,11 @@ export class SocketServer {
     }
   }
 
-  init(server: HttpServer, onMsgReceive: IOnMsgReceive) {
+  init(url: string, server: HttpServer, onMsgReceive: IOnMsgReceive) {
     if (this.ws) return;
     this.ws = new WebSocketServer({
       server,
-      path: "/chat",
+      path: url,
     });
     this.ws.on("connection", (socket) => {
       console.log("client connected");

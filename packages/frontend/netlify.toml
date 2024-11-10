@@ -6,7 +6,7 @@
 
 [[redirects]]
   from = "/chat/*"
-  to = "http://47.130.0.227:8080/chat/:splat"
+  to = "ws://47.130.0.227:8080/chat/:splat"
   status = 200
   force = true # COMMENT: ensure that we always redirect
 
