@@ -13,17 +13,11 @@
     "dev": "pnpm db && pnpm --parallel -F backend -F frontend -F db dev",
     "serve": "pnpm db && pnpm --parallel -F backend -F db dev",
     "lint:eslint": "pnpm -F frontend -F backend lint:eslint",
-    "commit": "cz",
     "lint:prettier": "pnpm -F frontend -F backend lint:prettier",
     "test": "pnpm -F frontend -F backend test",
     "down": "docker compose down",
     "deploy": "docker compose up --build -d",
     "postinstall": "npx simple-git-hooks"
-  },
-  "config": {
-    "commitizen": {
-      "path": "cz-conventional-changelog"
-    }
   },
   "workspaces": [
     "packages/*"
