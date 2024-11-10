@@ -75,7 +75,7 @@ export default function useWebsocket() {
     ws?.socket?.readyState === WebSocket.CLOSED ||
     ws?.socket?.readyState === WebSocket.CLOSING
   ) {
-    ws = new SocketClient(`ws://${location.host}/chat`);
+    ws = new SocketClient(`/chat`);
   }
   const room = useAppSelector((state) => state.room.data);
   const roomRef = useRef<IRoom>(room);
