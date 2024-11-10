@@ -22,7 +22,7 @@
         path: ~/chatroom/
     - name: Clone Repository
       git:
-        repo: https://github.com/plh2/chatroom.git
+        repo: https://github.com/plh97/c.git
         dest: ~/chatroom
         clone: yes
         update: yes
@@ -30,7 +30,7 @@
 
     - name: install dependences
       command:
-        cmd: pnpm run bootstrap
+        cmd: pnpm i
         chdir: ~/chatroom
     # - name: build
     #   command:
@@ -39,5 +39,5 @@
     - name: deploy
       command:
         chdir: ~/chatroom
-        cmd: npm run deploy
+        cmd: pnpm run deploy
 ...

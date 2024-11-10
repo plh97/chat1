@@ -21,22 +21,22 @@
     #     path: ~/chatroom/
     - name: pull latest code on develop branch
       git:
-        repo: https://github.com/plh2/chatroom.git
-        dest: ~/chatroom
+        repo: https://github.com/plh2/c.git
+        dest: ~/c
         force: true
         version: develop
 
     - name: install dependences
       command:
         cmd: pnpm run bootstrap
-        chdir: ~/chatroom
+        chdir: ~/c
 
     # - name: build
     #   command:
-    #     chdir: ~/chatroom
+    #     chdir: ~/c
     #     cmd: npm run build
 
     - name: deploy
       command:
-        chdir: ~/chatroom
+        chdir: ~/c
         cmd: npm run deploy

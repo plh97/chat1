@@ -18,13 +18,13 @@ jobs:
           known_hosts: "just-a-placeholder-so-we-dont-get-errors"
           config: |
             Host aws
-              HostName 18.136.199.73
+              HostName ${{ secrets.SSH_HOST }}
               CheckHostIP no
               User ubuntu
               Port 22
 
       - name: Adding Known Hosts
-        run: ssh-keyscan -H 18.136.199.73 >> ~/.ssh/known_hosts
+        run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: run ansible
         run: |
