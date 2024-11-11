@@ -38,7 +38,6 @@ export class SocketServer {
         if (msg === "ping") return;
         this.onMsgReceive(msg, socket, onMsgReceive);
       });
-
       socket.on("close", () => {
         console.log("close");
       });

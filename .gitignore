@@ -16,6 +16,6 @@ terraform.tfstate
 *.log
 .history
 
-*.pem
+# *.pem
 
 # ssh_config

@@ -1,6 +1,6 @@
 import { Context } from "koa";
 import jwt from "jsonwebtoken";
-import { privateKey } from "@/config";
+import { CookieConfig, privateKey } from "@/config";
 import { RoomModel } from "@/model/room";
 import { UserModel } from "@/model/user";
 import { getVerifiedToken } from "@/utils/token";
@@ -157,7 +157,7 @@ export async function Login(ctx: Context) {
   });
   if (userinfo) {
     const token = jwt.sign(String(userinfo.id), privateKey);
-    ctx.cookies.set("token", token, { maxAge: 3600000, httpOnly: false });
+    ctx.cookies.set("token", token, CookieConfig);
     userinfo.password = "";
     ctx.body = {
       data: userinfo,
@@ -195,10 +195,7 @@ export async function Register(ctx: Context) {
       },
     });
     const token = jwt.sign(String(userinfo.id), privateKey);
-    ctx.cookies.set("token", token, {
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      httpOnly: false,
-    });
+    ctx.cookies.set("token", token, CookieConfig);
     userinfo.password = "";
     ctx.body = {
       code: 0,

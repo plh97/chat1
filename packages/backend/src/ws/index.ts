@@ -10,11 +10,11 @@ import { handleRecallMsg } from "./recallMsg";
 export const onMsgReceive: IOnMsgReceive = async (objMsg, socket, ws) => {
   try {
     jwt.verify(socket.protocol, privateKey) as string;
-  } catch (error) {
+  } catch (error: any) {
     socket.send(
       JSON.stringify({
         code: 1,
-        message: "WebSocket token verify fail",
+        message: error.message,
         event: objMsg.event,
         requestId: objMsg.requestId,
         data: null,

@@ -1,12 +1,12 @@
 [[redirects]]
   from = "/api/*"
-  to = "http://47.130.0.227:8080/api/:splat"
+  to = "https://47.130.0.227:443/api/:splat"
   status = 200
   force = true # COMMENT: ensure that we always redirect
 
 [[redirects]]
   from = "/chat/*"
-  to = "ws://47.130.0.227:8080/chat/:splat"
+  to = "http://47.130.0.227:8080/chat/:splat"
   status = 200
   force = true # COMMENT: ensure that we always redirect
 

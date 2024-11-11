@@ -1,3 +1,5 @@
+import * as Cookies from "cookies"; // Add this import statement
+
 // const FRONTEND_PORT = process.env.FRONTEND_PORT || 3000;
 
 export const privateKey =
@@ -14,3 +16,9 @@ export const roomIcon =
 const MONGODB_IP = process.env.MONGODB_IP ?? "127.0.0.1";
 
 export const DATABASE_URL = `mongodb://${MONGODB_IP}:27017`;
+
+export const CookieConfig: Cookies.SetOption = {
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  httpOnly: false,
+  secure: true,
+};

@@ -11,7 +11,7 @@
     "db:down": "docker compose -f ./docker-compose.dev.yml down",
     "bootstrap": "pnpm i",
     "dev": "pnpm db && pnpm --parallel -F backend -F frontend -F db dev",
-    "serve": "pnpm db && pnpm --parallel -F backend -F db dev",
+    "serve": "pnpm --parallel -F backend -F db dev",
     "lint:eslint": "pnpm -F frontend -F backend lint:eslint",
     "lint:prettier": "pnpm -F frontend -F backend lint:prettier",
     "test": "pnpm -F frontend -F backend test",

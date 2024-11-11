@@ -10,7 +10,7 @@ import {
 const { toast } = createStandaloneToast();
 
 export const axios = Axios.create({
-  baseURL: "/api",
+  baseURL: "https://127.0.0.1/api",
   timeout: 10000,
   withCredentials: true,
 });
