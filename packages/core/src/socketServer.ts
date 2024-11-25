@@ -30,6 +30,7 @@ export class SocketServer {
       server,
       path: url,
     });
+    console.log("[WS] init success");
     this.ws.on("connection", (socket) => {
       console.log("client connected");
       socket.on("message", async (data: RawData) => {

@@ -1,40 +1,46 @@
 {
-  "name": "chatroom",
-  "version": "1.0.0",
-  "private": true,
-  "main": "index.js",
-  "repository": "https://github.com/pengliheng/chatroom.git",
-  "author": "plh2 <pengliheng111@gmail.com>",
-  "license": "MIT",
-  "scripts": {
-    "db": "docker compose -f ./docker-compose.dev.yml up -d",
-    "db:down": "docker compose -f ./docker-compose.dev.yml down",
-    "bootstrap": "pnpm i",
-    "dev": "pnpm db && pnpm --parallel -F backend -F frontend -F db dev",
-    "serve": "pnpm --parallel -F backend -F db dev",
-    "lint:eslint": "pnpm -F frontend -F backend lint:eslint",
-    "lint:prettier": "pnpm -F frontend -F backend lint:prettier",
-    "test": "pnpm -F frontend -F backend test",
-    "down": "docker compose down",
-    "deploy": "docker compose up --build -d",
-    "postinstall": "npx simple-git-hooks"
-  },
-  "workspaces": [
-    "packages/*"
-  ],
-  "devDependencies": {
-    "commitizen": "^4.2.6",
-    "lint-staged": "^13.2.2",
-    "stylelint": "^15.6.2",
-    "stylelint-config-standard": "^33.0.0",
-    "simple-git-hooks": "^2.11.1",
-    "stylelint-config-standard-scss": "^9.0.0"
-  },
-  "simple-git-hooks": {
-    "pre-commit": "npx lint-staged",
-    "preserveUnused": [
-      "commit-msg"
-    ]
-  },
-  "packageManager": "pnpm@9.12.3+sha512.cce0f9de9c5a7c95bef944169cc5dfe8741abfb145078c0d508b868056848a87c81e626246cb60967cbd7fd29a6c062ef73ff840d96b3c86c40ac92cf4a813ee"
+	"name": "chatroom",
+	"version": "1.0.0",
+	"private": true,
+	"main": "index.js",
+	"repository": "https://github.com/pengliheng/chatroom.git",
+	"author": "plh2 <pengliheng111@gmail.com>",
+	"license": "MIT",
+	"scripts": {
+		"db": "docker compose -f ./docker-compose.dev.yml up",
+		"db:down": "docker compose -f ./docker-compose.dev.yml down",
+		"bootstrap": "pnpm i",
+		"dev": "pnpm db -d && pnpm --parallel -F backend -F frontend -F db dev",
+		"db_nginx": "docker compose -f ./docker-compose.yml up",
+		"serve": "pnpm -F backend dev",
+		"lint:eslint": "pnpm -F frontend -F backend lint:eslint",
+		"lint:prettier": "pnpm -F frontend -F backend lint:prettier",
+		"test": "pnpm -F frontend -F backend test",
+		"down": "docker compose down",
+		"deploy": "docker compose up --build -d",
+		"postinstall": "npx simple-git-hooks"
+	},
+	"workspaces": [
+		"packages/*"
+	],
+	"devDependencies": {
+		"lint-staged": "^13.2.2",
+		"stylelint": "^15.6.2",
+		"stylelint-config-standard": "^33.0.0",
+		"simple-git-hooks": "^2.11.1",
+		"stylelint-config-standard-scss": "^9.0.0"
+	},
+	"simple-git-hooks": {
+		"pre-commit": "npx lint-staged",
+		"preserveUnused": [
+			"commit-msg"
+		]
+	},
+	"packageManager": "pnpm@10.0.0-alpha.2+sha512.f18a59ca3611002321af7681e6d49234cb3ece8496b05818be5b1081168ec21b8c3d28cbb4351e2fdec66ca95e6516faaf08b95b755013c88cf5174d5029865c",
+	"pnpm": {
+		"overrides": {}
+	},
+	"dependencies": {
+		"db": "link:../../../../Library/pnpm/global/5/node_modules/db"
+	}
 }

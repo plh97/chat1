@@ -2,8 +2,8 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import AutoImports from "unplugin-auto-import/vite";
 import { defineConfig } from "vite";
-import { VitePWA } from "vite-plugin-pwa";
-import viteCompression from "vite-plugin-compression";
+// import { VitePWA } from "vite-plugin-pwa";
+// import viteCompression from "vite-plugin-compression";
 
 const PROT = +(process.env.PORT ?? 9001);
 
@@ -110,15 +110,15 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        // target: "https://127.0.0.1:8080",
-        target: "https://47.130.0.227:8080",
+        target: "https://127.0.0.1:8081",
+        // target: "https://47.130.0.227:8080",
         changeOrigin: true,
         secure: false,
         // rewrite: (path) => path.replace(/^\/api/, "/api"),
       },
       "/chat": {
-        // target: "wss://127.0.0.1:8080",
-        target: "wss://47.130.0.227:8080",
+        target: "wss://127.0.0.1:8081",
+        // target: "wss://47.130.0.227:8080",
         changeOrigin: true,
         secure: false,
       },

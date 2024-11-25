@@ -20,5 +20,5 @@ export const DATABASE_URL = `mongodb://${MONGODB_IP}:27017`;
 export const CookieConfig: Cookies.SetOption = {
   maxAge: 7 * 24 * 60 * 60 * 1000,
   httpOnly: false,
-  secure: true,
+  secure: false,
 };

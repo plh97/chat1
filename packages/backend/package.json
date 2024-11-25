@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "dev": "npx nodemon ./src/index.ts",
+    "dev": "nodemon ./src/index.ts",
     "lint:prettier": "prettier src --write",
     "deploy": "ts-node ./src/index.ts",
     "test": "jest --passWithNoTests"
@@ -51,6 +51,7 @@
     "prettier": "2.8.2",
     "prettier-eslint": "^15.0.1",
     "ts-node": "^10.9.1",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.5.4"
   },
   "dependencies": {
@@ -73,5 +74,6 @@
     "koa-static": "^5.0.0",
     "vite-node": "^2.1.1",
     "ws": "^8.18.0"
-  }
+  },
+  "packageManager": "pnpm@9.13.2+sha512.88c9c3864450350e65a33587ab801acf946d7c814ed1134da4a924f6df5a2120fd36b46aab68f7cd1d413149112d53c7db3a4136624cfd00ff1846a0c6cef48a"
 }

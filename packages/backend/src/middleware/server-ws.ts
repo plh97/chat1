@@ -6,7 +6,7 @@ import { onMsgReceive } from "@/ws";
 const socketServer = new SocketServer();
 
 export default function socket(server: HttpServer) {
-  socketServer.init('/chat', server, onMsgReceive);
+  socketServer.init("/chat", server, onMsgReceive);
   return async function socket(ctx: Context, next: () => Promise<void>) {
     ctx.ws = socketServer.ws;
     await next();

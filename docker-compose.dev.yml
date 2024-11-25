@@ -1,33 +1,31 @@
 # version: "3.9"
 
 services:
-    mongodb_container:
-        image: prismagraphql/mongo-single-replica:5.0.3
-        # image: mongo
+    mongodb:
+        image: prismagraphql/mongo-single-replica:4.4.3-bionic
         environment:
             MONGO_INITDB_ROOT_USERNAME: root
             MONGO_INITDB_ROOT_PASSWORD: prisma
             INIT_WAIT_SEC: 3
-        # command: 
-        #     - '--logpath'
-        #     - '/var/log/mongodb/mongod.log'
-        # build:
-        #     context: "./mongodb"
-        # logging:
-        #     driver: none
         ports: 
             - "27017:27017"
-        # restart: always
-        # volumes:
-        #     - ./mongodb/data:/data/db
+        networks:
+            - gate-tier
 
-    # postgres_db:
-    #     image: postgres
-    #     ports:
-    #         - 5432:5432
-    #     environment:
-    #         POSTGRES_DB: mydb
-    #         POSTGRES_USER: johndoe
-    #         POSTGRES_PASSWORD: randompassword
-    #     # volumes:
-    #     #     - ./mongodb:/var/lib/postgresql/data/
+    nginx:
+        hostname: nginx
+        restart: always
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        build:
+            context: "./nginx"
+        volumes:
+            - ./nginx/conf.d/:/etc/nginx/conf.d/
+            - ./nginx/log:/var/log/nginx/
+        ports:
+            - "8081:8081"
+        networks:
+            - gate-tier
+
+networks:
+    gate-tier:

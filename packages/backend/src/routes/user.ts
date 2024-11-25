@@ -38,7 +38,7 @@ export async function GetUserInfo(ctx: Context) {
       code: 0,
       data: {
         ...userinfo,
-        room: room.map((r) => {
+        room: room.map((r: any) => {
           return Object.assign(r, {
             totalCount: r.message.length,
             lastMsg: r.message[r.message.length - 1],
