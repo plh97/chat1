@@ -111,15 +111,15 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        // target: "https://localhost:8082",
-        target: "https://47.129.250.141:8082",
+        target: "https://localhost",
+        // target: "https://47.129.250.141:8082",
         changeOrigin: true,
         secure: false,
         // rewrite: (path) => path.replace(/^\/api/, "/api"),
       },
       "/ws": {
-        // target: "wss://localhost:8082",
-        target: "wss://47.129.250.141:8082",
+        target: "wss://localhost",
+        // target: "wss://47.129.250.141:8082",
         changeOrigin: true,
         secure: false,
       },

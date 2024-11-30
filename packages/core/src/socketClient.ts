@@ -42,12 +42,12 @@ export class SocketClient {
 
   // handle close logic
   close() {
-    console.log("close");
+    console.log("[WS] close");
   }
 
   // handle reconect logic
   error() {
-    console.log("error");
+    console.log("[WS] error");
   }
 
   async init() {

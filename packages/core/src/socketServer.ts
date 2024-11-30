@@ -32,7 +32,7 @@ export class SocketServer {
     });
     console.log(`[WS] init success: ${url}`);
     this.ws.on("connection", (socket) => {
-      console.log("client connected");
+      console.log("[WS] client connected");
       socket.on("message", async (data: RawData) => {
         const msg: string = data.toString();
         this.onWsPing(msg, socket);
@@ -40,7 +40,7 @@ export class SocketServer {
         this.onMsgReceive(msg, socket, onMsgReceive);
       });
       socket.on("close", () => {
-        console.log("close");
+        console.log("[WS] close");
       });
     });
   }

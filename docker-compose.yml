@@ -11,8 +11,6 @@ services:
     nginx:
         hostname: nginx
         restart: always
-        extra_hosts:
-            - "host.docker.internal:host-gateway"
         build:
             context: "./nginx"
         volumes:
@@ -31,7 +29,5 @@ services:
             - "8080:8080"
         volumes:
             - ./:/usr/src/app
-        extra_hosts:
-            - "host.docker.internal:host-gateway"
         build:
             dockerfile: ./backend.Dockerfile
