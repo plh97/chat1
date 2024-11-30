@@ -1,8 +1,18 @@
 import { IWsData, SocketClient, WS_EVENT } from "core";
 import { IMessage, IRoom } from "@/interfaces";
-import { updateUserRoomReadSeq, topUserRoom, updateUserLastMsg } from "@/store/reducer/user";
-import { addMessage, markReadMessage, recallExistMessage, scrollToEnd } from "@/store/reducer/room";
+import {
+  updateUserRoomReadSeq,
+  topUserRoom,
+  updateUserLastMsg,
+} from "@/store/reducer/user";
+import {
+  addMessage,
+  markReadMessage,
+  recallExistMessage,
+  scrollToEnd,
+} from "@/store/reducer/room";
 import { MutableRefObject } from "react";
+import { wsUrl } from "@/config";
 
 export let ws: SocketClient;
 
@@ -23,7 +33,7 @@ const useSubscribeSendMsg = (roomRef: MutableRefObject<IRoom>) => {
       ws.eventEmitter.off(WS_EVENT.SEND_MSG, onReceiveMsg);
     };
   }, []);
-}
+};
 
 const useSubscribeReadMsg = () => {
   const dispatch = useAppDispatch();
@@ -50,8 +60,7 @@ const useSubscribeReadMsg = () => {
       ws.eventEmitter.off(WS_EVENT.READ_MSG, onReceiveRead);
     };
   }, []);
-}
-
+};
 
 const useSubscribeRecallMsg = () => {
   const dispatch = useAppDispatch();
@@ -66,7 +75,8 @@ const useSubscribeRecallMsg = () => {
       ws.eventEmitter.off(WS_EVENT.RECALL_MSG, onReceiveMsg);
     };
   }, []);
-}
+};
+
 
 
 export default function useWebsocket() {
@@ -75,7 +85,7 @@ export default function useWebsocket() {
     ws?.socket?.readyState === WebSocket.CLOSED ||
     ws?.socket?.readyState === WebSocket.CLOSING
   ) {
-    ws = new SocketClient(`//47.129.250.141:8080/chat`);
+    ws = new SocketClient(wsUrl);
   }
   const room = useAppSelector((state) => state.room.data);
   const roomRef = useRef<IRoom>(room);

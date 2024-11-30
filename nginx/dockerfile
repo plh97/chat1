@@ -1,3 +1,7 @@
-FROM nginx:latest
+FROM nginx
 
 COPY ssl /etc/nginx/certs/
+
+COPY ./html /usr/share/nginx/html
+
+EXPOSE 8081

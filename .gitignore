@@ -15,7 +15,7 @@ terraform.tfstate
 # .circleci
 *.log
 .history
-
+.pnpm-store/
 # *.pem
 
 # ssh_config

@@ -9,9 +9,6 @@ services:
             INIT_WAIT_SEC: 3
         ports: 
             - "27017:27017"
-        networks:
-            - gate-tier
-
     nginx:
         hostname: nginx
         restart: always
@@ -24,8 +21,20 @@ services:
             - ./nginx/log:/var/log/nginx/
         ports:
             - "8081:8081"
-        networks:
-            - gate-tier
+            - "8082:8082"
 
-networks:
-    gate-tier:
+
+    # backend:
+    #     hostname: backend
+    #     # restart: always
+    #     environment:
+    #         DATABASE_URL: mongodb://root:prisma@host.docker.internal:27017/test?authSource=admin&retryWrites=true&w=majority
+    #         PORT: "8080"
+    #     ports:
+    #         - "8080:8080"
+    #     volumes:
+    #         - ./:/usr/src/app
+    #     extra_hosts:
+    #         - "host.docker.internal:host-gateway"
+    #     build:
+    #         dockerfile: ./backend.Dockerfile

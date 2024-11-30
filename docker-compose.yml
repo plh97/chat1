@@ -1,20 +1,18 @@
 services:
-
     mongodb:
-        hostname: mongodb
         image: prismagraphql/mongo-single-replica:4.4.3-bionic
         environment:
             MONGO_INITDB_ROOT_USERNAME: root
             MONGO_INITDB_ROOT_PASSWORD: prisma
-            INIT_WAIT_SEC: 10
-        ports:
+            INIT_WAIT_SEC: 3
+        ports: 
             - "27017:27017"
-        networks:
-            - gate-tier
 
     nginx:
         hostname: nginx
         restart: always
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
         build:
             context: "./nginx"
         volumes:
@@ -22,22 +20,18 @@ services:
             - ./nginx/log:/var/log/nginx/
         ports:
             - "8081:8081"
-        networks:
-            - gate-tier
 
     backend:
         hostname: backend
         restart: always
         environment:
-            DATABASE_URL: mongodb://root:prisma@mongodb:27017/test?authSource=admin&retryWrites=true&w=majority
+            DATABASE_URL: mongodb://root:prisma@host.docker.internal:27017/test?authSource=admin&retryWrites=true&w=majority
             PORT: "8080"
+        ports:
+            - "8080:8080"
         volumes:
             - ./:/usr/src/app
         extra_hosts:
             - "host.docker.internal:host-gateway"
         build:
             dockerfile: ./backend.Dockerfile
-        networks:
-            - gate-tier
-networks:
-    gate-tier:
