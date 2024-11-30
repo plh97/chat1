@@ -7,7 +7,7 @@
 	"author": "plh2 <pengliheng111@gmail.com>",
 	"license": "MIT",
 	"scripts": {
-		"db": "docker compose -f ./docker-compose.dev.yml up",
+		"db": "docker compose -f ./docker-compose.dev.yml up -d",
 		"db:down": "docker compose -f ./docker-compose.dev.yml down",
 		"bootstrap": "pnpm i",
 		"dev": "pnpm --parallel -F backend -F frontend -F db dev",
