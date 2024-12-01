@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      db:
-        specifier: link:../../../../Library/pnpm/global/5/node_modules/db
-        version: link:../../../../Library/pnpm/global/5/node_modules/db
     devDependencies:
       lint-staged:
         specifier: ^13.2.2
