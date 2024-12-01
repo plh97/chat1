@@ -112,14 +112,14 @@ export default defineConfig({
     proxy: {
       "/api": {
         target: "http://localhost",
-        // target: "http://3.0.58.48",
+        // target: "http://54.179.189.41",
         changeOrigin: true,
         secure: false,
         // rewrite: (path) => path.replace(/^\/api/, "/api"),
       },
       "/ws": {
         target: "ws://localhost",
-        // target: "ws://3.0.58.48",
+        // target: "ws://54.179.189.41",
         changeOrigin: true,
         secure: false,
       },
