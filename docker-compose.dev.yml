@@ -18,6 +18,7 @@ services:
       - ./nginx/log:/var/log/nginx/
     ports:
       - "443:443"
+      - "80:80"
     networks:
       - backend
 
