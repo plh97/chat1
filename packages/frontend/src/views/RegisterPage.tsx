@@ -1,5 +1,5 @@
 import CSS from "csstype";
-import { ChangeEvent } from "react";
+import { ChangeEvent, EventHandler, SyntheticEvent } from "react";
 
 import { registerThunk } from "@/store/reducer/user";
 
@@ -32,7 +32,8 @@ export function RegisterPage() {
   const [password, setPassword] = useState("");
   const dispatch = useAppDispatch();
   const toast = useToast();
-  async function handleRegister() {
+  const handleRegister = async (e: SyntheticEvent) => {
+    e.preventDefault();
     if (!username || !password) {
       toast({
         title: "Warning.",

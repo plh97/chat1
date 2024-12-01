@@ -1,33 +1,47 @@
 services:
-    mongodb:
-        image: prismagraphql/mongo-single-replica:4.4.3-bionic
-        environment:
-            MONGO_INITDB_ROOT_USERNAME: root
-            MONGO_INITDB_ROOT_PASSWORD: prisma
-            INIT_WAIT_SEC: 3
-        ports: 
-            - "27017:27017"
+  mongodb:
+    image: prismagraphql/mongo-single-replica:4.4.3-bionic
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: prisma
+      INIT_WAIT_SEC: 3
+    command: ["--bind_ip_all", "--quiet"]
+    networks:
+      - backend
 
-    nginx:
-        hostname: nginx
-        restart: always
-        build:
-            context: "./nginx"
-        volumes:
-            - ./nginx/conf.d/:/etc/nginx/conf.d/
-            - ./nginx/log:/var/log/nginx/
-        ports:
-            - "8081:8081"
+  nginx:
+    hostname: nginx
+    restart: always
+    build:
+      context: "./nginx"
+    volumes:
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+      - ./nginx/log:/var/log/nginx/
+    ports:
+      - "443:443"
+      - "80:80"
+    networks:
+      - backend
 
-    backend:
-        hostname: backend
-        restart: always
-        environment:
-            DATABASE_URL: mongodb://root:prisma@host.docker.internal:27017/test?authSource=admin&retryWrites=true&w=majority
-            PORT: "8080"
-        ports:
-            - "8080:8080"
-        volumes:
-            - ./:/usr/src/app
-        build:
-            dockerfile: ./backend.Dockerfile
+  backend:
+    hostname: backend
+    restart: always
+    command: pnpm -F backend run serve
+    environment:
+      DATABASE_URL: mongodb://root:prisma@mongodb:27017/test?authSource=admin&retryWrites=true&w=majority&directConnection=true
+      PORT: "8080"
+    # volumes:
+    #   - ./:/usr/src/app
+    build:
+      dockerfile: ./backend.Dockerfile
+    networks:
+      - backend
+
+networks:
+  backend:
+    name: backend
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.123.0/24

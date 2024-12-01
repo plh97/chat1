@@ -19,7 +19,7 @@ export const Upload = async (ctx: Context) => {
   const fileType = file.type?.split(";")[0];
   const ext = mime.getType(fileType);
   const name = `${Math.random().toString().replace(/0./, "")}.${ext}`;
-  const newpath = path.resolve("static", name);
+  const newpath = path.resolve("public/static", name);
   const toPath = fs.createWriteStream(newpath);
   const stream = fs.createReadStream(file.path).pipe(toPath);
   await new Promise<void>((resolve) => {

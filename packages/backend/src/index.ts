@@ -43,13 +43,6 @@ app
     })
   )
   .use(
-    kosStatic(path.resolve("static"), {
-      root: '/static',
-      gzip: true,
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-    })
-  )
-  .use(
     jwt({
       secret: privateKey,
       getToken: (ctx: Koa.Context) => ctx.cookies.get("token") ?? "",
@@ -74,6 +67,7 @@ const server = http.createServer(app.callback()).listen(HTTP_PROT, () => {
 // const server = app.listen(BACKEND_PROT, () => {
 //   console.log(`listening at port ${BACKEND_PROT}`);
 // });
+
 app
   .use(socket(server))
   // .use(socket(servers))

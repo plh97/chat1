@@ -25,11 +25,12 @@ services:
   backend:
     hostname: backend
     restart: always
+    command: pnpm -F backend run dev
     environment:
       DATABASE_URL: mongodb://root:prisma@mongodb:27017/test?authSource=admin&retryWrites=true&w=majority&directConnection=true
       PORT: "8080"
-    # volumes:
-    #   - ./:/usr/src/app
+    volumes:
+      - ./:/usr/src/app
     build:
       dockerfile: ./backend.Dockerfile
     networks:

@@ -7,17 +7,16 @@
 	"author": "plh2 <pengliheng111@gmail.com>",
 	"license": "MIT",
 	"scripts": {
+		"bootstrap": "pnpm i",
 		"db": "docker compose -f ./docker-compose.dev.yml up",
 		"db:down": "docker compose -f ./docker-compose.dev.yml down",
-		"bootstrap": "pnpm i",
-		"dev": "pnpm --parallel -F backend -F frontend -F db dev",
-		"db_nginx": "docker compose up",
-		"serve": "pnpm -F backend serve",
+		"dev": "pnpm run db && pnpm --parallel -F frontend dev",
+		"up": "docker compose up --build -d",
+		"down": "docker compose down",
+		"serve": "pnpm run up && pnpm -F backend serve",
 		"lint:eslint": "pnpm -F frontend -F backend lint:eslint",
 		"lint:prettier": "pnpm -F frontend -F backend lint:prettier",
 		"test": "pnpm -F frontend -F backend test",
-		"down": "docker compose down",
-		"deploy": "docker compose up --build -d",
 		"postinstall": "npx simple-git-hooks"
 	},
 	"workspaces": [

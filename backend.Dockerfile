@@ -14,4 +14,3 @@ WORKDIR /usr/src/app
 # RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 RUN pnpm -F db dev
 # RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm  -F backend install tsconfig-paths
-CMD [ "pnpm", "serve" ]
