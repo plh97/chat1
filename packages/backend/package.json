@@ -1,8 +1,8 @@
 {
   "scripts": {
-    "dev": "nodemon -w . -w .env ./src/index.ts",
+    "dev": "nodemon ./src/index.ts",
     "lint:prettier": "prettier src --write",
-    "deploy": "ts-node ./src/index.ts",
+    "serve": "ts-node ./src/index.ts",
     "test": "jest --passWithNoTests"
   },
   "imports": {
