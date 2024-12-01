@@ -20,7 +20,9 @@ const whiteList = [
   "/api/register",
   "/api/userImage",
   "/api/upload",
-  "/chat",
+  "/ws",
+  "/static/*",
+  "/public/*",
 ];
 
 app
@@ -42,6 +44,7 @@ app
   )
   .use(
     kosStatic(path.resolve("static"), {
+      root: '/static',
       gzip: true,
       maxAge: 1000 * 60 * 60 * 24 * 7,
     })

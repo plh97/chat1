@@ -2,11 +2,8 @@
   "scripts": {
     "dev": "nodemon ./src/index.ts",
     "lint:prettier": "prettier src --write",
-    "serve": "ts-node ./src/index.ts",
+    "serve": "ts-node --transpile-only ./src/index.ts",
     "test": "jest --passWithNoTests"
-  },
-  "imports": {
-    "@/*": "./src/*"
   },
   "name": "backend",
   "version": "0.0.0",
@@ -14,12 +11,6 @@
   "author": "plh2 <pengliheng111@mgail.com>",
   "homepage": "https://github.com/plh2/chatroom#readme",
   "license": "ISC",
-  "files": [
-    "lib"
-  ],
-  "publishConfig": {
-    "registry": "https://registry.npmjs.org"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/plh2/chatroom.git"

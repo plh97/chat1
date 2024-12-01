@@ -20,8 +20,8 @@ export const Upload = async (ctx: Context) => {
   const ext = mime.getType(fileType);
   const name = `${Math.random().toString().replace(/0./, "")}.${ext}`;
   const newpath = path.resolve("static", name);
-  const topath = fs.createWriteStream(newpath);
-  const stream = fs.createReadStream(file.path).pipe(topath);
+  const toPath = fs.createWriteStream(newpath);
+  const stream = fs.createReadStream(file.path).pipe(toPath);
   await new Promise<void>((resolve) => {
     stream.on("finish", () => {
       resolve();
@@ -35,7 +35,7 @@ export const Upload = async (ctx: Context) => {
       duration,
       size: file.size,
       extension: ext,
-      url: `${ctx.request.origin}/${name}`,
+      url: `/static/${name}`,
     },
   };
 };

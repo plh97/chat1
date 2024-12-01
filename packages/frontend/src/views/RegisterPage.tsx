@@ -18,10 +18,6 @@ const style: { [key: string]: CSS.Properties } = {
     margin: "0 auto",
     position: "relative",
   },
-  Title: {
-    fontSize: "revert",
-    fontWeight: "initial",
-  },
   AvatarContainer: {
     left: "31%",
     bottom: "100%",
@@ -64,41 +60,47 @@ export function RegisterPage() {
   }
   return (
     <div style={style.container} data-testid="register">
-      <div style={style.Wrapper}>
+      <div style={style.Wrapper} className="flex flex-col gap-2">
         <div style={style.AvatarContainer}>
           <Avatar size="xl" name="?" />
         </div>
-        <h1 style={style.Title}>Register</h1>
-        <FormControl id="username" isRequired>
-          <FormLabel>User Name</FormLabel>
-          <Input
-            type="text"
-            autoComplete="true"
-            autoFocus
-            value={username}
-            onChange={handleInputUsername}
-          />
-        </FormControl>
-        <FormControl id="password" isRequired>
-          <FormLabel>Password</FormLabel>
-          <Input
-            type="password"
-            autoComplete="true"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </FormControl>
-        <FormControl id="button">
-          <FormLabel></FormLabel>
-          <Stack spacing={2} direction="row" align="center">
-            <Button onClick={handleLogin} colorScheme="green" variant="outline">
-              Login
-            </Button>
-            <Button onClick={handleRegister} colorScheme="green">
-              Register
-            </Button>
-          </Stack>
-        </FormControl>
+        <h1 className="text-4xl">Register</h1>
+        <form onSubmit={handleRegister} className="flex flex-col gap-2">
+          <FormControl id="username" isRequired>
+            <FormLabel>User Name</FormLabel>
+            <Input
+              type="text"
+              autoComplete="true"
+              autoFocus
+              value={username}
+              onChange={handleInputUsername}
+            />
+          </FormControl>
+          <FormControl id="password" isRequired>
+            <FormLabel>Password</FormLabel>
+            <Input
+              type="password"
+              autoComplete="true"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </FormControl>
+          <FormControl id="button">
+            <FormLabel></FormLabel>
+            <Stack spacing={2} direction="row" align="center">
+              <Button
+                onClick={handleLogin}
+                colorScheme="green"
+                variant="outline"
+              >
+                Login
+              </Button>
+              <Button type="submit" onClick={handleRegister} colorScheme="green">
+                Register
+              </Button>
+            </Stack>
+          </FormControl>
+        </form>
       </div>
     </div>
   );

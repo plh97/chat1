@@ -111,15 +111,15 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        // target: "http://localhost",
-        target: "http://3.0.58.48",
+        target: "http://localhost",
+        // target: "http://3.0.58.48",
         changeOrigin: true,
         secure: false,
         // rewrite: (path) => path.replace(/^\/api/, "/api"),
       },
       "/ws": {
-        // target: "ws://localhost",
-        target: "ws://3.0.58.48",
+        target: "ws://localhost",
+        // target: "ws://3.0.58.48",
         changeOrigin: true,
         secure: false,
       },

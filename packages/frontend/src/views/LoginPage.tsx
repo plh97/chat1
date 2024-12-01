@@ -18,10 +18,6 @@ const style: { [key: string]: Properties } = {
     margin: "0 auto",
     position: "relative",
   },
-  Title: {
-    fontSize: "revert",
-    fontWeight: "initial",
-  },
   AvatarContainer: {
     left: "31%",
     bottom: "100%",
@@ -67,12 +63,12 @@ export function LoginPage() {
   }
   return (
     <div style={style.container} data-testid="login">
-      <div style={style.Wrapper}>
+      <div style={style.Wrapper} className="flex flex-col gap-2">
         <div style={style.AvatarContainer}>
           <Avatar size="xl" name="?" src={imageUrl} />
         </div>
-        <h1 style={style.Title}>Login</h1>
-        <form onSubmit={handleLogin}>
+        <h1 className="text-4xl">Login</h1>
+        <form onSubmit={handleLogin} className="flex flex-col gap-2">
           <FormControl id="username" isRequired>
             <FormLabel>User Name</FormLabel>
             <Input
