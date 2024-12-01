@@ -1,12 +1,12 @@
 [[redirects]]
   from = "/api/*"
-  to = "http://47.129.250.141:8081/api/:splat"
+  to = "https://3.0.58.48/api/:splat"
   status = 200
   force = true # COMMENT: ensure that we always redirect
 
 [[redirects]]
   from = "/ws/*"
-  to = "ws://47.129.250.141:8081/ws/:splat"
+  to = "wss://3.0.58.48/ws/:splat"
   status = 200
   force = true # COMMENT: ensure that we always redirect
 
