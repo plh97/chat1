@@ -1,0 +1,6 @@
+services:
+  terraform:
+    image: hashicorp/terraform:latest
+    build:
+      context: "."
+    command: ["init"]

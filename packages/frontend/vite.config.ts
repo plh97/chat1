@@ -8,7 +8,6 @@ import { defineConfig } from "vite";
 const PROT = +(process.env.PORT ?? 9001);
 
 export default defineConfig({
-  envDir: "./env",
   build: {
     sourcemap: true,
     target: "modules",
@@ -112,21 +111,21 @@ export default defineConfig({
     proxy: {
       "/static": {
         target: "https://localhost",
-        // target: "https://54.179.189.41",
+        // target: "https://18.141.225.236",
         changeOrigin: true,
         secure: false,
         // rewrite: (path) => path.replace(/^\/api/, "/api"),
       },
       "/api": {
-        target: "https://localhost",
-        // target: "https://54.179.189.41",
+        // target: "https://localhost",
+        target: "https://18.141.225.236",
         changeOrigin: true,
         secure: false,
         // rewrite: (path) => path.replace(/^\/api/, "/api"),
       },
       "/ws": {
-        target: "wss://localhost",
-        // target: "wss://54.179.189.41",
+        // target: "ws://localhost",
+        target: "wss://18.141.225.236",
         changeOrigin: true,
         secure: false,
       },

@@ -10,10 +10,11 @@
 		"bootstrap": "pnpm i",
 		"db": "docker compose -f ./docker-compose.dev.yml up",
 		"db:down": "docker compose -f ./docker-compose.dev.yml down",
-		"dev": "pnpm run db && pnpm --parallel -F frontend dev",
-		"up": "docker compose up --build -d",
+		"dev": "pnpm run db -d && pnpm --parallel -F frontend dev",
+		"up": "docker compose up",
 		"down": "docker compose down",
-		"serve": "pnpm run up && pnpm -F backend serve",
+		"preview:fe": "pnpm -F frontend build && pnpm -F frontend preview",
+		"serve": "pnpm run up --build -d && pnpm run preview:fe",
 		"lint:eslint": "pnpm -F frontend -F backend lint:eslint",
 		"lint:prettier": "pnpm -F frontend -F backend lint:prettier",
 		"test": "pnpm -F frontend -F backend test",
@@ -23,10 +24,10 @@
 		"packages/*"
 	],
 	"devDependencies": {
-		"lint-staged": "^13.2.2",
-		"stylelint": "^15.6.2",
-		"stylelint-config-standard": "^33.0.0",
+		"lint-staged": "^13.3.0",
 		"simple-git-hooks": "^2.11.1",
+		"stylelint": "^15.11.0",
+		"stylelint-config-standard": "^33.0.0",
 		"stylelint-config-standard-scss": "^9.0.0"
 	},
 	"simple-git-hooks": {
