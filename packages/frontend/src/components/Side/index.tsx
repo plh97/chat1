@@ -4,7 +4,9 @@ import { AddRoomDialog } from "./AddRoomDialog";
 import { AddFriendDialog } from "./AddFriendDialog";
 import classNames from "classnames";
 import { IconButton } from "@chakra-ui/react";
-import { FaBars, FaPlus } from "react-icons/fa";
+import { FaBars } from "react-icons/fa";
+import { FaXmark } from "react-icons/fa6";
+
 import { PropsWithChildren } from "react";
 
 export function SideComponent({
@@ -56,7 +58,7 @@ export function Side() {
             setOpen(!open);
           }}
           isRound
-          icon={open ? <FaPlus /> : <FaBars />}
+          icon={open ? <FaXmark /> : <FaBars />}
         />
       </span>
       <div
