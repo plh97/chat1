@@ -20,9 +20,12 @@ export const Upload = async (ctx: Context) => {
   const ext = mime.getType(fileType);
   const name = `${Math.random().toString().replace(/0./, "")}.${ext}`;
   // TODO: cannot find in cloud server
-  const newpath = path.resolve(__dirname, "../../", "public/static", name);
-  console.log(newpath);
-  const toPath = fs.createWriteStream(newpath);
+  const newpath = path.resolve(__dirname, "../../", "public/api/static");
+  const isFile = fs.existsSync(newpath);
+  if (!isFile) {
+    fs.mkdirSync(newpath);
+  }
+  const toPath = fs.createWriteStream(newpath + "/" + name);
   const stream = fs.createReadStream(file.path).pipe(toPath);
   await new Promise<void>((resolve) => {
     stream.on("finish", () => {
@@ -37,7 +40,7 @@ export const Upload = async (ctx: Context) => {
       duration,
       size: file.size,
       extension: ext,
-      url: `/static/${name}`,
+      url: `/api/static/${name}`,
     },
   };
 };
