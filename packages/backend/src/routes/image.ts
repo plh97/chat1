@@ -19,7 +19,9 @@ export const Upload = async (ctx: Context) => {
   const fileType = file.type?.split(";")[0];
   const ext = mime.getType(fileType);
   const name = `${Math.random().toString().replace(/0./, "")}.${ext}`;
-  const newpath = path.resolve("public/static", name);
+  // TODO: cannot find in cloud server
+  const newpath = path.resolve(__dirname, "../../", "public/static", name);
+  console.log(newpath);
   const toPath = fs.createWriteStream(newpath);
   const stream = fs.createReadStream(file.path).pipe(toPath);
   await new Promise<void>((resolve) => {
