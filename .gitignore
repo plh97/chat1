@@ -2,7 +2,7 @@ node_modules/
 mongodb/data/
 *.log
 dist
-static
+static/*
 .DS_Store
 .eslintcache
 # terraform/variable.tf
