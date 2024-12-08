@@ -21,8 +21,7 @@ const whiteList = [
   "/api/userImage",
   "/api/upload",
   "/ws",
-  "/static/*",
-  "/public/*",
+  "/api/static/*",
 ];
 
 app
