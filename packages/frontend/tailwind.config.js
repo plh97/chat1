@@ -1,4 +1,5 @@
 import { fontFamily } from "tailwindcss/defaultTheme";
+import safeArea from "tailwindcss-safe-area";
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -64,7 +65,9 @@ export default {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    safeArea,
+  ],
   container: {
     center: true,
     padding: "2rem",
