@@ -6,7 +6,7 @@
 //   channelId: { type: Schema.Types.String, required: true },
 //   textMessage: undefined || {
 //     text: String,
-//     methion: [],
+//     mention: [],
 //   },
 //   mediaMessage: undefined || {
 //     url: String,

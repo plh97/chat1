@@ -10,7 +10,7 @@
 		"bootstrap": "pnpm i",
 		"db": "docker compose -f ./docker-compose.dev.yml up",
 		"db:down": "docker compose -f ./docker-compose.dev.yml down",
-		"dev": "pnpm --parallel -F frontend dev",
+		"dev": "pnpm --parallel -F frontend -F db dev",
 		"up": "docker compose up",
 		"down": "docker compose down",
 		"preview:fe": "pnpm -F frontend build && pnpm -F frontend preview",

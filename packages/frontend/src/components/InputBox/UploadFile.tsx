@@ -1,7 +1,11 @@
 import { IconButton } from "@chakra-ui/react";
 import { FiUpload } from "react-icons/fi";
 
-export function UploadFile({ onUpload }: { onUpload: (file: File) => void }) {
+export const UploadFile = ({
+  onUpload,
+}: {
+  onUpload: (file: File) => void;
+}) => {
   const inputRef = useRef<HTMLInputElement>(null);
   return (
     <>
@@ -26,4 +30,4 @@ export function UploadFile({ onUpload }: { onUpload: (file: File) => void }) {
       />
     </>
   );
-}
+};

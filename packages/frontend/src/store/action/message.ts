@@ -1,7 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { WS_EVENT } from "core";
 import { formatMessage } from "@/utils/formatMessage";
-import { addMessage, markReadMessage, recallExistMessage, updateRecallMessage } from "../reducer/room";
+import { addMessage, markReadMessage, recallExistMessage, scrollToEnd } from "../reducer/room";
 import { IMessage, IRoom } from "@/interfaces";
 import { topUserRoom, updateUserLastMsg, updateUserRoomReadSeq } from "../reducer/user";
 
@@ -36,6 +36,7 @@ export const sendMessageAction = createAsyncThunk<void, Partial<IMessage>>(
         },
       })
     );
+    dispatch(scrollToEnd());
   }
 );
 

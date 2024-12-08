@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   // output = "../src/db"
   binaryTargets = ["native", "linux-arm64-openssl-3.0.x"]
 }
@@ -107,7 +107,7 @@ type MediaMessage {
 
 type TextMessage {
   text    String
-  methion String[]
+  mention String[]
 }
 
 enum SystemActionType {
@@ -126,6 +126,6 @@ type SystemMessage {
 }
 
 type RecallMessage {
-  operator String
+  operator    String
   recallMsgId String
 }

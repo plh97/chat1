@@ -22,7 +22,7 @@ export const useDraft = (
           channelId: afterRoute.current,
           textMessage: {
             text,
-            methion: [],
+            mention: [],
           },
         })
       );

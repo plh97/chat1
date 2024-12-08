@@ -1,10 +1,10 @@
+import { FiSend, FiPause } from "react-icons/fi";
+import { IconButton } from "@chakra-ui/react";
+import { FaRecordVinyl } from "react-icons/fa";
 import { useAppSelector } from "@/hooks/app";
 import { scrollToEnd } from "@/store/reducer/room";
 import { sendMessageAction } from "@/store/action/message";
 import { formatTime, getImgFromClip } from "@/utils";
-import { FiSend, FiPause } from "react-icons/fi";
-import { IconButton } from "@chakra-ui/react";
-import { FaRecordVinyl } from "react-icons/fa";
 import { useRecord } from "@/hooks/useRecord";
 import { Input } from "./input";
 import { IMediaMessage } from "@/interfaces";
@@ -21,8 +21,9 @@ export function InputBox() {
   const [text, setText] = useState("");
   const { startRecording, stopRecording, time } = useRecord();
   useDraft(text, setText);
-  const handleSendMedia = async (file: File, duration?: string) => {
-    await dispatch(
+  const handleSendMedia = (file: File, duration?: string) => {
+    if (!userInfo?.id || !room?.id) return;
+    dispatch(
       sendMessageAction({
         contentType: "MEDIA_MESSAGE",
         userId: userInfo.id,
@@ -33,7 +34,6 @@ export function InputBox() {
         } as IMediaMessage,
       })
     );
-    dispatch(scrollToEnd());
   };
   const handlePaste = async () => {
     const file = await getImgFromClip();
@@ -49,7 +49,7 @@ export function InputBox() {
         channelId: room.id,
         textMessage: {
           text: trimText,
-          methion: [],
+          mention: [],
         },
       })
     );
@@ -57,7 +57,7 @@ export function InputBox() {
     setText("");
     dispatch(scrollToEnd());
   };
-  const utilMome = useMemo(() => {
+  const utilComponent = useMemo(() => {
     if (text) {
       return (
         <IconButton
@@ -87,7 +87,7 @@ export function InputBox() {
     }
     return (
       <>
-        <UploadFile onUpload={handleSendMedia} />
+        <UploadFile onUpload={(...arg) => handleSendMedia(...arg)} />
         <IconButton
           onClick={async () => {
             startRecording().catch((e) => {
@@ -107,7 +107,7 @@ export function InputBox() {
         />
       </>
     );
-  }, [time, text]);
+  }, [time, text, userInfo, room]);
 
   return (
     <div className="box-border flex flex-row gap-3 flex-0 basis-20 pt-0 pb-5 px-3">
@@ -128,7 +128,7 @@ export function InputBox() {
           aria-label="maximum height"
         />
       )}
-      {utilMome}
+      {utilComponent}
     </div>
   );
 }

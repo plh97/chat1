@@ -13,10 +13,6 @@ export const personIcon = "/naruto2.jpeg";
 export const roomIcon =
   "https://static.okx.com/cdn/assets/imgs/221/A60595EC12C04739.png";
 
-const MONGODB_IP = process.env.MONGODB_IP ?? "127.0.0.1";
-
-export const DATABASE_URL = `mongodb://${MONGODB_IP}:27017`;
-
 export const CookieConfig: Cookies.SetOption = {
   maxAge: 7 * 24 * 60 * 60 * 1000,
   httpOnly: false,

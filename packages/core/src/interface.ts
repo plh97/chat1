@@ -21,7 +21,7 @@ export type CHANNEL_TYPE = `room:${string}` | `userinfo:${string}`;
 
 export interface ITextMessage {
   text: string;
-  methion: string[];
+  mention: string[];
 }
 
 export interface IMediaMessage extends MediaMessage {
