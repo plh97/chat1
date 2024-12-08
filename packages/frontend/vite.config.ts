@@ -109,23 +109,16 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      "/static": {
-        target: "https://localhost",
-        // target: "https://18.141.225.236",
-        changeOrigin: true,
-        secure: false,
-        // rewrite: (path) => path.replace(/^\/api/, "/api"),
-      },
       "/api": {
-        target: "https://localhost",
-        // target: "https://18.141.225.236",
+        // target: "https://localhost",
+        target: "https://c.plhh.xyz",
         changeOrigin: true,
         secure: false,
         // rewrite: (path) => path.replace(/^\/api/, "/api"),
       },
       "/ws": {
-        target: "ws://localhost",
-        // target: "wss://18.141.225.236",
+        // target: "ws://localhost",
+        target: "ws://18.141.225.236",
         changeOrigin: true,
         secure: false,
       },

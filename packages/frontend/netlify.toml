@@ -6,7 +6,7 @@
 
 [[redirects]]
   from = "/ws/*"
-  to = "http://18.141.225.236/ws/:splat"
+  to = "ws://18.141.225.236/ws/:splat"
   status = 200
   force = true # COMMENT: ensure that we always redirect
 
