@@ -7,7 +7,7 @@
 export {}
 declare global {
   const Avatar: typeof import('@chakra-ui/react')['Avatar']
-  const AvatarComponnet: typeof import('./src/components/Avatar')['AvatarComponnet']
+  const AvatarComponent: typeof import('./src/components/Avatar')['AvatarComponent']
   const Axios: typeof import('axios')['default']
   const Button: typeof import('@chakra-ui/react')['Button']
   const ChakraProvider: typeof import('@chakra-ui/react')['ChakraProvider']

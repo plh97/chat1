@@ -18,20 +18,29 @@ export function Item({ data: message, setIsOpen }: IProps): JSX.Element {
   const myUserInfo = useAppSelector((state) => state.user.data);
   const room = useAppSelector((state) => state.room.data);
   const isMe = myUserInfo?.id === message?.user?.id;
-  const temp = MessageTemplate[message.contentType];
-  if (!temp) return <></>;
-  const { Component } = temp(message, room);
+  const Component = useMemo(() => {
+    const temp = MessageTemplate[message.contentType];
+    if (!temp) return null;
+    const { Component } = temp(message, room);
+    return <Component />;
+  }, [
+    message,
+    message?.contentType,
+    message?.mediaMessage,
+    message?.user,
+    room,
+  ]);
   if (message.contentType === "SYSTEM_MESSAGE") {
     return (
       <div ref={ref}>
-        <Component />
+        {Component}
       </div>
     );
   }
   if (message.contentType === "RECALL_MESSAGE") {
     return (
       <div ref={ref}>
-        <Component />
+        {Component}
       </div>
     );
   }
@@ -46,7 +55,7 @@ export function Item({ data: message, setIsOpen }: IProps): JSX.Element {
     let x = e.clientX;
     const y = e.clientY;
     if (x + menu.clientWidth > pageW) {
-      x -= menu.clientWidth
+      x -= menu.clientWidth;
     }
     Object.assign(popper.style, {
       top: `${y}px`,
@@ -62,7 +71,7 @@ export function Item({ data: message, setIsOpen }: IProps): JSX.Element {
         "flex-row-reverse": isMe,
       })}
     >
-      <AvatarComponnet
+      <AvatarComponent
         size="md"
         name={message?.user?.username}
         src={message?.user?.image}
@@ -71,7 +80,7 @@ export function Item({ data: message, setIsOpen }: IProps): JSX.Element {
         onContextMenu={onContextMenu}
         className="mx-2.5 max-w-[60%] rounded-lg overflow-hidden whitespace-pre-wrap bg-gray-800 shadow-md"
       >
-        <Component />
+        {Component}
       </div>
       <Indicator message={message} />
     </div>

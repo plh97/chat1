@@ -1,4 +1,4 @@
-import { AvatarComponnet } from "../Avatar";
+import { AvatarComponent } from "../Avatar";
 import { MessageTemplate } from "@/messages";
 import { IRoom, IMessage } from "@/interfaces";
 import { cn } from "@/utils";
@@ -49,7 +49,7 @@ const ItemOriginal = ({ myId, room, active, draft, unreadCount }: IProps) => {
           { "bg-white/10": active }
         )}
       >
-        <AvatarComponnet name={name} src={image} count={unreadCount} />
+        <AvatarComponent name={name} src={image} count={unreadCount} />
         <span className="ml-2 flex-1 inline-flex flex-col leading-4 w-20">
           <span className="font-bold text-base break-all whitespace-nowrap text-ellipsis overflow-hidden leading-4">
             {name}

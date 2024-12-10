@@ -41,14 +41,14 @@ export const VideoMsg = ({ message }: { message: IMediaMessage }) => {
         <video controls autoPlay src={message.url} />
       ) : (
         <>
-          <span className="absolute">
+          <span className="absolute z-10">
             <IconButton
               onClick={() => setPlaying(true)}
               aria-label="play button"
               icon={<FaPlay />}
             />
           </span>
-          <ProgressImage thumbnail={message.thumbnail} url={message.url} />
+          <ProgressImage message={message} />
         </>
       )}
     </div>

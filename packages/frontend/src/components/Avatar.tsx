@@ -16,7 +16,7 @@ const generateColor = (name: string) => {
   return randomColor;
 };
 
-export const AvatarComponnet = ({
+export const AvatarComponent = ({
   name = "?",
   src,
   size = "xl",
