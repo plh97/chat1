@@ -1,12 +1,8 @@
 {
-  "rewrites": [
+  "redirects": [
     {
       "source": "/api/:path*",
       "destination": "http://18.141.225.236/api/:path*`,"
-    },
-    {
-      "source": "/ws",
-      "destination": "http://18.141.225.236/ws"
     }
   ]
 }
