@@ -7,7 +7,7 @@
     },
     {
       "source": "/ws",
-      "destination": "ws://18.141.225.236/ws"
+      "destination": "ws://18.141.225.236/ws/:path*"
     }
   ]
 }
