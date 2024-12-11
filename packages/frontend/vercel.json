@@ -6,8 +6,8 @@
       "destination": "http://18.141.225.236/api/:path*"
     },
     {
-      "source": "/ws/:path*",
-      "destination": "ws://18.141.225.236/ws/:path*"
+      "source": "/ws",
+      "destination": "ws://18.141.225.236/ws"
     }
   ]
 }
