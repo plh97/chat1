@@ -6,7 +6,11 @@
       "destination": "https://18.141.225.236/api/:path*"
     },
     {
-      "source": "/((?!api/).*)", "destination": "/index.html"
+      "source": "/ws/:path*",
+      "destination": "wss://18.141.225.236/ws/:path*"
+    },
+    {
+      "source": "/((?!(api|ws)/).*)", "destination": "/index.html"
     }
   ]
 }
