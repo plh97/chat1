@@ -8,6 +8,9 @@
     {
       "source": "/ws",
       "destination": "wss://18.141.225.236/ws"
+    },
+    {
+      "source": "/(.*)", "destination": "/index.html"
     }
   ],
   "redirects": [
