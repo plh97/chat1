@@ -15,8 +15,8 @@
   ],
   "redirects": [
     {
-      "source": "/*",
-      "destination": "index.html",
+      "source": "/(.*)",
+      "destination": "/index.html",
       "permanent": true,
       "statusCode": 200
     }
