@@ -2,23 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "https://18.141.225.236/api/:path*"
-    },
-    {
-      "source": "/ws/:path*",
-      "destination": "wss://18.141.225.236/ws/:path*"
-    },
-    {
       "source": "/(.*)", "destination": "/index.html"
-    }
-  ],
-  "redirects": [
-    {
-      "source": "/(.*)",
-      "destination": "/index.html",
-      "permanent": true,
-      "statusCode": 200
     }
   ]
 }
