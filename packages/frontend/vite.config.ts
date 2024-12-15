@@ -110,17 +110,17 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        // target: "https://localhost",
+        target: "https://localhost",
         // target: "https://18.141.225.236",
-        target: "https://c-delta-eight.vercel.app/",
+        // target: "https://c-delta-eight.vercel.app/",
         changeOrigin: true,
         secure: false,
         // rewrite: (path) => path.replace(/^\/api/, "/api"),
       },
       "/ws": {
-        // target: "wss://localhost",
-        target: "wss://18.141.225.236",
-        // target: "https://c-delta-eight.vercel.app/",
+        target: "wss://localhost",
+        // target: "wss://18.141.225.236/",
+        // target: "ws://c-delta-eight.vercel.app/",
         changeOrigin: true,
         secure: false,
       },

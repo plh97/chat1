@@ -1,7 +1,5 @@
 FROM nginx
 
-COPY ssl /etc/nginx/certs/
+COPY . /etc/nginx/
 
 COPY ./html /usr/share/nginx/html
-
-EXPOSE 8081
