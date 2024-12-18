@@ -1,9 +1,18 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { WS_EVENT } from "core";
 import { formatMessage } from "@/utils/formatMessage";
-import { addMessage, markReadMessage, recallExistMessage, scrollToEnd } from "../reducer/room";
+import {
+  addMessage,
+  markReadMessage,
+  recallExistMessage,
+  scrollToEnd,
+} from "../reducer/room";
 import { IMessage, IRoom } from "@/interfaces";
-import { topUserRoom, updateUserLastMsg, updateUserRoomReadSeq } from "../reducer/user";
+import {
+  topUserRoom,
+  updateUserLastMsg,
+  updateUserRoomReadSeq,
+} from "../reducer/user";
 
 const { toast } = createStandaloneToast();
 
@@ -48,7 +57,10 @@ export const markReadMessageThunk = createAsyncThunk<void, Partial<IMessage>>(
       ...message,
       contentType: "READ_MESSAGE",
     };
-    const wsRes = await ws.sendMsgPromise<IRoom>(readMessage, WS_EVENT.READ_MSG);
+    const wsRes = await ws.sendMsgPromise<IRoom>(
+      readMessage,
+      WS_EVENT.READ_MSG
+    );
     if (wsRes.code === 1) {
       toast({
         description: wsRes.message,
@@ -66,7 +78,6 @@ export const markReadMessageThunk = createAsyncThunk<void, Partial<IMessage>>(
   }
 );
 
-
 export const recallMessageThunk = createAsyncThunk<void, Partial<IMessage>>(
   `recallMessage`,
   async (message, { dispatch }) => {
@@ -75,7 +86,10 @@ export const recallMessageThunk = createAsyncThunk<void, Partial<IMessage>>(
       ...message,
       contentType: "RECALL_MESSAGE",
     };
-    const wsRes = await ws.sendMsgPromise<IMessage>(recallMessage, WS_EVENT.RECALL_MSG);
+    const wsRes = await ws.sendMsgPromise<IMessage>(
+      recallMessage,
+      WS_EVENT.RECALL_MSG
+    );
     if (wsRes.code === 1) {
       toast({
         description: wsRes.message,

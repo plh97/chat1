@@ -13,6 +13,7 @@ export class SocketClient {
   eventEmitter: EventEmitter;
   promiseMap: Record<string, Promisify> = {};
   url: string;
+  isError = false;
   constructor(url: string) {
     this.url = url;
     this.eventEmitter = new EventEmitter();
@@ -25,11 +26,15 @@ export class SocketClient {
     });
   };
 
-  private open = async () => {
-    console.log("open");
+  private open = async (e: any) => {
+    console.log("open", e);
     // handle something else logic here
     // 0. add heart beat
     this.heartBeat();
+    if (this.isError) {
+      this.eventEmitter.emit(WS_EVENT.RECONNECT, e);
+      this.isError = false;
+    }
   };
 
   destroy() {
@@ -44,6 +49,7 @@ export class SocketClient {
   // handle close logic
   close(error: unknown) {
     console.log("[WS] close", error);
+    this.isError = true;
     setTimeout(() => {
       this.init();
     }, 1000);

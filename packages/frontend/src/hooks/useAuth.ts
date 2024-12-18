@@ -1,15 +1,15 @@
 import { useMatch } from "react-router-dom";
 import { fetchUserInfoThunk } from "@/store/reducer/user";
-import { useAppDispatch, useAppSelector } from "./app";
+import { useAppSelector } from "./app";
 
 export default function useAuth() {
-  const dispatch = useAppDispatch();
+  const dispatch = useThunkDispatch();
   const isLogin = useMatch("login");
   const isRegister = useMatch("register");
   const navigation = useNavigate();
   const userinfo = useAppSelector((state) => state.user);
   useEffect(() => {
-    dispatch(fetchUserInfoThunk() as any);
+    dispatch(fetchUserInfoThunk());
   }, []);
   useEffect(() => {
     if (isLogin || isRegister) {

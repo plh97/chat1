@@ -4,9 +4,12 @@ import {
   updateUserRoomReadSeq,
   topUserRoom,
   updateUserLastMsg,
+  fetchUserInfoThunk,
 } from "@/store/reducer/user";
 import {
   addMessage,
+  getRoomInfoThunk,
+  initialMessage,
   markReadMessage,
   recallExistMessage,
   scrollToEnd,
@@ -77,7 +80,23 @@ const useSubscribeRecallMsg = () => {
   }, []);
 };
 
-
+const useReconnect = () => {
+  const { id = "" } = useParams();
+  const dispatch = useAppDispatch();
+  const onReconnect = () => {
+    dispatch(fetchUserInfoThunk());
+    if (id) {
+      dispatch(initialMessage({ message: [], totalCount: 0 }));
+      dispatch(getRoomInfoThunk(id));
+    }
+  };
+  useEffect(() => {
+    ws.eventEmitter.on(WS_EVENT.RECONNECT, onReconnect);
+    return () => {
+      ws.eventEmitter.off(WS_EVENT.RECONNECT, onReconnect);
+    };
+  }, []);
+};
 
 export default function useWebsocket() {
   if (
@@ -93,4 +112,5 @@ export default function useWebsocket() {
   useSubscribeSendMsg(roomRef);
   useSubscribeReadMsg();
   useSubscribeRecallMsg();
+  useReconnect();
 }
