@@ -66,7 +66,7 @@ export default {
     },
   },
   plugins: [
-    safeArea,
+    require("tailwindcss-safe-area"),
   ],
   container: {
     center: true,

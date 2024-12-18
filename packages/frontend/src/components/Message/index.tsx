@@ -5,7 +5,7 @@ import { IoArrowUndoOutline } from "react-icons/io5";
 import { recallMessageThunk } from "@/store/action/message";
 import { updateRecallMessage } from "@/store/reducer/room";
 
-export function Message() {
+export function Message({ className }: { className?: string }) {
   const dispatch = useThunkDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const room = useAppSelector((state) => state.room.data);

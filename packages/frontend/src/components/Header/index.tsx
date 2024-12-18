@@ -1,6 +1,7 @@
 import { WrapItem } from "@chakra-ui/react";
 import { Config } from "./config";
 import { Loading } from "./Loading";
+import classNames from "classnames";
 
 export function Content() {
   const room = useAppSelector((state) => state.room.data);
@@ -30,9 +31,14 @@ export function Content() {
   );
 }
 
-export function Header() {
+export function Header({ className }: { className?: string }) {
   return (
-    <div className="shadow-2xl z-10 bg-slate-800 flex items-center justify-between px-4 py-2 border-b">
+    <div
+      className={classNames(
+        "shadow-2xl z-10 bg-slate-800 flex items-center justify-between px-4 py-2 border-b",
+        className
+      )}
+    >
       <div className="flex flex-1 items-center">
         <Content />
       </div>

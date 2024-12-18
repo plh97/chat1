@@ -10,11 +10,12 @@ import { Input } from "./input";
 import { IMediaMessage } from "@/interfaces";
 import { UploadFile } from "./UploadFile";
 import { useDraft } from "./useDraft";
+import classNames from "classnames";
 
 const MAX_INPUT = 2000;
 const { toast } = createStandaloneToast();
 
-export function InputBox() {
+export function InputBox({ className }: { className?: string }) {
   const room = useAppSelector((state) => state.room.data);
   const userInfo = useAppSelector((state) => state.user.data);
   const dispatch = useThunkDispatch();
@@ -110,7 +111,12 @@ export function InputBox() {
   }, [time, text, userInfo, room]);
 
   return (
-    <div className="box-border flex flex-row gap-3 flex-0 basis-20 pt-0 pb-5 px-3">
+    <div
+      className={classNames(
+        "box-border flex flex-row gap-3 flex-0 basis-20 pt-0 pb-5 px-3",
+        className
+      )}
+    >
       {!time ? (
         <Input
           maxLength={MAX_INPUT}

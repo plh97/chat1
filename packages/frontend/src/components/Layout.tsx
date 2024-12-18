@@ -6,7 +6,7 @@ interface LayoutProps {
 
 export function Layout(props: LayoutProps) {
   return (
-    <div className="h-full flex pt-safe px-safe pb-safe">
+    <div className="h-full flex">
       <Side />
       <div className="w-[calc(100%-288px)] flex flex-1 flex-col">
         {props.children}
