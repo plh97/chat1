@@ -9,12 +9,13 @@ type Promisify = {
 };
 
 export class SocketClient {
-  socket: WebSocket;
+  socket?: WebSocket;
   eventEmitter: EventEmitter;
   promiseMap: Record<string, Promisify> = {};
+  url: string;
   constructor(url: string) {
+    this.url = url;
     this.eventEmitter = new EventEmitter();
-    this.socket = new WebSocket(url, getToken());
     this.init();
   }
 
@@ -34,24 +35,29 @@ export class SocketClient {
   destroy() {
     // handle destroy logic
     console.log("destroy");
-    this.socket.close();
-    this.socket.removeEventListener("message", this.heartBeatFn);
-    this.socket.removeEventListener("message", this.onMessageReceice);
+    this.socket?.close();
+    this.socket?.removeEventListener("message", this.heartBeatFn);
+    this.socket?.removeEventListener("message", this.onMessageReceive);
     // this.socket = null;
   }
 
   // handle close logic
-  close() {
-    console.log("[WS] close");
+  close(error: unknown) {
+    console.log("[WS] close", error);
+    setTimeout(() => {
+      this.init();
+    }, 1000);
   }
 
   // handle reconect logic
-  error() {
-    console.log("[WS] error");
+  error(error: unknown) {
+    console.log("[WS] error", error);
   }
 
-  async init() {
-    await this.createWS(this.open, this.close, this.error);
+  init() {
+    this.socket = new WebSocket(this.url, getToken());
+    this.createWS(this.open, this.close, this.error);
+    window.socket = this.socket;
   }
 
   heartBeatFn = ({ data }: any) => {
@@ -62,25 +68,25 @@ export class SocketClient {
     }
   };
   heartBeat = () => {
-    this.socket.addEventListener("message", this.heartBeatFn);
+    this.socket?.addEventListener("message", this.heartBeatFn);
     this.send("ping");
   };
 
   createWS = (open: CB, close: CB, error: CB): Promise<void> => {
     return new Promise((resolve) => {
-      this.socket.addEventListener("open", () => {
-        if (this.socket.readyState === WebSocket.OPEN) {
+      this.socket?.addEventListener("open", () => {
+        if (this.socket?.readyState === WebSocket.OPEN) {
           open();
           resolve();
         }
       });
-      this.socket.addEventListener("close", close);
-      this.socket.addEventListener("message", this.onMessageReceice);
-      this.socket.addEventListener("error", error);
+      this.socket?.addEventListener("close", close.bind(this));
+      this.socket?.addEventListener("message", this.onMessageReceive);
+      this.socket?.addEventListener("error", error.bind(this));
     });
   };
 
-  onMessageReceice = ({ data }: any) => {
+  onMessageReceive = ({ data }: any) => {
     // handle heart beat
     if (data === "pong") {
       return;
@@ -101,9 +107,9 @@ export class SocketClient {
 
   send = (data: object | string) => {
     if (typeof data === "object") {
-      this.socket.send(JSON.stringify(data));
+      this.socket?.send(JSON.stringify(data));
     } else {
-      this.socket.send(data);
+      this.socket?.send(data);
     }
   };
 
