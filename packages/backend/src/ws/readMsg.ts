@@ -18,11 +18,17 @@ export const handleReadMsg = async (message: IMessage) => {
       [message?.readMessage?.operator]: message.readMessage?.lastReadSeq,
     });
   }
-  const room = await RoomModel.update({
+  await RoomModel.update({
     where: { id: message.channelId },
     data: {
       readSeq: readSeq,
     },
   });
-  return room;
+  return {
+    ...message,
+    readMessage: {
+      ...message.readMessage,
+      readSeq: readSeq,
+    }
+  } as IMessage;
 };

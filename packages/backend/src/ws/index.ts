@@ -7,20 +7,22 @@ import { handleReadMsg } from "./readMsg";
 import { handleSendMsg } from "./sendMsg";
 import { handleRecallMsg } from "./recallMsg";
 
-export const onMsgReceive: IOnMsgReceive = async (objMsg, socket, ws) => {
-  try {
-    jwt.verify(socket.protocol, privateKey) as string;
-  } catch (error: any) {
-    socket.send(
-      JSON.stringify({
-        code: 1,
-        message: error.message,
-        event: objMsg.event,
-        requestId: objMsg.requestId,
-        data: null,
-      })
-    );
-    return;
+export const onMsgReceive: IOnMsgReceive = async (objMsg, ws, socket) => {
+  if (socket) {
+    try {
+      jwt.verify(socket.protocol, privateKey) as string;
+    } catch (error: any) {
+      socket.send(
+        JSON.stringify({
+          code: 1,
+          message: error.message,
+          event: objMsg.event,
+          requestId: objMsg.requestId,
+          data: null,
+        })
+      );
+      return;
+    }
   }
   const { data, event } = objMsg as IWsData<IMessage>;
   const room = await RoomModel.findUnique({
@@ -28,17 +30,17 @@ export const onMsgReceive: IOnMsgReceive = async (objMsg, socket, ws) => {
     include: { message: true },
   });
   let broadcastData = null;
-  if (event === WS_EVENT.READ_MSG) {
-    broadcastData = await handleReadMsg(data);
-  }
   if (event === WS_EVENT.SEND_MSG) {
-    broadcastData = await handleSendMsg(data);
-  }
-  if (event === WS_EVENT.RECALL_MSG) {
-    broadcastData = await handleRecallMsg(data);
+    if (data.contentType === "RECALL_MESSAGE") {
+      broadcastData = await handleRecallMsg(data);
+    } else if (data.contentType === "READ_MESSAGE") {
+      broadcastData = await handleReadMsg(data);
+    } else {
+      broadcastData = await handleSendMsg(data);
+    }
   }
   if (!broadcastData) {
-    socket.send(
+    socket?.send(
       JSON.stringify({
         code: 1,
         event,

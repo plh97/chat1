@@ -1,4 +1,4 @@
-import { IMessage, IRoom } from "@/interface";
+import { IMessage } from "@/interface";
 import { RoomModel } from "@/model/room";
 
 export const handleSendMsg = async (data: IMessage) => {
@@ -21,7 +21,7 @@ export const handleSendMsg = async (data: IMessage) => {
       where: { id: msg.channelId },
       data: {
         message: {
-          create: [msg],
+          create: [msg as any],
         },
         updatedAt: new Date(),
         readSeq: {

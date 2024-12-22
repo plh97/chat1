@@ -1,6 +1,5 @@
 import WebSocket, { RawData, WebSocketServer } from "ws";
 import { Server as HttpServer } from "http";
-import { WS_EVENT } from "./constants";
 import { IWsData, IOnMsgReceive } from "./interface";
 
 export * from "./constants";
@@ -18,7 +17,7 @@ export class SocketServer {
   onMsgReceive(msg: string, socket: WebSocket, cb: IOnMsgReceive) {
     try {
       const objMsg: IWsData = JSON.parse(msg);
-      cb(objMsg, socket, this.ws!);
+      cb(objMsg, this.ws!, socket);
     } catch (error) {
       console.error(error);
     }

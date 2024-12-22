@@ -1,7 +1,7 @@
 import { Side } from "./Side";
 
 interface LayoutProps {
-  children?: React.ReactNode;
+  readonly children?: React.ReactNode;
 }
 
 export function Layout(props: LayoutProps) {

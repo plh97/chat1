@@ -5,6 +5,8 @@ import { RoomModel } from "@/model/room";
 import { privateKey } from "@/config";
 import { handleSendMsg } from "@/ws/sendMsg";
 import { sendWs } from "@/utils/sendWs";
+import { onMsgReceive } from "@/ws";
+import { WS_EVENT } from "core";
 
 export const getRoom = async (ctx: Context) => {
   const id = (ctx.request.query.id as string) ?? "";
@@ -20,7 +22,7 @@ export const getRoom = async (ctx: Context) => {
         },
       },
       member: true,
-      creater: true,
+      creator: true,
       admin: true,
     },
   });
@@ -48,24 +50,36 @@ export const getRoom = async (ctx: Context) => {
 
 export const addRoom = async (ctx: Context) => {
   const body = ctx.request.body;
+  const ws: WebSocketServer = ctx.ws;
   const newRoom = await RoomModel.create({
     data: body,
     include: {
       message: true,
-      creater: true,
+      creator: true,
     },
   });
-  // @ts-ignore
-  handleSendMsg({
+  const data = {
     contentType: "SYSTEM_MESSAGE",
-    userId: newRoom.createrId,
+    userId: newRoom.creatorId,
     channelId: newRoom.id,
     systemMessage: {
-      targetList: [newRoom.createrId],
-      operator: newRoom.createrId,
+      targetList: [newRoom.creatorId],
+      operator: newRoom.creatorId,
       actionType: "CREATE_ROOM",
     },
-  });
+  };
+  onMsgReceive(
+    {
+      event: WS_EVENT.SEND_MSG,
+      data,
+      requestId: "",
+      message: "",
+      code: 0,
+    },
+    ws
+  );
+  // @ts-ignore
+  handleSendMsg(data);
   ctx.body = {
     code: 0,
     message: "Create room success",
@@ -88,7 +102,7 @@ export const updateRoom = async (ctx: Context) => {
     },
     include: {
       member: true,
-      creater: true,
+      creator: true,
       admin: true,
     },
   });

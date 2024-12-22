@@ -111,12 +111,13 @@ export const userSlice = createSlice({
       }
     },
     // update room readSeq
-    updateUserRoomReadSeq(state, action: PayloadAction<Partial<IRoom>>) {
-      const room = action.payload;
-      if (room.id) {
-        const _room = state.data.room?.find((r) => r.id === room.id);
-        if (room?.readSeq && _room?.readSeq) {
-          Object.assign(_room.readSeq, room.readSeq);
+    updateUserRoomReadSeq(state, action: PayloadAction<Partial<IMessage>>) {
+      const message = action.payload;
+      if (message.channelId) {
+        const readMessage = message.readMessage;
+        const room = state.data.room?.find((r) => r.id === message.channelId);
+        if (readMessage?.readSeq && room?.readSeq) {
+          Object.assign(room.readSeq, readMessage.readSeq);
         }
       }
     },

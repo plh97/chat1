@@ -103,7 +103,6 @@ const debounce = (fn: Function, delay = 100) => {
   };
 };
 
-
 export const useMsgWatch = (message: IMessage) => {
   const myUserInfo = useAppSelector((state) => state.user.data);
   const room = useAppSelector((state) => state.room.data);
@@ -123,6 +122,7 @@ export const useMsgWatch = (message: IMessage) => {
           readMessage: {
             operator: myUserInfo.id,
             lastReadSeq: message.seq,
+            readSeq: {},
           },
         })
       );

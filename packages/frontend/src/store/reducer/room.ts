@@ -5,6 +5,7 @@ import type { PayloadAction } from "@reduxjs/toolkit";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { IMessage, MESSAGE_REQUEST, IRoom } from "@/interfaces";
 import { fetchUserInfoThunk, shiftRoom } from "./user";
+import { IReadMessage } from "core";
 
 export interface IState {
   id: string;
@@ -32,7 +33,7 @@ const initialState: IState = {
     memberId: [],
     channelType: "PRIVATE",
     // lastMsg?: {},
-    createrId: "",
+    creatorId: "",
     adminId: [],
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -128,7 +129,7 @@ export const roomSlice = createSlice({
     // sync method, just modify state
     markReadMessage(
       state,
-      action: PayloadAction<Pick<IRoom, "id" | "readSeq">>
+      action: PayloadAction<{id: string; readSeq?: IReadMessage["readSeq"]}>
     ) {
       const room = action.payload;
       if (room.id === state.id) {

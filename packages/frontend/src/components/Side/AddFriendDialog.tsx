@@ -55,9 +55,10 @@ export const AddFriendDialog = () => {
           <ModalCloseButton />
           <ModalBody>
             <Form onSubmit={handleAddRoom}>
-              <FormControl id="roomname">
+              <FormControl id="name">
                 <FormLabel>Name: </FormLabel>
                 <Input
+                  autoComplete="off"
                   autoFocus
                   onChange={(e) => {
                     handleSearch(e.target.value);

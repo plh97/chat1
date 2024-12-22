@@ -50,7 +50,7 @@ model User {
   RoomMember  Room[]   @relation(name: "room-member-user", fields: UserId, references: id)
   UserId      String[] @unique
   RoomAdmin   Room[]   @relation(name: "room-admin-user", fields: UserId, references: id)
-  RoomCreater Room?    @relation(name: "room-creater-user")
+  RoomCreator Room?    @relation(name: "room-creator-user")
 }
 
 model Room {
@@ -67,8 +67,8 @@ model Room {
   memberId    String[]
   admin       User[]      @relation("room-admin-user", fields: adminId, references: id)
   adminId     String[]
-  creater     User        @relation("room-creater-user", fields: createrId, references: id)
-  createrId   String      @unique
+  creator     User        @relation("room-creator-user", fields: creatorId, references: id)
+  creatorId   String      @unique
 }
 
 model Message {
@@ -91,6 +91,7 @@ model Message {
 type ReadMessage {
   operator    String
   lastReadSeq Int
+  readSeq     Json        @default("{}")
 }
 
 type MediaMessage {

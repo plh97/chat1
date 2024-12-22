@@ -24,7 +24,7 @@ export const AddRoomDialog = () => {
     const { payload } = await dispatch(
       addRoomThunk({
         name: roomName, // Add a default name or get it from the body
-        createrId: myUserInfo?.id,
+        creatorId: myUserInfo?.id,
         memberId: [myUserInfo?.id],
         adminId: [myUserInfo?.id],
       })
@@ -48,11 +48,11 @@ export const AddRoomDialog = () => {
           <ModalCloseButton />
           <ModalBody>
             <Form onSubmit={handleAddRoom}>
-              <FormControl id="roomname">
+              <FormControl id="name">
                 <FormLabel>Name: </FormLabel>
                 <Input
                   type="text"
-                  autoComplete="true"
+                  autoComplete="off"
                   autoFocus
                   value={roomName}
                   onChange={(e) => setRoomName(e.target.value)}

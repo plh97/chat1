@@ -73,7 +73,7 @@ export function LoginPage() {
             <FormLabel>User Name</FormLabel>
             <Input
               type="text"
-              autoComplete="true"
+              autoComplete="off"
               autoFocus
               value={username}
               onChange={handleInputUsername}

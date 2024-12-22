@@ -1,5 +1,5 @@
 import CSS from "csstype";
-import { ChangeEvent, EventHandler, SyntheticEvent } from "react";
+import { ChangeEvent, SyntheticEvent } from "react";
 
 import { registerThunk } from "@/store/reducer/user";
 
@@ -71,7 +71,7 @@ export function RegisterPage() {
             <FormLabel>User Name</FormLabel>
             <Input
               type="text"
-              autoComplete="true"
+              autoComplete="off"
               autoFocus
               value={username}
               onChange={handleInputUsername}

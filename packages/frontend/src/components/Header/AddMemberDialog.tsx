@@ -58,7 +58,7 @@ export function AddMember() {
           <ModalCloseButton />
           <ModalBody>
             <Form onSubmit={handleAddFriend}>
-              <FormControl id="roomname">
+              <FormControl id="name">
                 <FormLabel>Name: </FormLabel>
                 <CheckboxGroup
                   colorScheme="green"

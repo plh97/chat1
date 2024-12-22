@@ -4,6 +4,7 @@ import type {
   MediaMessage,
   Message,
   ReadMessage,
+  RecallMessage,
   Room,
 } from "db";
 import { WebSocket, WebSocketServer } from "ws";
@@ -13,8 +14,8 @@ export type CB = (...arg: unknown[]) => void;
 
 export type IOnMsgReceive = (
   msg: IWsData,
-  socket: WebSocket,
-  ws: WebSocketServer
+  ws: WebSocketServer,
+  socket?: WebSocket,
 ) => Promise<void>;
 
 export type CHANNEL_TYPE = `room:${string}` | `userinfo:${string}`;
@@ -37,6 +38,9 @@ export interface IMediaMessage extends MediaMessage {
 export interface IReadMessage extends ReadMessage {
   // lastReadSeq: number;
   // operator: string;
+}
+
+export interface IRecallMessage extends RecallMessage {
 }
 
 export interface IMessageCore extends Message {
@@ -65,7 +69,7 @@ export interface IRoomCore extends Room {
   name: string;
   image: string;
   channelType: ChannelType;
-  // creater: Types.ObjectId;
+  // creator: Types.ObjectId;
   admin: string[];
   member: string[];
   createdAt: Date;

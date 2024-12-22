@@ -14,7 +14,15 @@ export class SocketClient {
   promiseMap: Record<string, Promisify> = {};
   url: string;
   isError = false;
-  constructor(url: string) {
+  reconnectTime: number;
+  constructor({
+    url,
+    reconnectTime = 1000,
+  }: {
+    url: string;
+    reconnectTime: number;
+  }) {
+    this.reconnectTime = reconnectTime;
     this.url = url;
     this.eventEmitter = new EventEmitter();
     this.init();
@@ -26,7 +34,7 @@ export class SocketClient {
     });
   };
 
-  private open = async (e: any) => {
+  private readonly open = async (e: any) => {
     console.log("open", e);
     // handle something else logic here
     // 0. add heart beat
@@ -52,7 +60,7 @@ export class SocketClient {
     this.isError = true;
     setTimeout(() => {
       this.init();
-    }, 1000);
+    }, this.reconnectTime);
   }
 
   // handle reconect logic
@@ -63,6 +71,7 @@ export class SocketClient {
   init() {
     this.socket = new WebSocket(this.url, getToken());
     this.createWS(this.open, this.close, this.error);
+    // @ts-ignore
     window.socket = this.socket;
   }
 

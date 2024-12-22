@@ -12,8 +12,9 @@ import socket from "./middleware/server-ws";
 
 export const app = new Koa();
 
-const HTTP_PROT = process.env.PORT || process.env.BACKEND_PORT || 8080;
+const HTTP_PROT = process.env.PORT ?? process.env.BACKEND_PORT ?? 8080;
 // const HTTPS_PROT = 443;
+
 const whiteList = [
   "/api/login",
   "/api/logout",

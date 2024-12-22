@@ -1,7 +1,7 @@
 import { WS_EVENT } from "./constants";
 import { IWsData } from "./interface";
 
-type CbFunction = (data: IWsData) => void;
+export type CbFunction = (data: IWsData) => void;
 
 export class Emitter<EVENT extends string> {
   events = Object.values(WS_EVENT).reduce((c, p) => {

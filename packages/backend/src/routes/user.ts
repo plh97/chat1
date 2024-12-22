@@ -136,7 +136,7 @@ export async function QueryUser(ctx: Context) {
   } else {
     ctx.body = {
       code: 1,
-      message: "Please provide info to query user infomation.",
+      message: "Please provide info to query user information.",
       data: [],
     };
   }
@@ -272,7 +272,7 @@ export async function AddFriend(ctx: Context) {
       // image,
       name: `PRIVATE_CHAT`,
       memberId: [userIdFromToken, id],
-      createrId: userIdFromToken,
+      creatorId: userIdFromToken,
       channelType: "PRIVATE",
       readSeq: {},
     },

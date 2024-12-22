@@ -12,6 +12,7 @@ export type {
   ReadMessage,
   TextMessage,
   ChannelType,
+  RecallMessage,
   ContentType,
   SystemActionType,
 } from "@prisma/client";
