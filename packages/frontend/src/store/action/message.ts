@@ -1,18 +1,9 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { WS_EVENT } from "core";
 import { formatMessage } from "@/utils/formatMessage";
-import {
-  addMessage,
-  markReadMessage,
-  recallExistMessage,
-  scrollToEnd,
-} from "../reducer/room";
+import { addMessage, scrollToEnd } from "../reducer/room";
 import { IMessage } from "@/interfaces";
-import {
-  topUserRoom,
-  updateUserLastMsg,
-  updateUserRoomReadSeq,
-} from "../reducer/user";
+import { topUserRoom, updateUserRoomReadSeq } from "../reducer/user";
 
 const { toast } = createStandaloneToast();
 

@@ -1,4 +1,4 @@
-import { CbFunction, IWsData, WS_EVENT } from "core";
+import { IWsData, WS_EVENT } from "core";
 import { IMessage, IRoom } from "@/interfaces";
 import {
   fetchUserInfoThunk,
