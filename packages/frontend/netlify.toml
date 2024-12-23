@@ -1,19 +1,19 @@
 [[redirects]]
   from = "/api/*"
-  to = "http://18.141.225.236/api/:splat"
+  to = "http://47.129.45.86/api/:splat"
   status = 200
   force = true # COMMENT: ensure that we always redirect
 
 [[redirects]]
   from = "/ws/*"
-  to = "ws://18.141.225.236/ws/:splat"
+  to = "ws://47.129.45.86/ws/:splat"
   status = 200
   force = true # COMMENT: ensure that we always redirect
 
 
 [[redirects]]
   from = "/.well-known/*"
-  to = "http://18.141.225.236/.well-known/:splat"
+  to = "http://47.129.45.86/.well-known/:splat"
   status = 200
   force = true # COMMENT: ensure that we always redirect
 
