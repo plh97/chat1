@@ -1,5 +1,4 @@
 import classNames from "classnames";
-// import { SkeletonCircle, SkeletonText } from "@chakra-ui/react";
 import { MessageTemplate } from "@/messages";
 import { IMessage } from "@/interfaces/IMessage";
 import { Indicator } from "./Indicator";
@@ -8,11 +7,11 @@ import { useMsgWatch } from "./hook";
 import { updateRecallMessage } from "@/store/reducer/room";
 
 interface IProps {
-  data: IMessage;
-  setIsOpen: (isOpen: boolean) => void;
+  readonly data: IMessage;
+  readonly setIsOpen: (isOpen: boolean) => void;
 }
 
-export function Item({ data: message, setIsOpen }: IProps): JSX.Element {
+export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
   const dispatch = useThunkDispatch();
   const ref = useMsgWatch(message);
   const myUserInfo = useAppSelector((state) => state.user.data);
@@ -28,21 +27,12 @@ export function Item({ data: message, setIsOpen }: IProps): JSX.Element {
     message?.contentType,
     message?.mediaMessage,
     message?.user,
-    room,
   ]);
   if (message.contentType === "SYSTEM_MESSAGE") {
-    return (
-      <div ref={ref}>
-        {Component}
-      </div>
-    );
+    return <div ref={ref}>{Component}</div>;
   }
   if (message.contentType === "RECALL_MESSAGE") {
-    return (
-      <div ref={ref}>
-        {Component}
-      </div>
-    );
+    return <div ref={ref}>{Component}</div>;
   }
   const onContextMenu: MouseEventHandler<HTMLDivElement> = (e) => {
     if (!isMe) return;
@@ -51,7 +41,6 @@ export function Item({ data: message, setIsOpen }: IProps): JSX.Element {
     const menu = document.querySelector("[role=menu]")!;
     const popper = menu.parentElement!;
     const pageW = window.innerWidth;
-    // const pageH = window.screen.height;
     let x = e.clientX;
     const y = e.clientY;
     if (x + menu.clientWidth > pageW) {
@@ -86,25 +75,3 @@ export function Item({ data: message, setIsOpen }: IProps): JSX.Element {
     </div>
   );
 }
-
-// TODO: TBC
-// export function SkeletonItem({ isMe = false }: { isMe?: boolean }) {
-//   return (
-//     <div
-//       className={classNames("relative flex flex-row items-start mb-2", {
-//         "flex-row-reverse": isMe,
-//       })}
-//     >
-//       <SkeletonCircle size="10" />
-//       <span className="mx-2.5 max-w-[60%] rounded-lg whitespace-pre-wrap shadow-md">
-//         <SkeletonText
-//           className="flex-1 w-[200px] text-right rounded-lg overflow-hidden"
-//           mr="2"
-//           noOfLines={1}
-//           spacing="2"
-//           skeletonHeight="10"
-//         />
-//       </span>
-//     </div>
-//   );
-// }

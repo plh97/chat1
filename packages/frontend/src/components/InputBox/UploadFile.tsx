@@ -1,11 +1,11 @@
 import { IconButton } from "@chakra-ui/react";
 import { FiUpload } from "react-icons/fi";
 
-export const UploadFile = ({
-  onUpload,
-}: {
+interface IProps {
   onUpload: (file: File) => void;
-}) => {
+}
+
+export const UploadFile = ({ onUpload }: IProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
   return (
     <>

@@ -31,7 +31,7 @@ export function Content() {
   );
 }
 
-export function Header({ className }: { className?: string }) {
+export function Header({ className }: { readonly className?: string }) {
   return (
     <div
       className={classNames(

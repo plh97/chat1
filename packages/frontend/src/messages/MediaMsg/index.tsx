@@ -1,6 +1,6 @@
 import { ImageMsg } from "./ImageMsg";
 import { VideoMsg } from "./VideoMsg";
-import { PdfMsg } from "./PdfMsg";
+import { DocsMsg } from "./DocsMsg";
 import { AudioMsg } from "./AudioMsg";
 import { IMessage } from "@/interfaces/IMessage";
 
@@ -17,16 +17,8 @@ export const Component = ({ message }: { message: IMessage }) => {
       return <VideoMsg message={mediaMsg} />;
     case "audio":
       return <AudioMsg message={mediaMsg} />;
-    // case "pdf":
-    // case "csv":
-    // case "doc":
-    // case "ppt":
-    // case "xls":
-    // case "xml":
-    //   return <PdfMsg message={mediaMsg} />;
     default:
-      return <PdfMsg message={mediaMsg} />;
-    // return <div>Unsupported media type: {JSON.stringify(message)}</div>;
+      return <DocsMsg message={mediaMsg} />;
   }
 };
 
@@ -34,7 +26,7 @@ export const MediaMsg = (message: IMessage) => {
   return {
     Preview: () => {
       const type = message.mediaMessage?.fileType?.split("/")[0];
-      return <>{`[${type ?? "Unknow Media"}]`}</>;
+      return <>{`[${type ?? "Unknown Media"}]`}</>;
     },
     Component: () => <Component message={message} />,
   };

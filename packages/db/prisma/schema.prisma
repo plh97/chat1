@@ -91,7 +91,7 @@ model Message {
 type ReadMessage {
   operator    String
   lastReadSeq Int
-  readSeq     Json        @default("{}")
+  readSeq     Json   @default("{}")
 }
 
 type MediaMessage {
@@ -118,6 +118,8 @@ enum SystemActionType {
   REMOVE_ADMIN  @map("3")
   CREATE_ROOM   @map("4")
   REMOVE_ROOM   @map("5")
+  ADD_FRIEND    @map("6")
+  REMOVE_FRIEND @map("7")
 }
 
 type SystemMessage {

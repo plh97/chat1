@@ -1,6 +1,5 @@
 import { IconButton } from "@chakra-ui/react";
 import { IMediaMessage } from "core";
-import { PiEyesFill } from "react-icons/pi";
 import { HiOutlineDocumentSearch } from "react-icons/hi";
 import {
   FaFileAlt,
@@ -10,6 +9,7 @@ import {
   FaFilePowerpoint,
   FaFileWord,
 } from "react-icons/fa";
+import { JSX } from "react";
 
 export function formatFileSize(size?: number) {
   if (!size) return "0 Byte";
@@ -34,12 +34,10 @@ const FileIcon = ({ type, ...args }: { type: string; className?: string }) => {
   return iconMap[type] ?? iconMap.default;
 };
 
-export const PdfMsg = ({ message }: { message: IMediaMessage }) => {
+export const DocsMsg = ({ message }: { message: IMediaMessage }) => {
   return (
     <div
-      style={{
-        width: "300px",
-      }}
+      style={{ width: "300px" }}
       className="w-[300px] gap-2 box-content p-2.5 h-10 overflow-hidden select-none flex items-start justify-center"
     >
       <FileIcon
@@ -48,16 +46,11 @@ export const PdfMsg = ({ message }: { message: IMediaMessage }) => {
       />
       <div
         className="h-full flex flex-col text-nowrap justify-between flex-1 text-xs truncate"
-        style={{
-          width: "calc(100% - 100px)",
-          textWrap: "nowrap",
-        }}
+        style={{ width: "calc(100% - 100px)", textWrap: "nowrap" }}
       >
         <div
-          style={{
-            lineHeight: "1em",
-          }}
-          className="text-lg font-blod overflow-hidden text-nowrap text-ellipsis"
+          style={{ lineHeight: "1em" }}
+          className="text-lg font-bold overflow-hidden text-nowrap text-ellipsis"
         >
           {message.name}
         </div>

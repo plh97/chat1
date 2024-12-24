@@ -23,6 +23,7 @@ export const useReceiveMsg = (roomRef: MutableRefObject<IRoom>) => {
     if (msg.contentType === "SYSTEM_MESSAGE") {
       const sysMsg = msg.systemMessage;
       if (
+        sysMsg?.actionType === "ADD_FRIEND" ||
         sysMsg?.actionType === "CREATE_ROOM" ||
         sysMsg?.actionType === "REMOVE_ROOM"
       ) {

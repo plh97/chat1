@@ -95,3 +95,21 @@ declare global {
   const useWindowSize: typeof import('usehooks-ts')['useWindowSize']
   const ws: typeof import('./src/hooks/useWebsocket')['ws']
 }
+// for type re-export
+declare global {
+  // @ts-ignore
+  export type { IMediaMessage, IMessage, MESSAGE_RESPONSE, MESSAGE_REQUEST, ADD_MESSAGE_REQUEST } from './src/interfaces/IMessage'
+  import('./src/interfaces/IMessage')
+  // @ts-ignore
+  export type { IRoom } from './src/interfaces/IRoom'
+  import('./src/interfaces/IRoom')
+  // @ts-ignore
+  export type { IUser } from './src/interfaces/IUser'
+  import('./src/interfaces/IUser')
+  // @ts-ignore
+  export type { ChannelType, ContentType, Message, MediaMessage, TextMessage } from './src/interfaces/index'
+  import('./src/interfaces/index')
+  // @ts-ignore
+  export type { AppThunk } from './src/hooks/app'
+  import('./src/hooks/app')
+}

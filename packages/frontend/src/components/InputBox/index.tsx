@@ -15,7 +15,7 @@ import classNames from "classnames";
 const MAX_INPUT = 2000;
 const { toast } = createStandaloneToast();
 
-export function InputBox({ className }: { className?: string }) {
+export function InputBox({ className }: { readonly className?: string }) {
   const room = useAppSelector((state) => state.room.data);
   const userInfo = useAppSelector((state) => state.user.data);
   const dispatch = useThunkDispatch();

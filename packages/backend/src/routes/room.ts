@@ -7,6 +7,7 @@ import { handleSendMsg } from "@/ws/sendMsg";
 import { sendWs } from "@/utils/sendWs";
 import { onMsgReceive } from "@/ws";
 import { WS_EVENT } from "core";
+import { IMessage } from "@/interface";
 
 export const getRoom = async (ctx: Context) => {
   const id = (ctx.request.query.id as string) ?? "";
@@ -67,7 +68,7 @@ export const addRoom = async (ctx: Context) => {
       operator: newRoom.creatorId,
       actionType: "CREATE_ROOM",
     },
-  };
+  } as IMessage;
   onMsgReceive(
     {
       event: WS_EVENT.SEND_MSG,
@@ -76,10 +77,8 @@ export const addRoom = async (ctx: Context) => {
       message: "",
       code: 0,
     },
-    ws
+    ctx.ws
   );
-  // @ts-ignore
-  handleSendMsg(data);
   ctx.body = {
     code: 0,
     message: "Create room success",

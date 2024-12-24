@@ -39,7 +39,7 @@ export const formatTime = (_time: number) => {
   const time = Math.ceil(_time);
   const minutes = Math.floor(time / 60);
   const seconds = Math.floor(time % 60);
-  return `${minutes}:${seconds < 10 ? `0${seconds}` : seconds}`;
+  return minutes + ":" + (seconds < 10 ? "0" + seconds : seconds);
 };
 
 export function cn(...inputs: ClassValue[]) {

@@ -4,7 +4,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { store } from "./store";
 import theme from "./theme";
 
-export function App() {
+export const App = (): React.ReactNode => {
   const router = createBrowserRouter([
     {
       path: "/",

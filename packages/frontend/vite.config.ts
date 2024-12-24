@@ -5,7 +5,7 @@ import { defineConfig } from "vite";
 // import { VitePWA } from "vite-plugin-pwa";
 // import viteCompression from "vite-plugin-compression";
 
-const PROT = +(process.env.PORT ?? 9001);
+const PROT = process.env.PORT ?? 9001;
 
 export default defineConfig({
   build: {
@@ -13,7 +13,7 @@ export default defineConfig({
     target: "modules",
   },
   preview: {
-    port: PROT,
+    port: +PROT,
   },
   resolve: {
     alias: {
@@ -88,7 +88,6 @@ export default defineConfig({
             "ModalFooter",
             "ModalCloseButton",
             "useDisclosure",
-            "Formik",
           ],
         },
         {
@@ -125,6 +124,6 @@ export default defineConfig({
         secure: false,
       },
     },
-    port: PROT,
+    port: +PROT,
   },
 });

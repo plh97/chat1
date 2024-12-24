@@ -33,9 +33,10 @@ export const VideoMsg = ({ message }: { message: IMediaMessage }) => {
   const { width, height } = useFixedSize(message);
   if (!thumbnail) return <div>Invalid Video</div>;
   return (
-    <div
+    <button
       className="box-content p-2.5 relative overflow-hidden max-w-[200px] max-h-[200px] cursor-pointer select-none flex items-center justify-center"
       style={{ height, width }}
+      onClick={() => !playing && setPlaying(true)}
     >
       {playing ? (
         <video controls autoPlay src={message.url} />
@@ -43,7 +44,7 @@ export const VideoMsg = ({ message }: { message: IMediaMessage }) => {
         <>
           <span className="absolute z-10">
             <IconButton
-              onClick={() => setPlaying(true)}
+              as={"span"}
               aria-label="play button"
               icon={<FaPlay />}
             />
@@ -51,6 +52,6 @@ export const VideoMsg = ({ message }: { message: IMediaMessage }) => {
           <ProgressImage message={message} />
         </>
       )}
-    </div>
+    </button>
   );
 };

@@ -4,6 +4,9 @@ import { CookieConfig, privateKey } from "@/config";
 import { RoomModel } from "@/model/room";
 import { UserModel } from "@/model/user";
 import { getVerifiedToken } from "@/utils/token";
+import { WS_EVENT } from "core";
+import { onMsgReceive } from "@/ws";
+import { IMessage } from "@/interface";
 
 /**
  * get user info through cookie
@@ -218,7 +221,7 @@ export async function Logout(ctx: Context) {
  * @param {*} ctx
  */
 export async function AddFriend(ctx: Context) {
-  const id = String(ctx.request.body.id) ?? "";
+  const id = String(ctx.request.body.id) || "";
   if (!id) {
     ctx.body = {
       code: 1,
@@ -226,10 +229,8 @@ export async function AddFriend(ctx: Context) {
     };
     return;
   }
-  // const { image } = ctx.request.body;
   const cookie = ctx.cookies.get("token") ?? "";
   const userIdFromToken = jwt.verify(cookie, privateKey) as string;
-  const token = getVerifiedToken(ctx);
   if (id === userIdFromToken) {
     ctx.body = {
       code: 1,
@@ -251,11 +252,11 @@ export async function AddFriend(ctx: Context) {
     return;
   }
   // add friend
-  const friend = await UserModel.update({
+  const me = await UserModel.update({
     where: { id: userIdFromToken },
     data: { friendId: { push: id } },
   });
-  const me = await UserModel.update({
+  const friend = await UserModel.update({
     where: { id: id },
     data: { friendId: { push: userIdFromToken } },
   });
@@ -267,20 +268,40 @@ export async function AddFriend(ctx: Context) {
     return;
   }
   // create room
-  const roomResponse = await RoomModel.create({
+  const newRoom = await RoomModel.create({
     data: {
-      // image,
       name: `PRIVATE_CHAT`,
-      memberId: [userIdFromToken, id],
-      creatorId: userIdFromToken,
+      memberId: [me.id, friend.id],
+      creatorId: me.id,
       channelType: "PRIVATE",
       readSeq: {},
     },
   });
+  const data = {
+    seq: 1,
+    contentType: "SYSTEM_MESSAGE",
+    userId: newRoom.creatorId,
+    channelId: newRoom.id,
+    systemMessage: {
+      targetList: [friend.id],
+      operator: me.id,
+      actionType: "ADD_FRIEND",
+    },
+  } as IMessage;
+  onMsgReceive(
+    {
+      event: WS_EVENT.SEND_MSG,
+      data,
+      requestId: "",
+      message: "",
+      code: 0,
+    },
+    ctx.ws
+  );
   ctx.body = {
     code: 0,
     message: "Add friend success",
-    data: roomResponse,
+    data: newRoom,
   };
 }
 /**

@@ -31,8 +31,6 @@ export const AddRoomDialog = () => {
     );
     onClose();
     setRoomName("");
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     navigation(`/room/${payload?.id}`);
   };
   const { isOpen, onOpen, onClose } = useDisclosure();

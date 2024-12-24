@@ -1,9 +1,9 @@
 interface IProps {
-  handlePaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void;
-  text: string;
-  maxLength?: number;
-  onChange: (text: string) => void;
-  handleSendText: () => void;
+  readonly handlePaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => void;
+  readonly text: string;
+  readonly maxLength?: number;
+  readonly onChange: (text: string) => void;
+  readonly handleSendText: () => void;
 }
 
 export function Input({

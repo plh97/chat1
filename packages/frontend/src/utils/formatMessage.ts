@@ -77,6 +77,7 @@ const previewVideo = (
   const video = document.createElement("video");
   video.autoplay = true;
   video.currentTime = 0;
+  video.volume = 0;
   video.src = URL.createObjectURL(file);
   return new Promise((resolve) => {
     video.onerror = async () => {
@@ -100,6 +101,8 @@ const previewVideo = (
       ctx.drawImage(video, 0, 0, w, h, 0, 0, thumbnailX, thumbnailY);
       const base64 = ctx.canvas.toDataURL(file.type, 0.8);
       const fileInfo = await uploadFile(file);
+      video.pause();
+      video.remove();
       resolve({
         ...fileInfo,
         thumbnail: base64,
@@ -132,13 +135,6 @@ const formatMediaMessage = async (
 
 export const formatMessage = async (message: Partial<IMessage>) => {
   switch (message.contentType) {
-    // case ContentType.TEXT_MESSAGE:
-    //   return {
-    //     ...message,
-    //     textMessage: {
-    //       content: message.textMessage?.content,
-    //     },
-    //   };
     case "MEDIA_MESSAGE": {
       return {
         ...message,

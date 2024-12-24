@@ -61,19 +61,19 @@ export async function request<RESPONSE>(
   return res.data;
 }
 
-interface ILoginRequestParamters {
+interface ILoginRequestParameters {
   username: string;
   password: string;
 }
 
 const Api = {
-  login: (data: ILoginRequestParamters) =>
+  login: (data: ILoginRequestParameters) =>
     request({
       url: "/login",
       method: "post",
       data,
     }),
-  register: (data: ILoginRequestParamters) =>
+  register: (data: ILoginRequestParameters) =>
     request({
       url: "/register",
       method: "post",
@@ -156,7 +156,7 @@ const Api = {
       method: "delete",
     }),
   addFriend: (data: { id: string }) =>
-    request({
+    request<IRoom>({
       url: "/friend",
       method: "post",
       data,
