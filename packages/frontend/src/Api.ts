@@ -129,6 +129,9 @@ const Api = {
       params: {
         username,
       },
+      fetchOptions: {
+        alert: false,
+      },
     }),
   queryUser: (params: { username: string }) =>
     request<IUser[]>({
