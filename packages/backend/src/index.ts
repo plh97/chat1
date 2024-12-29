@@ -52,7 +52,4 @@ const server = http.createServer(app.callback()).listen(HTTP_PROT, () => {
   console.log(`[NODE] listening at port ${HTTP_PROT}`);
 });
 
-app
-  .use(socket(server))
-  .use(allRouter.routes())
-  .use(allRouter.allowedMethods());
+app.use(socket(server)).use(allRouter.routes()).use(allRouter.allowedMethods());

@@ -35,6 +35,8 @@ export const onMsgReceive: IOnMsgReceive = async (objMsg, ws, socket) => {
       broadcastData = await handleRecallMsg(data);
     } else if (data.contentType === "READ_MESSAGE") {
       broadcastData = await handleReadMsg(data);
+    } else if (data.contentType === "CALL_MESSAGE") {
+      // do nothing
     } else {
       broadcastData = await handleSendMsg(data);
     }

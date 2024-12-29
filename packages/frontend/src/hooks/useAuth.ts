@@ -19,7 +19,6 @@ export default function useAuth() {
     } else {
       if (userinfo.auth === false) {
         navigation("/login");
-        ws.destroy();
       }
     }
   }, [userinfo.auth]);

@@ -22,8 +22,8 @@ const initialState: IState = {
     image: "",
     username: "",
     bio: "",
-    qq: "",
-    wechat: "",
+    QQ: "",
+    WeChat: "",
     github: "",
     permission: "",
     friendId: [],
@@ -35,7 +35,7 @@ export const fetchUserInfoThunk = createAsyncThunk(
   `getMyUserInfo`,
   async (_, { dispatch }) => {
     const userinfo = await Api.getMyUserInfo();
-    dispatch(setUserInfo(userinfo));
+    dispatch(setLocalUserInfo(userinfo));
   }
 );
 
@@ -64,6 +64,14 @@ export const registerThunk = createAsyncThunk<
   dispatch(fetchUserInfoThunk());
 });
 
+export const setUserInfoThunk = createAsyncThunk<void, Partial<IUser>>(
+  `setUserInfoThunk`,
+  async (data, { dispatch }) => {
+    const userInfo = await Api.setMyUserInfo(data);
+    dispatch(setLocalUserInfo(userInfo));
+  }
+);
+
 export const userSlice = createSlice({
   name: "user",
   initialState,
@@ -80,7 +88,7 @@ export const userSlice = createSlice({
         });
       }
     },
-    setUserInfo(state, action) {
+    setLocalUserInfo(state, action) {
       Object.assign(state, {
         auth: true,
         data: {
@@ -152,7 +160,7 @@ export const userSlice = createSlice({
 
 export const {
   logout,
-  setUserInfo,
+  setLocalUserInfo,
   updateUserRoomMessage,
   setDraft,
   removeDraft,

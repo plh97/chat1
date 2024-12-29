@@ -6,7 +6,7 @@ import { UserModel } from "@/model/user";
 import { getVerifiedToken } from "@/utils/token";
 import { WS_EVENT } from "core";
 import { onMsgReceive } from "@/ws";
-import { IMessage } from "@/interface";
+import { IMessage, IUser } from "@/interface";
 
 /**
  * get user info through cookie
@@ -63,12 +63,12 @@ export async function GetUserInfo(ctx: Context) {
  * @param {*} ctx
  */
 export async function SetUserInfo(ctx: Context) {
-  const image = ctx.request.body.image as string;
+  const userInfo = ctx.request.body as IUser;
   const cookie = ctx.cookies.get("token") ?? "";
   const id = jwt.verify(cookie, privateKey) as string;
   await UserModel.update({
     where: { id },
-    data: { image },
+    data: userInfo,
   });
   const userinfo = await UserModel.findUnique({
     where: { id },
@@ -77,25 +77,16 @@ export async function SetUserInfo(ctx: Context) {
       // room: true,
     },
   });
-  // .populate("room");
-  // const userinfo = {
-  //   ..._userinfo,
-  //   friend: await UserModel.findMany({
-  //     where: {
-  //       id: { in: _userinfo?.friend },
-  //     },
-  //   }),
-  // };
-  if (userinfo) {
-    ctx.body = {
-      code: 0,
-      data: userinfo,
-    };
-  } else {
+  if (!userinfo) {
     ctx.body = {
       code: 0,
     };
+    return;
   }
+  ctx.body = {
+    code: 0,
+    data: userinfo,
+  };
 }
 
 export async function GetUserImage(ctx: Context) {

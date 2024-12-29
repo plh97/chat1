@@ -1,6 +1,4 @@
 import { UIEvent } from "react";
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
 
 export const throttle = (
   cb: (event: UIEvent<HTMLDivElement>, ...args: unknown[]) => void,
@@ -41,7 +39,3 @@ export const formatTime = (_time: number) => {
   const seconds = Math.floor(time % 60);
   return minutes + ":" + (seconds < 10 ? "0" + seconds : seconds);
 };
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}

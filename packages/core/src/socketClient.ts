@@ -54,13 +54,18 @@ export class SocketClient {
     // this.socket = null;
   }
 
+  reconnect() {
+    if (!getToken()) return;
+    setTimeout(() => {
+      this.init();
+    }, this.reconnectTime);
+  }
+
   // handle close logic
   close(error: unknown) {
     console.log("[WS] close", error);
     this.isError = true;
-    setTimeout(() => {
-      this.init();
-    }, this.reconnectTime);
+    this.reconnect();
   }
 
   // handle reconect logic

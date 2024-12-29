@@ -1,7 +1,6 @@
 import { AvatarComponent } from "../Avatar";
 import { MessageTemplate } from "@/messages";
 import { IRoom, IMessage } from "@/interfaces";
-import { cn } from "@/utils";
 
 interface IProps {
   room: IRoom;
@@ -44,7 +43,7 @@ const ItemOriginal = ({ myId, room, active, draft, unreadCount }: IProps) => {
     <li key={room.id}>
       <NavLink
         to={"/room/" + room.id}
-        className={cn(
+        className={clsx(
           "flex flex-row items-center overflow-hidden rounded-lg px-2 py-1",
           { "bg-white/10": active }
         )}

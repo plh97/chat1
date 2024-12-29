@@ -10,7 +10,6 @@ import { Input } from "./input";
 import { IMediaMessage } from "@/interfaces";
 import { UploadFile } from "./UploadFile";
 import { useDraft } from "./useDraft";
-import classNames from "classnames";
 
 const MAX_INPUT = 2000;
 const { toast } = createStandaloneToast();
@@ -43,7 +42,7 @@ export function InputBox({ className }: { readonly className?: string }) {
   const handleSendText = async () => {
     const trimText = text.trim();
     if (!userInfo.id || !trimText) return;
-    const { error } = await dispatch(
+    const result = await dispatch(
       sendMessageAction({
         contentType: "TEXT_MESSAGE",
         userId: userInfo.id,
@@ -54,7 +53,7 @@ export function InputBox({ className }: { readonly className?: string }) {
         },
       })
     );
-    if (error) return;
+    if (sendMessageAction.rejected.match(result)) return;
     setText("");
     dispatch(scrollToEnd());
   };
@@ -112,7 +111,7 @@ export function InputBox({ className }: { readonly className?: string }) {
 
   return (
     <div
-      className={classNames(
+      className={clsx(
         "box-border flex flex-row gap-3 flex-0 basis-20 pt-0 pb-5 px-3",
         className
       )}

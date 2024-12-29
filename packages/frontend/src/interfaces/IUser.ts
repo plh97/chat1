@@ -6,8 +6,8 @@ export interface IUser extends Omit<User, "friend" | "password" | "createdAt"> {
   image: string;
   username: string;
   bio: string;
-  qq: string;
-  wechat: string;
+  QQ: string;
+  WeChat: string;
   github: string;
   permission: string;
   room: IRoom[] | null;

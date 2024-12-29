@@ -11,19 +11,11 @@ datasource db {
 }
 
 enum ChannelType {
-  // PRIVATE: 0,
-  // GROUP = 1,
   PRIVATE @map("0")
   GROUP   @map("1")
 }
 
 enum ContentType {
-  // TEXT_MESSAGE = 0,
-  // MEDIA_MESSAGE = 1,
-  // SYSTEM_MESSAGE = 2,
-  // CALL_MESSAGE = 3,
-  // READ_MESSAGE = 4,
-  // RECALL_MESSAGE = 5,
   TEXT_MESSAGE   @map("0")
   MEDIA_MESSAGE  @map("1")
   SYSTEM_MESSAGE @map("2")
@@ -38,8 +30,8 @@ model User {
   username    String   @unique
   password    String
   bio         String?
-  qq          String?
-  wechat      String?
+  QQ          String?
+  WeChat      String?
   github      String?
   permission  String?
   image       String   @default("")

@@ -1,4 +1,4 @@
-import { AxiosRequestConfig } from "axios";
+import { AxiosError, AxiosRequestConfig } from "axios";
 import {
   ADD_MESSAGE_REQUEST,
   IMessage,
@@ -25,13 +25,12 @@ axios.interceptors.response.use(
   (response) => {
     const res = response.data;
     if (res.code === 1) {
-      res.message &&
-        toast({
-          description: res.message,
-          status: "error",
-          position: "top",
-          duration: 1000,
-        });
+      toast({
+        description: res.message ?? "Backend throw unexpected error.",
+        status: "error",
+        position: "top",
+        duration: 1000,
+      });
     } else if (res.code === 0) {
       res.message &&
         toast({
@@ -43,12 +42,21 @@ axios.interceptors.response.use(
     }
     return res;
   },
-  async (error) => {
+  async (error: AxiosError) => {
     if (error?.response?.status === 401) {
       // to fix the cycle import
       const { store } = await import("@/store");
       const { logout } = await import("@/store/reducer/user");
       store.dispatch(logout());
+      ws.destroy();
+    }
+    if (error.config?.fetchOptions?.alert !== false) {
+      toast({
+        description: error.message ?? "Unexpected network error.",
+        status: "error",
+        position: "top",
+        duration: 1000,
+      });
     }
     return Promise.reject(error);
   }
@@ -88,11 +96,15 @@ const Api = {
     request<IUser>({
       url: "/userInfo",
       method: "get",
+      fetchOptions: {
+        alert: false,
+      },
     }),
-  setMyUserInfo: () =>
-    request({
+  setMyUserInfo: (user: Partial<IUser>) =>
+    request<IUser>({
       url: "/userInfo",
       method: "post",
+      data: user,
     }),
   upload: (data: FormData) =>
     request<{ url: string; extension: string; name: string; size: number }>({
@@ -100,6 +112,16 @@ const Api = {
       method: "post",
       data,
     }),
+  uploadFile: (file: File, params?: { [key: string]: string }) => {
+    const form = new FormData();
+    form.append("file", file);
+    if (params) {
+      Object.keys(params).forEach((key) => {
+        form.append(key, params[key]);
+      });
+    }
+    return Api.upload(form) as Promise<MediaMessage>;
+  },
   getUserImage: (username: string) =>
     request<string>({
       url: "/userImage",

@@ -1,4 +1,3 @@
-import classNames from "classnames";
 import { MessageTemplate } from "@/messages";
 import { IMessage } from "@/interfaces/IMessage";
 import { Indicator } from "./Indicator";
@@ -22,12 +21,7 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
     if (!temp) return null;
     const { Component } = temp(message, room);
     return <Component />;
-  }, [
-    message,
-    message?.contentType,
-    message?.mediaMessage,
-    message?.user,
-  ]);
+  }, [message, message?.contentType, message?.mediaMessage, message?.user]);
   if (message.contentType === "SYSTEM_MESSAGE") {
     return <div ref={ref}>{Component}</div>;
   }
@@ -56,7 +50,7 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
     <div
       ref={ref}
       data-seq={message.seq}
-      className={classNames("group relative flex flex-row items-start mb-2", {
+      className={clsx("group relative flex flex-row items-start mb-2", {
         "flex-row-reverse": isMe,
       })}
     >

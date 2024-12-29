@@ -1,7 +1,8 @@
 import { Provider } from "react-redux";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-
 import { store } from "./store";
+// import { Theme } from "@radix-ui/themes";
+import "@radix-ui/themes/styles.css";
 import theme from "./theme";
 
 export const App = (): React.ReactNode => {
@@ -25,9 +26,12 @@ export const App = (): React.ReactNode => {
   ]);
   return (
     <Provider store={store}>
-      <ChakraProvider theme={theme}>
-        <RouterProvider router={router} />
-      </ChakraProvider>
+      {/* <Theme className="h-full" accentColor="indigo"> */}
+        <ChakraProvider theme={theme}>
+          <RouterProvider router={router} />
+          <div id="portal" />
+        </ChakraProvider>
+      {/* </Theme> */}
     </Provider>
   );
-}
+};

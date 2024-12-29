@@ -1,11 +1,6 @@
 import { FaPlus } from "react-icons/fa";
 import { Form } from "react-router-dom";
-import {
-  Checkbox,
-  CheckboxGroup,
-  IconButton,
-  useDisclosure,
-} from "@chakra-ui/react";
+import { Checkbox, CheckboxGroup, useDisclosure } from "@chakra-ui/react";
 import { updateRoomThunk } from "@/store/reducer/room";
 
 export function AddAdmin() {

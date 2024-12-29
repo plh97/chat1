@@ -1,6 +1,5 @@
 import { Image } from "@chakra-ui/react";
 import { IMediaMessage } from "core";
-import classNames from "classnames";
 import { CSSProperties } from "react";
 
 export const ProgressImage = ({
@@ -38,7 +37,7 @@ export const ProgressImage = ({
         ...patchStyle,
       }}
       fallbackSrc={thumbnail!}
-      className={classNames(
+      className={clsx(
         "w-full",
         "h-full",
         "bg-cover",
@@ -48,7 +47,7 @@ export const ProgressImage = ({
           "blur-sm": loading,
         }
       )}
-      src={url!}
+      src={url}
       onLoad={() => {
         setLoading(false);
       }}

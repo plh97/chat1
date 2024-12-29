@@ -9,10 +9,10 @@ export const store = configureStore({
     user: userReducer,
     room: roomReducer,
   },
-
-  middleware: (getDefaultMiddleware) => {
-    return [thunk];
-  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: false,
+    }).concat(thunk, logger),
 });
 
 export type RootState = ReturnType<typeof store.getState>;

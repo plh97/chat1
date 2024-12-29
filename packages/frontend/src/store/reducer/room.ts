@@ -53,7 +53,7 @@ export const getRoomInfoThunk = createAsyncThunk<void, string>(
     dispatch(changeLoading(true));
     // 获取当前房间基本信息
     const res = await Api.getRoom({
-      pageSize: 20,
+      pageSize: 50,
       id: id,
     });
     // 加载结束
@@ -87,8 +87,8 @@ export const addRoomThunk = createAsyncThunk<IRoom, Partial<IRoom>>(
 export const updateRoomThunk =
   (data: Partial<Room>): AppThunk =>
   async (dispatch) => {
-    const roominfo = await Api.updateRoom(data);
-    dispatch(initialMessage(roominfo));
+    const room = await Api.updateRoom(data);
+    dispatch(initialMessage(room));
   };
 
 export const joinRoomThunk = createAsyncThunk<

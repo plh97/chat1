@@ -5,8 +5,10 @@
   "eslint.format.enable": true,
   "git.ignoreLimitWarning": true,
   "cSpell.words": [
+    "cmdk",
     "plhh",
     "unplugin",
-    "VITE"
+    "VITE",
+    "Xmark"
   ]
 }

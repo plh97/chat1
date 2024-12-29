@@ -1,10 +1,10 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
+import * as Avatar from "@radix-ui/react-avatar";
+import "./avatar.css";
 
-interface IProps {
+interface IProps extends React.PropsWithChildren {
   className?: string;
   name?: string;
-  size?: string;
+  size?: 'md' | 'lg' | 'xl';
   src: string;
   count?: number;
 }
@@ -21,6 +21,7 @@ export const AvatarComponent = ({
   src,
   size = "xl",
   count = 0,
+  children,
   ...args
 }: IProps) => {
   const countMemo = useMemo(() => {
@@ -31,9 +32,6 @@ export const AvatarComponent = ({
     if (count > 99) {
       c = "99+";
     }
-    // line-height: 16px;
-    // padding: 0 .33rem;
-    // text-align: center;
     return (
       <span className="absolute bg-rose-600 text-xs px-[0.33rem] text-white rounded-xl top-0 right-[-6px] text-center flex items-center justify-center">
         {c}
@@ -42,20 +40,26 @@ export const AvatarComponent = ({
   }, [count]);
   return (
     <span className="relative">
-      <Avatar {...args}>
-        <AvatarImage src={src} />
-        <AvatarFallback
-          className={cn(size && `text-${size}`)}
-          data-color={generateColor(name)}
-          style={{
-            // backgroundColor: 'red',
-            backgroundColor: generateColor(name),
-          }}
+      <Avatar.Root
+        {...args}
+        style={{
+          // backgroundColor: 'red',
+          backgroundColor: generateColor(name),
+        }}
+        className={clsx("AvatarRoot", {
+          lg: size === "lg",
+        })}
+      >
+        <Avatar.Image className="AvatarImage" src={src} alt="avatar" />
+        <Avatar.Fallback
+          // style={{ width: "100px", height: "100px" }}
+          className="AvatarFallback"
         >
-          {name[0]}
-        </AvatarFallback>
-      </Avatar>
+          {name.slice(0, 2)}
+        </Avatar.Fallback>
+      </Avatar.Root>
       {countMemo}
+      {children}
     </span>
   );
 };

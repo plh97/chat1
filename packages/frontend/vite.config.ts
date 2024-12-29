@@ -78,6 +78,7 @@ export default defineConfig({
             "FormControl",
             "FormLabel",
             "Input",
+            "IconButton",
             "Stack",
             "useToast",
             "Modal",
@@ -92,7 +93,7 @@ export default defineConfig({
         },
         {
           axios: [["default", "Axios"]],
-          classnames: [["default", "classnames"]],
+          clsx: [["default", "clsx"]],
         },
       ],
       dirs: [

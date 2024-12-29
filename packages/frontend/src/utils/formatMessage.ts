@@ -2,17 +2,6 @@ import type { MediaMessage } from "db";
 import { IMediaMessage, IMessage } from "@/interfaces";
 import Api from "@/Api";
 
-const uploadFile = async (file: File, params?: { [key: string]: string }) => {
-  const form = new FormData();
-  form.append("file", file);
-  if (params) {
-    Object.keys(params).forEach((key) => {
-      form.append(key, params[key]);
-    });
-  }
-  return Api.upload(form) as Promise<MediaMessage>;
-};
-
 const previewImage = (
   file: File,
   maxWidth = 200,
@@ -55,7 +44,7 @@ const previewImage = (
       URL.revokeObjectURL(image.src);
       ctx.drawImage(image, 0, 0, w, h, 0, 0, thumbnailX, thumbnailY);
       const base64 = ctx.canvas.toDataURL(file.type, 0.8);
-      const fileInfo = await uploadFile(file);
+      const fileInfo = await Api.uploadFile(file);
       resolve({
         ...fileInfo,
         thumbnail: base64,
@@ -100,7 +89,7 @@ const previewVideo = (
       URL.revokeObjectURL(video.src);
       ctx.drawImage(video, 0, 0, w, h, 0, 0, thumbnailX, thumbnailY);
       const base64 = ctx.canvas.toDataURL(file.type, 0.8);
-      const fileInfo = await uploadFile(file);
+      const fileInfo = await Api.uploadFile(file);
       video.pause();
       video.remove();
       resolve({
@@ -126,22 +115,19 @@ const formatMediaMessage = async (
     return previewVideo(file);
   }
   if (fileType.startsWith("audio")) {
-    return uploadFile(file, {
+    return Api.uploadFile(file, {
       duration: mediaMessage.duration?.toString() ?? "",
     });
   }
-  return uploadFile(file);
+  return Api.uploadFile(file);
 };
 
 export const formatMessage = async (message: Partial<IMessage>) => {
-  switch (message.contentType) {
-    case "MEDIA_MESSAGE": {
-      return {
-        ...message,
-        mediaMessage: await formatMediaMessage(message.mediaMessage),
-      };
-    }
-    default:
-      return message;
+  if (message.contentType === "MEDIA_MESSAGE") {
+    return {
+      ...message,
+      mediaMessage: await formatMediaMessage(message.mediaMessage),
+    };
   }
+  return message;
 };
