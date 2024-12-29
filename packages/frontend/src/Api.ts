@@ -25,12 +25,14 @@ axios.interceptors.response.use(
   (response) => {
     const res = response.data;
     if (res.code === 1) {
-      toast({
-        description: res.message ?? "Backend throw unexpected error.",
-        status: "error",
-        position: "top",
-        duration: 1000,
-      });
+      if (response.config?.fetchOptions?.alert !== false) {
+        toast({
+          description: res.message ?? "Backend throw unexpected error.",
+          status: "error",
+          position: "top",
+          duration: 1000,
+        });
+      }
     } else if (res.code === 0) {
       res.message &&
         toast({
