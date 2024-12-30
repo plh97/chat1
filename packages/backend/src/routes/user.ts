@@ -274,8 +274,7 @@ export async function AddFriend(ctx: Context) {
     userId: newRoom.creatorId,
     channelId: newRoom.id,
     systemMessage: {
-      targetList: [friend.id],
-      operator: me.id,
+      content: `${me.id} and ${friend.id} are friends now!`,
       actionType: "ADD_FRIEND",
     },
   } as IMessage;

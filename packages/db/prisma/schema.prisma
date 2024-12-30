@@ -104,21 +104,20 @@ type TextMessage {
 }
 
 enum SystemActionType {
-  ADD_MEMBER       @map("0")
-  REMOVE_MEMBER    @map("1")
-  ADD_ADMIN        @map("2")
-  REMOVE_ADMIN     @map("3")
-  CREATE_ROOM      @map("4")
-  REMOVE_ROOM      @map("5")
-  ADD_FRIEND       @map("6")
-  REMOVE_FRIEND    @map("7")
-  CHANGE_ROOM_NAME @map("8")
+  ADD_MEMBER    @map("0")
+  REMOVE_MEMBER @map("1")
+  ADD_ADMIN     @map("2")
+  REMOVE_ADMIN  @map("3")
+  CREATE_ROOM   @map("4")
+  REMOVE_ROOM   @map("5")
+  ADD_FRIEND    @map("6")
+  REMOVE_FRIEND @map("7")
+  CHANGE_ROOM   @map("8")
 }
 
 type SystemMessage {
-  operator   String
-  targetList String[]
   actionType SystemActionType
+  content    String?          @default("")
 }
 
 type RecallMessage {

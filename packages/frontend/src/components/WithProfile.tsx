@@ -5,9 +5,14 @@ export const WithProfile = ({
   profile,
   children,
 }: React.PropsWithChildren<{ profile?: IUser }>) => {
+  if (!profile) {
+    return children;
+  }
   return (
     <Popover>
-      <PopoverTrigger>{children}</PopoverTrigger>
+      <PopoverTrigger>
+        <span className="cursor-pointer">{children}</span>
+      </PopoverTrigger>
       <Portal>
         <PopoverContent>
           <PopoverBody>

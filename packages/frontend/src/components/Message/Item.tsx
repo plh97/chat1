@@ -13,7 +13,7 @@ interface IProps {
 
 export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
   const dispatch = useThunkDispatch();
-  const ref = useMsgWatch(message);
+  const watchRef = useMsgWatch(message);
   const myUserInfo = useAppSelector((state) => state.user.data);
   const room = useAppSelector((state) => state.room.data);
   const isMe = myUserInfo?.id === message?.user?.id;
@@ -22,12 +22,18 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
     if (!temp) return null;
     const { Component } = temp(message, room);
     return <Component />;
-  }, [message, message?.contentType, message?.mediaMessage, message?.user]);
+  }, [message]);
+  const SysComponent = useMemo(() => {
+    const temp = MessageTemplate[message.contentType];
+    if (!temp) return null;
+    const { Component } = temp(message, room);
+    return <Component />;
+  }, [message, room.member]);
   if (message.contentType === "SYSTEM_MESSAGE") {
-    return <div ref={ref}>{Component}</div>;
+    return <>{SysComponent}</>;
   }
   if (message.contentType === "RECALL_MESSAGE") {
-    return <div ref={ref}>{Component}</div>;
+    return <>{Component}</>;
   }
   const onContextMenu: MouseEventHandler<HTMLDivElement> = (e) => {
     if (!isMe) return;
@@ -49,7 +55,7 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
   };
   return (
     <div
-      ref={ref}
+      ref={watchRef}
       data-seq={message.seq}
       className={clsx("group relative flex flex-row items-start mb-2", {
         "flex-row-reverse": isMe,

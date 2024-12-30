@@ -1,10 +1,14 @@
-import { WrapItem } from "@chakra-ui/react";
 import { Config } from "./config";
 import { Loading } from "./Loading";
 
 export function Content() {
   const room = useAppSelector((state) => state.room.data);
   const userinfo = useAppSelector((state) => state.user.data);
+  const profile = useMemo(() => {
+    if (room.channelType === "PRIVATE") {
+      return room.member?.find((u) => u.id !== userinfo.id);
+    }
+  }, [room.channelType, room.member, userinfo.id]);
   if (!room?.id) {
     return <Loading />;
   }
@@ -19,9 +23,9 @@ export function Content() {
   }
   return (
     <div className="flex items-center">
-      <WrapItem>
+      <WithProfile profile={profile}>
         <Avatar name={name} src={image} />
-      </WrapItem>
+      </WithProfile>
       <div className="ml-2">
         <p className="text-lg font-semibold">{name}</p>
         <p className="text-sm text-gray-400">Active now</p>

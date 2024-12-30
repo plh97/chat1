@@ -51,7 +51,6 @@ export const getRoom = async (ctx: Context) => {
 
 export const addRoom = async (ctx: Context) => {
   const body = ctx.request.body;
-  const ws: WebSocketServer = ctx.ws;
   const newRoom = await RoomModel.create({
     data: body,
     include: {
@@ -64,9 +63,8 @@ export const addRoom = async (ctx: Context) => {
     userId: newRoom.creatorId,
     channelId: newRoom.id,
     systemMessage: {
-      targetList: [newRoom.creatorId],
-      operator: newRoom.creatorId,
       actionType: "CREATE_ROOM",
+      content: `${newRoom.creatorId} create room success!`,
     },
   } as IMessage;
   onMsgReceive(
@@ -89,14 +87,16 @@ export const addRoom = async (ctx: Context) => {
 export const updateRoom = async (ctx: Context) => {
   const body = ctx.request.body;
   const ws: WebSocketServer = ctx.ws;
-  const { id, memberId, adminId, name, ...data } = body;
+  const { id, memberId, adminId, name, image, ...data } = body;
   const cookie = ctx.cookies.get("token") ?? "";
   const userIdFromToken = verify(cookie, privateKey) as string;
+  const oldRoom = await RoomModel.findUnique({ where: { id } });
   const room = await RoomModel.update({
     where: { id },
     data: {
       ...data,
       name,
+      image,
       memberId: memberId && { push: memberId },
       adminId: adminId && { push: adminId },
     },
@@ -113,8 +113,7 @@ export const updateRoom = async (ctx: Context) => {
       userId: "System-message",
       channelId: room.id,
       systemMessage: {
-        targetList: memberId,
-        operator: userIdFromToken,
+        content: `${userIdFromToken} add ${memberId.join(", ")} as member!`,
         actionType: "ADD_MEMBER",
       },
     });
@@ -127,8 +126,7 @@ export const updateRoom = async (ctx: Context) => {
       userId: "System-message",
       channelId: room.id,
       systemMessage: {
-        targetList: adminId,
-        operator: userIdFromToken,
+        content: `${userIdFromToken} add ${adminId.join(", ")} as admin!`,
         actionType: "ADD_ADMIN",
       },
     });
@@ -141,9 +139,21 @@ export const updateRoom = async (ctx: Context) => {
       userId: "System-message",
       channelId: room.id,
       systemMessage: {
-        targetList: [],
-        operator: userIdFromToken,
-        actionType: "CHANGE_ROOM_NAME",
+        actionType: "CHANGE_ROOM",
+        content: `${userIdFromToken} change the room name from ${oldRoom?.name} to ${room.name}`,
+      },
+    });
+    sendWs(broadcastData, ws, room);
+  }
+  if (image) {
+    // @ts-ignore
+    const broadcastData = await handleSendMsg({
+      contentType: "SYSTEM_MESSAGE",
+      userId: "System-message",
+      channelId: room.id,
+      systemMessage: {
+        actionType: "CHANGE_ROOM",
+        content: `${userIdFromToken} change the room avatar`,
       },
     });
     sendWs(broadcastData, ws, room);
@@ -162,27 +172,28 @@ export const joinRoom = async (ctx: Context) => {
   const room = await RoomModel.findFirst();
   if (!id) {
     if (!room) {
-      return (ctx.body = {
+      ctx.body = {
         code: 1,
         message: "haven't found a default room",
-      });
+      };
+      return;
     }
-    id = room.id;
     if (room?.memberId?.includes(userIdFromToken)) {
-      return (ctx.body = {
+      ctx.body = {
         code: 1,
         message: "you already joined this room!",
-      });
+      };
+      return;
     }
   }
   await RoomModel.update({
     where: { id: room?.id },
     data: { memberId: { push: userIdFromToken } },
   });
-  return (ctx.body = {
+  ctx.body = {
     code: 0,
     data: room,
-  });
+  };
 };
 
 export const deleteRoom = async (ctx: Context) => {

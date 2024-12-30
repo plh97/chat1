@@ -53,7 +53,7 @@ export const Avatar = ({
           variant="solid"
           colorScheme="teal"
           aria-label="Change Avatar"
-          fontSize="14px"
+          fontSize="15px"
           width="6"
           height="6"
           minW="6"
@@ -84,10 +84,10 @@ export const Avatar = ({
         style={{
           // backgroundColor: 'red',
           backgroundColor: generateColor(name),
+          marginInlineEnd: marginEnd,
         }}
-        className={clsx("AvatarRoot ml-0 my-0", size, {
+        className={clsx("AvatarRoot", size, {
           "border-2 border-black": showBorder,
-          [`m-[${marginEnd}]`]: marginEnd,
         })}
       >
         <AvatarComponent.Image className="AvatarImage" src={src} alt="avatar" />

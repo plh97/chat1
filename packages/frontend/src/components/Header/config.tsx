@@ -8,19 +8,24 @@ import {
   DrawerHeader,
   DrawerOverlay,
   IconButton,
+  InputGroup,
+  InputRightElement,
 } from "@chakra-ui/react";
 import Api from "@/Api";
 import { FiSettings } from "react-icons/fi";
 import { updateRoomThunk } from "@/store/reducer/room";
 import { AddMember } from "./AddMemberDialog";
 import { AddAdmin } from "./AddAdminDialog";
-import { ChangeEvent } from "react";
 
 export function Config() {
   const dispatch = useThunkDispatch();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const btnRef = useRef<HTMLButtonElement>(null);
   const room = useAppSelector((state) => state.room.data);
+  const [localName, setLocalName] = useState(room.name);
+  useEffect(() => {
+    setLocalName(room.name);
+  }, [setLocalName, room.name]);
   const isGroup = room?.channelType === "GROUP";
   const handleChangeAvatar = async (files: File[]) => {
     const file = files?.[0];
@@ -33,11 +38,11 @@ export function Config() {
       })
     );
   };
-  const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleNameChange = () => {
     dispatch(
       updateRoomThunk({
         id: room.id,
-        name: e.target.value,
+        name: localName,
       })
     );
   };
@@ -52,13 +57,7 @@ export function Config() {
           icon={<FiSettings className="text-2xl" />}
         />
       )}
-      <Drawer
-        key={2}
-        isOpen={isOpen}
-        placement="right"
-        onClose={onClose}
-        // finalFocusRef={btnRef}
-      >
+      <Drawer key={2} isOpen={isOpen} placement="right" onClose={onClose}>
         <DrawerOverlay />
         <DrawerContent>
           <DrawerCloseButton />
@@ -75,12 +74,25 @@ export function Config() {
               </FormControl>
               <FormControl>
                 <FormLabel>Group Name</FormLabel>
-                <Input
-                  defaultValue={room.name}
-                  name="name"
-                  placeholder="Group Name"
-                  onBlur={handleNameChange}
-                />
+                <InputGroup size="md">
+                  <Input
+                    pr="4.5rem"
+                    value={localName}
+                    onChange={(e) => setLocalName(e.target.value)}
+                    name="name"
+                    placeholder="Group Name"
+                  />
+                  <InputRightElement width="4.5rem">
+                    <Button
+                      isDisabled={room.name === localName}
+                      h="1.75rem"
+                      size="sm"
+                      onClick={() => handleNameChange()}
+                    >
+                      Save
+                    </Button>
+                  </InputRightElement>
+                </InputGroup>
               </FormControl>
               <FormControl>
                 <FormLabel>Admin List</FormLabel>
