@@ -50,7 +50,6 @@ export const AddFriendDialog = ({ isOpen, onClose }: {
                   key={a.id}
                 >
                   <Avatar
-                    size="md"
                     className="w-8 h-8"
                     src={a.image}
                     name={a.username}

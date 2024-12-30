@@ -63,7 +63,6 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
     >
       <WithProfile profile={message.user}>
         <Avatar
-          size="md"
           name={message?.user?.username}
           src={message?.user?.image}
         />
