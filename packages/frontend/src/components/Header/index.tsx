@@ -20,7 +20,7 @@ export function Content() {
   return (
     <div className="flex items-center">
       <WrapItem>
-        <AvatarComponent name={name} src={image} />
+        <Avatar name={name} src={image} />
       </WrapItem>
       <div className="ml-2">
         <p className="text-lg font-semibold">{name}</p>

@@ -50,7 +50,7 @@ export function RegisterPage() {
         password,
       }) as any
     );
-  }
+  };
   const navigate = useNavigate();
   function handleLogin() {
     return navigate("/login");
@@ -63,7 +63,7 @@ export function RegisterPage() {
     <div style={style.container} data-testid="register">
       <div style={style.Wrapper} className="flex flex-col gap-2">
         <div style={style.AvatarContainer}>
-          <Avatar size="xl" name="?" />
+          <Avatar size="xl" name="?" src={''} />
         </div>
         <h1 className="text-4xl">Register</h1>
         <form onSubmit={handleRegister} className="flex flex-col gap-2">
@@ -96,7 +96,11 @@ export function RegisterPage() {
               >
                 Login
               </Button>
-              <Button type="submit" onClick={handleRegister} colorScheme="green">
+              <Button
+                type="submit"
+                onClick={handleRegister}
+                colorScheme="green"
+              >
                 Register
               </Button>
             </Stack>

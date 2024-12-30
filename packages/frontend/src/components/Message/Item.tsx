@@ -1,9 +1,10 @@
+import React, { MouseEventHandler } from "react";
 import { MessageTemplate } from "@/messages";
 import { IMessage } from "@/interfaces/IMessage";
 import { Indicator } from "./Indicator";
-import { MouseEventHandler } from "react";
 import { useMsgWatch } from "./hook";
 import { updateRecallMessage } from "@/store/reducer/room";
+import { WithProfile } from "../WithProfile";
 
 interface IProps {
   readonly data: IMessage;
@@ -54,11 +55,13 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
         "flex-row-reverse": isMe,
       })}
     >
-      <AvatarComponent
-        size="md"
-        name={message?.user?.username}
-        src={message?.user?.image}
-      />
+      <WithProfile profile={message.user}>
+        <Avatar
+          size="md"
+          name={message?.user?.username}
+          src={message?.user?.image}
+        />
+      </WithProfile>
       <div
         onContextMenu={onContextMenu}
         className="mx-2.5 max-w-[60%] rounded-lg overflow-hidden whitespace-pre-wrap bg-gray-800 shadow-md"

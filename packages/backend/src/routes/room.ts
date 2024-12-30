@@ -89,13 +89,14 @@ export const addRoom = async (ctx: Context) => {
 export const updateRoom = async (ctx: Context) => {
   const body = ctx.request.body;
   const ws: WebSocketServer = ctx.ws;
-  const { id, memberId, adminId, ...data } = body;
+  const { id, memberId, adminId, name, ...data } = body;
   const cookie = ctx.cookies.get("token") ?? "";
   const userIdFromToken = verify(cookie, privateKey) as string;
   const room = await RoomModel.update({
     where: { id },
     data: {
       ...data,
+      name,
       memberId: memberId && { push: memberId },
       adminId: adminId && { push: adminId },
     },
@@ -118,7 +119,8 @@ export const updateRoom = async (ctx: Context) => {
       },
     });
     sendWs(broadcastData, ws, room);
-  } else if (adminId?.length > 0) {
+  }
+  if (adminId?.length > 0) {
     // @ts-ignore
     const broadcastData = await handleSendMsg({
       contentType: "SYSTEM_MESSAGE",
@@ -128,6 +130,20 @@ export const updateRoom = async (ctx: Context) => {
         targetList: adminId,
         operator: userIdFromToken,
         actionType: "ADD_ADMIN",
+      },
+    });
+    sendWs(broadcastData, ws, room);
+  }
+  if (name) {
+    // @ts-ignore
+    const broadcastData = await handleSendMsg({
+      contentType: "SYSTEM_MESSAGE",
+      userId: "System-message",
+      channelId: room.id,
+      systemMessage: {
+        targetList: [],
+        operator: userIdFromToken,
+        actionType: "CHANGE_ROOM_NAME",
       },
     });
     sendWs(broadcastData, ws, room);

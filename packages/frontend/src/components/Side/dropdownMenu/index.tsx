@@ -1,8 +1,8 @@
-import { FaInfo, FaPlus, FaUserFriends } from "react-icons/fa";
+import { FaPlus, FaUserFriends } from "react-icons/fa";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { AddFriendDialog } from "../AddFriendDialog";
 import { AddRoomDialog } from "../AddRoomDialog";
-import { FaHouse, FaPerson, FaPersonRifle } from "react-icons/fa6";
+import { FaHouse, FaPerson } from "react-icons/fa6";
 import "./styles.css";
 import { ProfileDialog } from "../ProfileDialog";
 

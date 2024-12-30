@@ -13,7 +13,7 @@ export interface IMediaMessage extends MediaMessage {
 
 export interface IMessage extends Omit<Message, "mediaMessage"> {
   mediaMessage?: IMediaMessage;
-  user: User;
+  user: IUser;
   member?: IUser[];
 }
 

@@ -49,7 +49,7 @@ export const AddFriendDialog = ({ isOpen, onClose }: {
                   className="mt-2 rounded-lg border-2 border-slate-900 border-solid px-0 my-2 flex gap-2 items-center justify-between flex-row"
                   key={a.id}
                 >
-                  <AvatarComponent
+                  <Avatar
                     size="md"
                     className="w-8 h-8"
                     src={a.image}

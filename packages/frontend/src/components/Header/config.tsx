@@ -1,3 +1,4 @@
+import { Form } from "react-router-dom";
 import {
   AvatarGroup,
   Drawer,
@@ -8,15 +9,38 @@ import {
   DrawerOverlay,
   IconButton,
 } from "@chakra-ui/react";
-import { AddMember } from "./AddMemberDialog";
+import Api from "@/Api";
 import { FiSettings } from "react-icons/fi";
+import { updateRoomThunk } from "@/store/reducer/room";
+import { AddMember } from "./AddMemberDialog";
 import { AddAdmin } from "./AddAdminDialog";
+import { ChangeEvent } from "react";
 
 export function Config() {
+  const dispatch = useThunkDispatch();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const btnRef = useRef<HTMLButtonElement>(null);
   const room = useAppSelector((state) => state.room.data);
   const isGroup = room?.channelType === "GROUP";
+  const handleChangeAvatar = async (files: File[]) => {
+    const file = files?.[0];
+    if (!file) return;
+    const { url } = await Api.uploadFile(file);
+    dispatch(
+      updateRoomThunk({
+        id: room.id,
+        image: url,
+      })
+    );
+  };
+  const handleNameChange = (e: ChangeEvent<HTMLInputElement>) => {
+    dispatch(
+      updateRoomThunk({
+        id: room.id,
+        name: e.target.value,
+      })
+    );
+  };
   return (
     <>
       {isGroup && (
@@ -33,14 +57,31 @@ export function Config() {
         isOpen={isOpen}
         placement="right"
         onClose={onClose}
-        finalFocusRef={btnRef}
+        // finalFocusRef={btnRef}
       >
         <DrawerOverlay />
         <DrawerContent>
           <DrawerCloseButton />
           <DrawerHeader>Group Info</DrawerHeader>
           <DrawerBody>
-            <form>
+            <Form className={clsx("flex flex-col gap-2")}>
+              <FormControl className="relative flex justify-center mb-5">
+                <Avatar
+                  size="lg"
+                  name={room.name}
+                  src={room.image ?? ""}
+                  onChange={handleChangeAvatar}
+                />
+              </FormControl>
+              <FormControl>
+                <FormLabel>Group Name</FormLabel>
+                <Input
+                  defaultValue={room.name}
+                  name="name"
+                  placeholder="Group Name"
+                  onBlur={handleNameChange}
+                />
+              </FormControl>
               <FormControl>
                 <FormLabel>Admin List</FormLabel>
                 <div className="flex flex-row gap-2">
@@ -63,7 +104,7 @@ export function Config() {
                   <AddMember />
                 </div>
               </FormControl>
-            </form>
+            </Form>
           </DrawerBody>
         </DrawerContent>
       </Drawer>

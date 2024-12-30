@@ -17,19 +17,19 @@ const Component = ({ message, room }: { message: IMessage; room?: IRoom }) => {
   };
   const targetListContent =
     sysMsg?.targetList
-      .filter((targetId) => {
+      ?.filter((targetId) => {
         return member?.find((m) => m.id === targetId);
       })
-      .map((targetId) => {
+      ?.map((targetId) => {
         if (targetId === me.id) {
           return "You";
         }
         return member?.find((m) => m.id === targetId)?.username;
       })
-      .join(", ") ??
+      ?.join(", ") ??
     JSON.stringify(sysMsg?.targetList) ??
     "???";
-  if (!sysMsg) return "un-reconized system message";
+  if (!sysMsg) return "invalid system message";
   const actionType = sysMsg?.actionType;
   switch (actionType) {
     case "CREATE_ROOM":
@@ -46,6 +46,8 @@ const Component = ({ message, room }: { message: IMessage; room?: IRoom }) => {
       return `${getOperator()} remove ${targetListContent} as member!`;
     case "ADD_FRIEND":
       return `${getOperator()} and ${targetListContent} are friends now!`;
+    case "CHANGE_ROOM_NAME":
+      return `${getOperator()} Change room name`;
     default:
       return `System message`;
   }

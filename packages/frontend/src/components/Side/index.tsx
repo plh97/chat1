@@ -2,7 +2,7 @@ import { PropsWithChildren } from "react";
 import { IconButton } from "@chakra-ui/react";
 import { FaBars } from "react-icons/fa";
 import { FaXmark } from "react-icons/fa6";
-import DropdownMenu from "@/components/Side/dropdownMenu";
+import DropdownMenu from "@/components/Side/DropdownMenu";
 import { logoutThunk } from "@/store/reducer/user";
 import { List } from "./List";
 
