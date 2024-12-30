@@ -101,7 +101,7 @@ export default defineConfig({
         {
           axios: [["default", "Axios"]],
           clsx: [["default", "clsx"]],
-          '@/components/Avatar': [["Avatar", "Avatar"]],
+          "@/components/Avatar": [["Avatar", "Avatar"]],
         },
       ],
       dirs: [
@@ -119,7 +119,7 @@ export default defineConfig({
     proxy: {
       "/api": {
         target: "https://localhost",
-        // target: "https://54.251.167.225",
+        // target: "https://18.141.180.119",
         // target: "https://c-delta-eight.vercel.app/",
         changeOrigin: true,
         secure: false,
@@ -127,7 +127,7 @@ export default defineConfig({
       },
       "/ws": {
         target: "wss://localhost",
-        // target: "wss://54.251.167.225/",
+        // target: "wss://18.141.180.119/",
         // target: "ws://c-delta-eight.vercel.app/",
         changeOrigin: true,
         secure: false,
