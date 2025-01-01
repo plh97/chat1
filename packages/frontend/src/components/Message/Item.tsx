@@ -36,7 +36,6 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
     return <>{Component}</>;
   }
   const onContextMenu: MouseEventHandler<HTMLDivElement> = (e) => {
-    if (!isMe) return;
     e.preventDefault();
     setIsOpen(true);
     const menu = document.querySelector("[role=menu]")!;

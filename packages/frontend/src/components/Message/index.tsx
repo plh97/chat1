@@ -3,7 +3,10 @@ import { Item } from "./Item";
 import { Scroll } from "./scroll";
 import { IoCopy } from "react-icons/io5";
 import { recallMessageThunk } from "@/store/action/message";
-import { updateReplyMessage, updateSelectedMessage } from "@/store/reducer/room";
+import {
+  updateReplyMessage,
+  updateSelectedMessage,
+} from "@/store/reducer/room";
 import { FaRegTrashAlt, FaReply } from "react-icons/fa";
 
 export function Message() {
@@ -13,6 +16,7 @@ export function Message() {
   const room = useAppSelector((state) => state.room.data);
   const selectedMessage = useAppSelector((state) => state.room.selectedMessage);
   const myUserInfo = useAppSelector((state) => state.user.data);
+  const isMe = myUserInfo?.id === selectedMessage?.user.id;
   const handleRecall = () => {
     if (!selectedMessage) return;
     dispatch(
@@ -41,6 +45,37 @@ export function Message() {
     if (!selectedMessage) return;
     dispatch(updateReplyMessage(selectedMessage));
   };
+  const menuList = useMemo(() => {
+    const config = [];
+    if (isMe) {
+      config.push({
+        label: "Recall",
+        onClick: handleRecall,
+        icon: <FaRegTrashAlt className="text-2xl" />,
+      });
+    }
+    if (selectedMessage?.contentType === "TEXT_MESSAGE") {
+      config.push({
+        label: "Copy",
+        onClick: handleCopy,
+        icon: <IoCopy className="text-2xl" />,
+      });
+    }
+    if (
+      ["TEXT_MESSAGE", "MEDIA_MESSAGE"].includes(
+        selectedMessage?.contentType ?? ""
+      )
+    ) {
+      config.push({
+        label: "Reply",
+        onClick: handleReply,
+        icon: <FaReply className="text-2xl" />,
+      });
+    }
+    return config;
+  }, [
+    selectedMessage,
+  ]);
   return (
     <Scroll>
       <Menu
@@ -54,30 +89,15 @@ export function Message() {
         ))}
         <Portal>
           <MenuList>
-            <MenuItem
-              onClick={handleRecall}
-              className="flex flex-row justify-between box-border"
-            >
-              Recall <FaRegTrashAlt className="text-2xl" />
-            </MenuItem>
-            {selectedMessage?.contentType === "TEXT_MESSAGE" && (
+            {menuList.map((item) => (
               <MenuItem
-                onClick={handleCopy}
+                key={item.label}
+                onClick={item.onClick}
                 className="flex flex-row justify-between box-border"
               >
-                Copy <IoCopy className="text-2xl" />
+                {item.label} {item.icon}
               </MenuItem>
-            )}
-            {["TEXT_MESSAGE", "MEDIA_MESSAGE"].includes(
-              selectedMessage?.contentType ?? ""
-            ) && (
-              <MenuItem
-                onClick={handleReply}
-                className="flex flex-row justify-between box-border"
-              >
-                Reply <FaReply className="text-2xl" />
-              </MenuItem>
-            )}
+            ))}
           </MenuList>
         </Portal>
       </Menu>
