@@ -3,7 +3,7 @@ import { MessageTemplate } from "@/messages";
 import { IMessage } from "@/interfaces/IMessage";
 import { Indicator } from "./Indicator";
 import { useMsgWatch } from "./hook";
-import { updateRecallMessage } from "@/store/reducer/room";
+import { updateSelectedMessage } from "@/store/reducer/room";
 import { WithProfile } from "../WithProfile";
 
 interface IProps {
@@ -51,7 +51,7 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
       top: `${y}px`,
       left: `${x}px`,
     });
-    dispatch(updateRecallMessage(message));
+    dispatch(updateSelectedMessage(message));
   };
   return (
     <div
@@ -62,15 +62,14 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
       })}
     >
       <WithProfile profile={message.user}>
-        <Avatar
-          name={message?.user?.username}
-          src={message?.user?.image}
-        />
+        <Avatar name={message?.user?.username} src={message?.user?.image} />
       </WithProfile>
       <div
         onContextMenu={onContextMenu}
         className="mx-2.5 max-w-[60%] rounded-lg overflow-hidden whitespace-pre-wrap bg-gray-800 shadow-md"
       >
+        {/* @ts-ignore */}
+        <Reply className="mt-2.5" message={message.reply} />
         {Component}
       </div>
       <Indicator message={message} />

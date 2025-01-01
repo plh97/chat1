@@ -9,10 +9,15 @@ export const store = configureStore({
     user: userReducer,
     room: roomReducer,
   },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
+  middleware: (getDefaultMiddleware) => {
+    const res = getDefaultMiddleware({
       serializableCheck: false,
-    }).concat(thunk, logger),
+    }).concat(thunk);
+    if (process.env.NODE_ENV === "development") {
+      return res.concat(logger);
+    }
+    return res;
+  },
 });
 
 export type RootState = ReturnType<typeof store.getState>;

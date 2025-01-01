@@ -3,10 +3,13 @@ import { IMediaMessage } from "core";
 import { HiOutlineDocumentSearch } from "react-icons/hi";
 import {
   FaFileAlt,
+  FaFileAudio,
   FaFileCsv,
   FaFileExcel,
+  FaFileImage,
   FaFilePdf,
   FaFilePowerpoint,
+  FaFileVideo,
   FaFileWord,
 } from "react-icons/fa";
 import { JSX } from "react";
@@ -22,16 +25,20 @@ export function formatFileSize(size?: number) {
   return `${size.toFixed(0)} Byte`;
 }
 
-const FileIcon = ({ type, ...args }: { type: string; className?: string }) => {
-  const iconMap: Record<string, JSX.Element> = {
+export const FileIcon = ({ type, ...args }: { type: string; className?: string }) => {
+  const [type1, type2] = type.split("/");
+  const iconMap: Record<string, JSX.Element | null> = {
     pdf: <FaFilePdf {...args} />,
     csv: <FaFileCsv {...args} />,
     doc: <FaFileWord {...args} />,
     xls: <FaFileExcel {...args} />,
     ppt: <FaFilePowerpoint {...args} />,
+    audio: <FaFileAudio {...args} />,
+    image: <FaFileImage {...args} />,
+    video: <FaFileVideo {...args} />,
     default: <FaFileAlt {...args} />,
   };
-  return iconMap[type] ?? iconMap.default;
+  return iconMap[type1] ?? iconMap[type2] ?? iconMap.default;
 };
 
 export const DocsMsg = ({ message }: { message: IMediaMessage }) => {

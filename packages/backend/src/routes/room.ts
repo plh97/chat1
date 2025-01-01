@@ -20,6 +20,7 @@ export const getRoom = async (ctx: Context) => {
       message: {
         include: {
           user: true,
+          reply: true,
         },
       },
       member: true,

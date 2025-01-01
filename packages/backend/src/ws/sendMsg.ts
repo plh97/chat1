@@ -32,6 +32,11 @@ export const handleSendMsg = async (data: IMessage) => {
         message: {
           include: {
             user: true,
+            reply: {
+              include: {
+                user: true,
+              },
+            },
           },
         },
       },

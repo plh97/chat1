@@ -1,5 +1,5 @@
 import { FiSend, FiPause } from "react-icons/fi";
-import { IconButton } from "@chakra-ui/react";
+import { IconButton, InputGroup, InputRightElement } from "@chakra-ui/react";
 import { FaRecordVinyl } from "react-icons/fa";
 import { useAppSelector } from "@/hooks/app";
 import { scrollToEnd } from "@/store/reducer/room";
@@ -10,12 +10,14 @@ import { Input } from "./input";
 import { IMediaMessage } from "@/interfaces";
 import { UploadFile } from "./UploadFile";
 import { useDraft } from "./useDraft";
+import { Reply } from "../Reply";
 
 const MAX_INPUT = 2000;
 const { toast } = createStandaloneToast();
 
 export function InputBox({ className }: { readonly className?: string }) {
   const room = useAppSelector((state) => state.room.data);
+  const replyMsg = useAppSelector((state) => state.room.replyMessage);
   const userInfo = useAppSelector((state) => state.user.data);
   const dispatch = useThunkDispatch();
   const [text, setText] = useState("");
@@ -109,31 +111,46 @@ export function InputBox({ className }: { readonly className?: string }) {
     );
   }, [time, text, userInfo, room]);
 
+  const replyMessage = useMemo(() => {
+    if (replyMsg) {
+      return <Reply onClose message={replyMsg} />;
+    }
+    return null;
+}, [replyMsg]);
+
   return (
     <div
       className={clsx(
-        "box-border flex flex-row gap-3 flex-0 basis-20 pt-0 pb-5 px-3",
+        "flex flex-col gap-3 flex-0",
         className
       )}
     >
-      {!time ? (
-        <Input
-          maxLength={MAX_INPUT}
-          handlePaste={handlePaste}
-          text={text}
-          onChange={setText}
-          handleSendText={handleSendText}
-        />
-      ) : (
-        <Textarea
-          rows={1}
-          disabled
-          value={formatTime(time)}
-          className="flex-1 text-right"
-          aria-label="maximum height"
-        />
-      )}
-      {utilComponent}
+      {replyMessage}
+      <div
+        className={clsx(
+          "box-border flex flex-row gap-3 flex-0 basis-20 pt-0 pb-5 px-3",
+          className
+        )}
+      >
+        {!time ? (
+          <Input
+            maxLength={MAX_INPUT}
+            handlePaste={handlePaste}
+            text={text}
+            onChange={setText}
+            handleSendText={handleSendText}
+          />
+        ) : (
+          <Textarea
+            rows={1}
+            disabled
+            value={formatTime(time)}
+            className="flex-1 text-right"
+            aria-label="maximum height"
+          />
+        )}
+        {utilComponent}
+      </div>
     </div>
   );
 }

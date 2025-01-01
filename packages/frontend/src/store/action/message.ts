@@ -1,7 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import { WS_EVENT } from "core";
 import { formatMessage } from "@/utils/formatMessage";
-import { addMessage, scrollToEnd } from "../reducer/room";
+import { addMessage, scrollToEnd, updateReplyMessage } from "../reducer/room";
 import { IMessage } from "@/interfaces";
 import { topUserRoom, updateUserRoomReadSeq } from "../reducer/user";
 
@@ -10,7 +10,13 @@ const { toast } = createStandaloneToast();
 // 发送一条新消息
 export const sendMessageAction = createAsyncThunk<void, Partial<IMessage>>(
   `sendMessage`,
-  async (data, { dispatch }) => {
+  async (data, { dispatch, getState }) => {
+    const state: any = getState();
+    if (state?.room?.replyMessage?.id) {
+      Object.assign(data, {
+        replyId: state?.room?.replyMessage?.id,
+      });
+    }
     const formatMsg = await formatMessage(data);
     const wsRes = await ws.sendMsgPromise<IMessage>(formatMsg);
     if (wsRes.code === 1) {
@@ -41,6 +47,8 @@ export const sendMessageAction = createAsyncThunk<void, Partial<IMessage>>(
       })
     );
     dispatch(scrollToEnd());
+    // remove reply message
+    dispatch(updateReplyMessage());
   }
 );
 

@@ -41,6 +41,7 @@ declare global {
   const PopoverTrigger: typeof import('@chakra-ui/react')['PopoverTrigger']
   const Profile: typeof import('./src/components/Profile')['Profile']
   const RegisterPage: typeof import('./src/views/RegisterPage')['RegisterPage']
+  const Reply: typeof import('./src/components/Reply')['Reply']
   const RoomPage: typeof import('./src/views/RoomPage')['RoomPage']
   const Route: typeof import('react-router-dom')['Route']
   const Routes: typeof import('react-router-dom')['Routes']

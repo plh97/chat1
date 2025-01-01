@@ -1,40 +1,45 @@
 import { Menu, MenuItem, MenuList, Portal } from "@chakra-ui/react";
 import { Item } from "./Item";
 import { Scroll } from "./scroll";
-import { IoArrowUndoOutline, IoCopy } from "react-icons/io5";
+import { IoCopy } from "react-icons/io5";
 import { recallMessageThunk } from "@/store/action/message";
-import { updateRecallMessage } from "@/store/reducer/room";
+import { updateReplyMessage, updateSelectedMessage } from "@/store/reducer/room";
+import { FaRegTrashAlt, FaReply } from "react-icons/fa";
 
 export function Message() {
   const toast = useToast();
   const dispatch = useThunkDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const room = useAppSelector((state) => state.room.data);
-  const recallMessage = useAppSelector((state) => state.room.recallMessage);
+  const selectedMessage = useAppSelector((state) => state.room.selectedMessage);
   const myUserInfo = useAppSelector((state) => state.user.data);
   const handleRecall = () => {
-    if (!recallMessage) return;
+    if (!selectedMessage) return;
     dispatch(
       recallMessageThunk({
-        channelId: recallMessage.channelId,
+        channelId: selectedMessage.channelId,
         recallMessage: {
           operator: myUserInfo.id,
-          recallMsgId: recallMessage.id,
+          recallMsgId: selectedMessage.id,
         },
       })
     );
-    dispatch(updateRecallMessage(undefined));
+    dispatch(updateSelectedMessage(undefined));
   };
   const handleCopy = () => {
-    const content = recallMessage?.textMessage?.text;
+    const content = selectedMessage?.textMessage?.text;
     if (!content) return;
-    navigator.clipboard.writeText(recallMessage.textMessage!.text);
+    navigator.clipboard.writeText(selectedMessage.textMessage!.text);
     toast({
       description: `Copy [${content}] successfully`,
       status: "success",
       position: "top",
       duration: 1000,
     });
+  };
+  const handleReply = () => {
+    if (!selectedMessage) return;
+    dispatch(updateReplyMessage(selectedMessage));
   };
   return (
     <Scroll>
@@ -53,14 +58,24 @@ export function Message() {
               onClick={handleRecall}
               className="flex flex-row justify-between box-border"
             >
-              Recall <IoArrowUndoOutline className="text-2xl" />
+              Recall <FaRegTrashAlt className="text-2xl" />
             </MenuItem>
-            {recallMessage?.contentType === "TEXT_MESSAGE" && (
+            {selectedMessage?.contentType === "TEXT_MESSAGE" && (
               <MenuItem
                 onClick={handleCopy}
                 className="flex flex-row justify-between box-border"
               >
                 Copy <IoCopy className="text-2xl" />
+              </MenuItem>
+            )}
+            {["TEXT_MESSAGE", "MEDIA_MESSAGE"].includes(
+              selectedMessage?.contentType ?? ""
+            ) && (
+              <MenuItem
+                onClick={handleReply}
+                className="flex flex-row justify-between box-border"
+              >
+                Reply <FaReply className="text-2xl" />
               </MenuItem>
             )}
           </MenuList>

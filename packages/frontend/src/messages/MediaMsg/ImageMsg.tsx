@@ -2,6 +2,7 @@ import { IconButton, Image } from "@chakra-ui/react";
 import { FaDownload } from "react-icons/fa";
 import { ProgressImage } from "./ProgressImage";
 import { IMediaMessage } from "@/interfaces";
+import { JSX } from "react";
 
 const PreviewImage = ({
   mediaMessage,

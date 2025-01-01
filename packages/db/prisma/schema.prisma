@@ -78,6 +78,10 @@ model Message {
   userId        String         @unique
   Room          Room           @relation("room-message", fields: roomId, references: id)
   roomId        String         @unique
+  // reply
+  reply         Message?       @relation("reply-message", fields: replyId, references: id, onDelete: NoAction, onUpdate: NoAction)
+  replyId       String?        @unique
+  Message       Message[]      @relation("reply-message")
 }
 
 type ReadMessage {

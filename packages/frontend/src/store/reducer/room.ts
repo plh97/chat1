@@ -14,7 +14,8 @@ export interface IState {
   error: string | null;
   data: IRoom;
   loadingMessage: boolean;
-  recallMessage?: IMessage;
+  selectedMessage?: IMessage;
+  replyMessage?: IMessage;
 }
 
 const initialState: IState = {
@@ -40,7 +41,7 @@ const initialState: IState = {
     readSeq: {},
     admin: [],
   },
-  recallMessage: undefined,
+  selectedMessage: undefined,
 };
 
 // 加载房间基本信息
@@ -136,10 +137,10 @@ export const roomSlice = createSlice({
         Object.assign(state.data.readSeq ?? {}, room.readSeq);
       }
     },
-    updateRecallMessage(state, action: PayloadAction<IMessage | undefined>) {
+    updateSelectedMessage(state, action: PayloadAction<IMessage | undefined>) {
       const message = action.payload;
       Object.assign(state, {
-        recallMessage: message,
+        selectedMessage: message,
       });
     },
     recallExistMessage(state, action: PayloadAction<IMessage>) {
@@ -149,6 +150,12 @@ export const roomSlice = createSlice({
       if (msg) {
         Object.assign(msg, message);
       }
+    },
+    updateReplyMessage(state, action: PayloadAction<IMessage | undefined>) {
+      const message = action.payload;
+      Object.assign(state, {
+        replyMessage: message,
+      });
     },
   },
 });
@@ -162,8 +169,9 @@ export const {
   changeLoading,
   changeRoomId,
   markReadMessage,
-  updateRecallMessage,
+  updateSelectedMessage,
   recallExistMessage,
+  updateReplyMessage,
 } = roomSlice.actions;
 
 export const roomReducer = roomSlice.reducer;
