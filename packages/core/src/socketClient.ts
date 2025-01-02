@@ -2,6 +2,7 @@ import { WS_EVENT } from "./constants";
 import { EventEmitter } from "./eventEmitter";
 import { CB, IWsData } from "./interface";
 import { generateTemplateId, getToken } from "./utils";
+import ReconnectingWebSocket from "./lib/reconnecting-websocket";
 
 type Promisify = {
   resolve: (value: unknown) => void;
@@ -65,7 +66,7 @@ export class SocketClient {
   close(error: unknown) {
     console.log("[WS] close", error);
     this.isError = true;
-    this.reconnect();
+    // this.reconnect();
   }
 
   // handle reconect logic
@@ -74,7 +75,7 @@ export class SocketClient {
   }
 
   init() {
-    this.socket = new WebSocket(this.url, getToken());
+    this.socket = new ReconnectingWebSocket(this.url, getToken());
     this.createWS(this.open, this.close, this.error);
     // @ts-ignore
     window.socket = this.socket;

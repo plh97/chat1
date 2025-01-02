@@ -29,7 +29,6 @@ export const App = (): React.ReactNode => {
       {/* <Theme className="h-full" accentColor="indigo"> */}
         <ChakraProvider theme={theme}>
           <RouterProvider router={router} />
-          <div id="portal" />
         </ChakraProvider>
       {/* </Theme> */}
     </Provider>

@@ -5,21 +5,26 @@ export const WithProfile = ({
   profile,
   children,
 }: React.PropsWithChildren<{ profile?: IUser }>) => {
+  const [open, setOpen] = useState(false);
   if (!profile) {
     return children;
   }
   return (
-    <Popover>
+    <Popover closeOnEsc onClose={() => setOpen(false)} isOpen={open}>
       <PopoverTrigger>
-        <span className="cursor-pointer">{children}</span>
+        <button onClick={() => setOpen(true)} className="cursor-pointer">
+          {children}
+        </button>
       </PopoverTrigger>
-      <Portal>
-        <PopoverContent>
-          <PopoverBody>
-            <Profile className="px-2 py-2" profile={profile} />
-          </PopoverBody>
-        </PopoverContent>
-      </Portal>
+      {open && (
+        <Portal>
+          <PopoverContent>
+            <PopoverBody>
+              <Profile className="px-2 py-2" profile={profile} />
+            </PopoverBody>
+          </PopoverContent>
+        </Portal>
+      )}
     </Popover>
   );
 };

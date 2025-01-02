@@ -51,14 +51,14 @@ export function Scroll({ children }: PropsWithChildren) {
   }, [myUserInfo?.id]);
   if (!myUserInfo?.id) {
     return (
-      <div className="overflow-y-auto flex-1 relative px-3.5 py-0 overscroll-none flex items-center justify-center flex-col">
+      <div className="overflow-y-auto flex-1 relative px-3.5 py-0 flex items-center justify-center flex-col">
         <Loader2 className="text-2xl w-8 h-8 text-gray-200 animate-spin dark:text-gray-600" />
       </div>
     );
   }
   return (
     <div
-      className="overflow-y-auto flex-1 relative px-3.5 py-0 overscroll-none"
+      className="overflow-y-auto flex-1 relative px-3.5 py-0"
       ref={scrollEl}
     >
       <Top />

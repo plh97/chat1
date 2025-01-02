@@ -73,9 +73,7 @@ export function Message() {
       });
     }
     return config;
-  }, [
-    selectedMessage,
-  ]);
+  }, [selectedMessage]);
   return (
     <Scroll>
       <Menu
