@@ -15,15 +15,7 @@ export class SocketClient {
   promiseMap: Record<string, Promisify> = {};
   url: string;
   isError = false;
-  reconnectTime: number;
-  constructor({
-    url,
-    reconnectTime = 1000,
-  }: {
-    url: string;
-    reconnectTime: number;
-  }) {
-    this.reconnectTime = reconnectTime;
+  constructor({ url }: { url: string }) {
     this.url = url;
     this.eventEmitter = new EventEmitter();
     this.init();
@@ -55,21 +47,13 @@ export class SocketClient {
     // this.socket = null;
   }
 
-  reconnect() {
-    if (!getToken()) return;
-    setTimeout(() => {
-      this.init();
-    }, this.reconnectTime);
-  }
-
   // handle close logic
   close(error: unknown) {
     console.log("[WS] close", error);
     this.isError = true;
-    // this.reconnect();
   }
 
-  // handle reconect logic
+  // handle error logic
   error(error: unknown) {
     console.log("[WS] error", error);
   }
