@@ -49,7 +49,7 @@ export const VideoMsg = ({ message }: { message: IMediaMessage }) => {
               icon={<FaPlay />}
             />
           </span>
-          <ProgressImage message={message} />
+          <ProgressImage message={{ ...message, url: thumbnail }} />
         </>
       )}
     </button>

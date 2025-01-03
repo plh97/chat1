@@ -95,7 +95,7 @@
  *
  */
 
-function ReconnectingWebSocket(url, protocols, options) {
+function ReconnectingWebSocket(url: string, protocols: string, options?: Record<string, any>) {
 
     // Default settings
     var settings = {
@@ -350,4 +350,4 @@ ReconnectingWebSocket.OPEN = WebSocket.OPEN;
 ReconnectingWebSocket.CLOSING = WebSocket.CLOSING;
 ReconnectingWebSocket.CLOSED = WebSocket.CLOSED;
 
-export default ReconnectingWebSocket;
+export default ReconnectingWebSocket as any;

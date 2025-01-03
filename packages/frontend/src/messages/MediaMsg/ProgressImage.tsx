@@ -11,7 +11,7 @@ export const ProgressImage = ({
   const w = message.width!;
   const h = message.height!;
   const [loading, setLoading] = useState<boolean>(true);
-  const patchStyle = useMemo(() => {
+  const style = useMemo(() => {
     const style: CSSProperties = {
       width: w,
       height: h,
@@ -33,9 +33,7 @@ export const ProgressImage = ({
   }, []);
   return (
     <Image
-      style={{
-        ...patchStyle,
-      }}
+      style={style}
       fallbackSrc={thumbnail!}
       className={clsx(
         "w-full",
