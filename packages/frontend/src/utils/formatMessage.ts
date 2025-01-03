@@ -106,7 +106,7 @@ const formatMediaMessage = async (
   mediaMessage?: IMediaMessage
 ): Promise<MediaMessage | undefined> => {
   if (!mediaMessage) return mediaMessage;
-  const file = mediaMessage?.file as File;
+  const file = mediaMessage?.file;
   const fileType = file?.type;
   if (fileType.startsWith("image")) {
     return previewImage(file);

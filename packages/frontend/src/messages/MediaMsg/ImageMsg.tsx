@@ -17,9 +17,9 @@ const PreviewImage = ({
   const { url, thumbnail } = mediaMessage;
   return (
     <>
-      <div onClick={onOpen} className={className}>
+      <button onClick={onOpen} className={className}>
         {children}
-      </div>
+      </button>
       <Modal isCentered onClose={onClose} size={"xl"} isOpen={isOpen}>
         <ModalOverlay backdropFilter="auto" backdropBlur="2px" />
         <ModalContent className="flex items-center justify-center">

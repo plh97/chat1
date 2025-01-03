@@ -1,36 +1,13 @@
-import { IMediaMessage } from "core";
 import { ProgressImage } from "./ProgressImage";
 import { IconButton } from "@chakra-ui/react";
 import { FaPlay } from "react-icons/fa";
-
-const useFixedSize = (
-  mediaMessage?: IMediaMessage,
-  maxWidth = 200,
-  maxHeight = 200
-) => {
-  if (!mediaMessage?.width || !mediaMessage?.height) {
-    return { width: 0, height: 0 };
-  }
-  const rate = mediaMessage.width / mediaMessage.height;
-  let width = 0;
-  let height = 0;
-  if (mediaMessage.width > mediaMessage.height) {
-    width = maxWidth;
-    height = maxHeight / rate;
-  } else {
-    height = maxWidth;
-    width = maxHeight * rate;
-  }
-  return {
-    width,
-    height,
-  };
-};
+import { useFixedSize, useMediaMsgStyle } from "@/hooks/general";
 
 export const VideoMsg = ({ message }: { message: IMediaMessage }) => {
   const [playing, setPlaying] = useState(false);
   const thumbnail = message?.thumbnail;
   const { width, height } = useFixedSize(message);
+  const style = useMediaMsgStyle(message);
   if (!thumbnail) return <div>Invalid Video</div>;
   return (
     <button
@@ -39,7 +16,9 @@ export const VideoMsg = ({ message }: { message: IMediaMessage }) => {
       onClick={() => !playing && setPlaying(true)}
     >
       {playing ? (
-        <video controls autoPlay src={message.url} />
+        <video style={style} controls autoPlay src={message.url}>
+          <track kind="captions" />
+        </video>
       ) : (
         <>
           <span className="absolute z-10">
