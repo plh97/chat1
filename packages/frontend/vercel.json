@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://18.141.180.119/api/:path*"
+      "destination": "https://54.151.148.52/api/:path*"
     },
     {
       "source": "/((?!ws/).*)",
@@ -13,7 +13,7 @@
   "redirects": [
     {
       "source": "/ws/:path*",
-      "destination": "ws://18.141.180.119/ws/:path*"
+      "destination": "ws://54.151.148.52/ws/:path*"
     }
   ]
 }
