@@ -13,9 +13,9 @@ export const store = configureStore({
     const res = getDefaultMiddleware({
       serializableCheck: false,
     }).concat(thunk);
-    if (process.env.NODE_ENV === "development") {
-      return res.concat(logger);
-    }
+    // if (process.env.NODE_ENV === "development") {
+    //   return res.concat(logger);
+    // }
     return res;
   },
 });

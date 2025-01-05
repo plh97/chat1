@@ -10,15 +10,16 @@ export const UploadFile = ({ onUpload }: IProps) => {
   return (
     <>
       <input
+        ref={inputRef}
+        className="hidden"
+        type="file"
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) {
             onUpload(file);
+            inputRef.current!.value = "";
           }
         }}
-        ref={inputRef}
-        className="hidden"
-        type="file"
       />
       <IconButton
         size="lg"
