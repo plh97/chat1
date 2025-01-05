@@ -35,6 +35,7 @@ services:
       dockerfile: ./backend.Dockerfile
     networks:
       - backend
+
 networks:
   backend:
     name: backend
