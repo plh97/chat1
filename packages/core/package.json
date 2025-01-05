@@ -21,6 +21,7 @@
     "db": "workspace:*",
     "md5": "^2.3.0",
     "nanoid": "^5.0.7",
+    "reconnecting-websocket": "^4.4.0",
     "ws": "^8.18.0"
   },
   "devDependencies": {

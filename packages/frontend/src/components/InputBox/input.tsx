@@ -15,14 +15,19 @@ export function Input({
 }: IProps) {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const location = useLocation();
-  useEffect(() => {
+  const replyMsg = useAppSelector((state) => state.room.replyMessage);
+  useLayoutEffect(() => {
     inputRef.current?.focus();
   }, [location]);
+  useLayoutEffect(() => {
+    if (replyMsg) {
+      inputRef.current?.focus();
+    }
+  }, [replyMsg]);
   return (
     <div className="relative flex-1 flex">
       <Textarea
         ref={inputRef}
-        rows={1}
         onPaste={handlePaste}
         autoFocus
         value={text}

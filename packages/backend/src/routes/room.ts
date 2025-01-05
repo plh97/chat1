@@ -20,7 +20,11 @@ export const getRoom = async (ctx: Context) => {
       message: {
         include: {
           user: true,
-          reply: true,
+          reply: {
+            include: {
+              user: true,
+            },
+          },
         },
       },
       member: true,
@@ -213,12 +217,4 @@ export const deleteMessage = async (ctx: Context) => {
     message: "done",
     // data: res,
   };
-};
-
-export default {
-  addRoom,
-  getRoom,
-  updateRoom,
-  deleteRoom,
-  deleteMessage,
 };

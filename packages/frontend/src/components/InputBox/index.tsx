@@ -1,5 +1,5 @@
 import { FiSend, FiPause } from "react-icons/fi";
-import { IconButton, InputGroup, InputRightElement } from "@chakra-ui/react";
+import { IconButton } from "@chakra-ui/react";
 import { FaRecordVinyl } from "react-icons/fa";
 import { useAppSelector } from "@/hooks/app";
 import { scrollToEnd } from "@/store/reducer/room";
@@ -116,15 +116,10 @@ export function InputBox({ className }: { readonly className?: string }) {
       return <Reply onClose message={replyMsg} />;
     }
     return null;
-}, [replyMsg]);
+  }, [replyMsg]);
 
   return (
-    <div
-      className={clsx(
-        "flex flex-col gap-3 flex-0",
-        className
-      )}
-    >
+    <div className={clsx("flex flex-col gap-3 flex-0", className)}>
       {replyMessage}
       <div
         className={clsx(

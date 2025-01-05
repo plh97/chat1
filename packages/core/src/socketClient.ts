@@ -2,7 +2,7 @@ import { WS_EVENT } from "./constants";
 import { EventEmitter } from "./eventEmitter";
 import { CB, IWsData } from "./interface";
 import { generateTemplateId, getToken } from "./utils";
-import ReconnectingWebSocket from "./lib/reconnecting-websocket";
+import ReconnectingWebSocket from 'reconnecting-websocket';
 
 type Promisify = {
   resolve: (value: unknown) => void;
@@ -10,7 +10,7 @@ type Promisify = {
 };
 
 export class SocketClient {
-  socket?: WebSocket;
+  socket?: ReconnectingWebSocket;
   eventEmitter: EventEmitter;
   promiseMap: Record<string, Promisify> = {};
   url: string;
