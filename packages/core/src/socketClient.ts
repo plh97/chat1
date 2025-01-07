@@ -39,7 +39,7 @@ export class SocketClient {
     console.log("open", e);
     // handle something else logic here
     // 0. add heart beat
-    this.heartBeat();
+    // this.heartBeat();
     if (this.isError) {
       this.eventEmitter.emit(WS_EVENT.RECONNECT, e);
       this.isError = false;
