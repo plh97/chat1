@@ -12,6 +12,7 @@ export const useReconnect = (ws: SocketClient) => {
     toast.closeAll();
     toastIdRef.current = null;
     toast({
+      duration: 1000,
       title: "WS ReConnect",
       status: "success",
       position: "top",
