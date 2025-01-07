@@ -25,6 +25,10 @@ export const useReconnect = (ws: SocketClient) => {
     toast.closeAll();
     if (toastIdRef.current) return;
     toastIdRef.current = toast({
+      isClosable: true,
+      status: "error",
+      duration: 99999999999,
+      position: "top",
       title: (
         <>
           <span>WS Disconnect</span>
@@ -33,7 +37,6 @@ export const useReconnect = (ws: SocketClient) => {
             variant="link"
             onClick={() => {
               ws?.socket?.reconnect();
-              toast.closeAll();
             }}
             size="sm"
             ml={2}
@@ -42,9 +45,6 @@ export const useReconnect = (ws: SocketClient) => {
           </Button>
         </>
       ),
-      status: "error",
-      duration: 99999999999,
-      position: "top",
     });
   };
   useEventListener(WS_EVENT.RECONNECT, onReconnect);
