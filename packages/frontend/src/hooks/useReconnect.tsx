@@ -47,12 +47,6 @@ export const useReconnect = (ws: SocketClient) => {
       position: "top",
     });
   };
-  useEffect(() => {
-    ws.eventEmitter.on(WS_EVENT.RECONNECT, onReconnect);
-    ws.eventEmitter.on(WS_EVENT.DISCONNECT, onError);
-    return () => {
-      ws.eventEmitter.off(WS_EVENT.RECONNECT, onError);
-      ws.eventEmitter.off(WS_EVENT.DISCONNECT, onError);
-    };
-  }, []);
+  useEventListener(WS_EVENT.RECONNECT, onReconnect);
+  useEventListener(WS_EVENT.DISCONNECT, onError);
 };
