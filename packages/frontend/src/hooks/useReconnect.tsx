@@ -9,7 +9,7 @@ export const useReconnect = (ws: SocketClient) => {
   const { id = "" } = useParams();
   const dispatch = useAppDispatch();
   const onReconnect = () => {
-    toast.close(toastIdRef.current!);
+    toast.closeAll();
     toastIdRef.current = null;
     toast({
       title: "WS ReConnect",
@@ -22,7 +22,7 @@ export const useReconnect = (ws: SocketClient) => {
     }
   };
   const onError = () => {
-    console.log(toastIdRef.current);
+    toast.closeAll();
     if (toastIdRef.current) return;
     toastIdRef.current = toast({
       title: (
@@ -33,7 +33,7 @@ export const useReconnect = (ws: SocketClient) => {
             variant="link"
             onClick={() => {
               ws?.socket?.reconnect();
-              toast.close(toastIdRef.current!);
+              toast.closeAll();
             }}
             size="sm"
             ml={2}
