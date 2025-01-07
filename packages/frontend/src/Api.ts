@@ -1,6 +1,6 @@
 import { AxiosError, AxiosRequestConfig } from "axios";
 import {
-  ADD_MESSAGE_REQUEST,
+  IAddMessageRequest,
   IMessage,
   IRoom,
   IUser,
@@ -171,7 +171,7 @@ const Api = {
       data,
     }),
 
-  sendMessage: (data: ADD_MESSAGE_REQUEST) =>
+  sendMessage: (data: IAddMessageRequest) =>
     request<IMessage>({
       url: "/room/message",
       method: "post",

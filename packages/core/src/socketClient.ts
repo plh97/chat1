@@ -1,8 +1,8 @@
+import ReconnectingWebSocket from "reconnecting-websocket";
 import { WS_EVENT } from "./constants";
 import { EventEmitter } from "./eventEmitter";
 import { CB, IWsData } from "./interface";
 import { generateTemplateId, getToken } from "./utils";
-import ReconnectingWebSocket from 'reconnecting-websocket';
 
 type Promisify = {
   resolve: (value: unknown) => void;
@@ -27,6 +27,14 @@ export class SocketClient {
     });
   };
 
+  destroy() {
+    // handle destroy logic
+    console.log("destroy");
+    this.socket?.close();
+    this.socket?.removeEventListener("message", this.heartBeatFn);
+    this.socket?.removeEventListener("message", this.onMessageReceive);
+  }
+
   private readonly open = async (e: any) => {
     console.log("open", e);
     // handle something else logic here
@@ -38,24 +46,18 @@ export class SocketClient {
     }
   };
 
-  destroy() {
-    // handle destroy logic
-    console.log("destroy");
-    this.socket?.close();
-    this.socket?.removeEventListener("message", this.heartBeatFn);
-    this.socket?.removeEventListener("message", this.onMessageReceive);
-    // this.socket = null;
-  }
-
   // handle close logic
   close(error: unknown) {
+    this.eventEmitter.emit(WS_EVENT.DISCONNECT);
     console.log("[WS] close", error);
     this.isError = true;
   }
 
   // handle error logic
   error(error: unknown) {
+    this.eventEmitter.emit(WS_EVENT.DISCONNECT);
     console.log("[WS] error", error);
+    this.isError = true;
   }
 
   init() {

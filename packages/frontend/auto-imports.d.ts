@@ -114,7 +114,7 @@ declare global {
 // for type re-export
 declare global {
   // @ts-ignore
-  export type { IMediaMessage, IMessage, MESSAGE_RESPONSE, MESSAGE_REQUEST, ADD_MESSAGE_REQUEST } from './src/interfaces/IMessage'
+  export type { IMediaMessage, IMessage, MessageRequest, IAddMessageRequest } from './src/interfaces/IMessage'
   import('./src/interfaces/IMessage')
   // @ts-ignore
   export type { IRoom } from './src/interfaces/IRoom'

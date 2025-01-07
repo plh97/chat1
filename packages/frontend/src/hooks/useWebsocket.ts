@@ -16,5 +16,5 @@ export default function useWebsocket() {
   const roomRef = useRef<IRoom>(room);
   roomRef.current = room;
   useReceiveMsg(roomRef);
-  useReconnect();
+  useReconnect(ws);
 }

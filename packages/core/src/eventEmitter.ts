@@ -1,7 +1,7 @@
 import { WS_EVENT } from "./constants";
 import { IWsData } from "./interface";
 
-export type CbFunction = (data: IWsData) => void;
+export type CbFunction = (data?: IWsData) => void;
 
 export class Emitter<EVENT extends string> {
   events = Object.values(WS_EVENT).reduce((c, p) => {
@@ -21,7 +21,7 @@ export class Emitter<EVENT extends string> {
     this.events[event] = this.events[event].filter((fn) => fn !== cb);
   }
 
-  emit(event: EVENT, data: IWsData) {
+  emit(event: EVENT, data?: IWsData) {
     console.log("NEW EVENT ~>", event);
     this.events[event].forEach((fn) => fn(data));
   }

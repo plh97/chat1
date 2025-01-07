@@ -1,5 +1,5 @@
 import type { IUser } from "@/interfaces";
-import type { MediaMessage, Message, Room, User } from "db";
+import type { MediaMessage, Message } from "db";
 
 export interface IMediaMessage extends MediaMessage {
   file: File;
@@ -15,31 +15,16 @@ export interface IMessage extends Omit<Message, "mediaMessage"> {
   mediaMessage?: IMediaMessage;
   user: IUser;
   member?: IUser[];
+  reply?: IMessage;
 }
 
-export interface MESSAGE_RESPONSE
-  extends Omit<Room, "message" | "member" | "id"> {
-  id: string;
-  message: IMessage[];
-  member: IUser[];
-  totalCount: number;
-}
-
-// export interface IRoom extends Omit<Room, "message" | "member" | "id"> {
-//   id: string;
-//   message: IMessage[];
-//   member: IUser[];
-//   totalCount: number;
-//   lastMsg?: IMessage;
-// }
-
-export interface MESSAGE_REQUEST {
+export interface MessageRequest {
   pageSize?: number;
   id: string;
   start?: number;
 }
 
-export interface ADD_MESSAGE_REQUEST {
+export interface IAddMessageRequest {
   text: string;
   images: string[];
   user: string;
