@@ -1,16 +1,13 @@
 import { SocketClient, WS_EVENT } from "core";
 import { fetchUserInfoThunk } from "@/store/reducer/user";
 import { getRoomInfoThunk } from "@/store/reducer/room";
-import { ToastId } from "@chakra-ui/react";
 
 export const useReconnect = (ws: SocketClient) => {
-  const toastIdRef = useRef<ToastId>(null);
   const toast = useToast();
   const { id = "" } = useParams();
   const dispatch = useAppDispatch();
   const onReconnect = () => {
     toast.closeAll();
-    toastIdRef.current = null;
     toast({
       duration: 1000,
       title: "WS ReConnect",
@@ -24,8 +21,7 @@ export const useReconnect = (ws: SocketClient) => {
   };
   const onError = () => {
     toast.closeAll();
-    if (toastIdRef.current) return;
-    toastIdRef.current = toast({
+    toast({
       isClosable: true,
       status: "error",
       duration: 99999999999,
