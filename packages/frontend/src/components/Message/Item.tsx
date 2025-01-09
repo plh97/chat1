@@ -5,6 +5,7 @@ import { Indicator } from "./Indicator";
 import { useMsgWatch } from "./hook";
 import { updateSelectedMessage } from "@/store/reducer/room";
 import { WithProfile } from "../WithProfile";
+import { useContextMenu } from "@/hooks";
 
 interface IProps {
   readonly data: IMessage;
@@ -29,12 +30,10 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
     const { Component } = temp(message, room);
     return <Component />;
   }, [message, room.member]);
-  if (message.contentType === "SYSTEM_MESSAGE") {
-    return <>{SysComponent}</>;
-  }
-  if (message.contentType === "RECALL_MESSAGE") {
-    return <>{Component}</>;
-  }
+  const contextMenu = useContextMenu(() => {
+    setIsOpen(true);
+    dispatch(updateSelectedMessage(message));
+  });
   const onContextMenu: MouseEventHandler<HTMLDivElement> = (e) => {
     e.preventDefault();
     setIsOpen(true);
@@ -52,6 +51,12 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
     });
     dispatch(updateSelectedMessage(message));
   };
+  if (message.contentType === "SYSTEM_MESSAGE") {
+    return <>{SysComponent}</>;
+  }
+  if (message.contentType === "RECALL_MESSAGE") {
+    return <>{Component}</>;
+  }
   return (
     <div
       ref={watchRef}
@@ -64,7 +69,7 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
         <Avatar name={message?.user?.username} src={message?.user?.image} />
       </WithProfile>
       <div
-        onContextMenu={onContextMenu}
+        {...contextMenu}
         className="mx-2.5 max-w-[60%] rounded-lg overflow-hidden whitespace-pre-wrap bg-gray-800 shadow-md"
       >
         {/* @ts-ignore */}
