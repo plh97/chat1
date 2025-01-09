@@ -31,7 +31,6 @@ export class SocketClient {
     // handle destroy logic
     console.log("destroy");
     this.socket?.close();
-    this.socket?.removeEventListener("message", this.heartBeatFn);
     this.socket?.removeEventListener("message", this.onMessageReceive);
   }
 
@@ -66,18 +65,6 @@ export class SocketClient {
     // @ts-ignore
     window.socket = this.socket;
   }
-
-  heartBeatFn = ({ data }: any) => {
-    if (data === "pong") {
-      setTimeout(() => {
-        this.send("ping");
-      }, 5000);
-    }
-  };
-  heartBeat = () => {
-    this.socket?.addEventListener("message", this.heartBeatFn);
-    this.send("ping");
-  };
 
   createWS = (open: CB, close: CB, error: CB): Promise<void> => {
     return new Promise((resolve) => {
