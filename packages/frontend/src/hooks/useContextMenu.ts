@@ -1,17 +1,25 @@
-import { on } from "events";
-import { MouseEventHandler } from "react";
+import { MouseEventHandler, TouchEventHandler } from "react";
 
 export const useContextMenu = (cb: Function) => {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  let isTouching = false;
   if (isIOS) {
-    let t = -1;
-    const onTouchStart = () => {
-      t = Date.now();
+    const onTouchStart: TouchEventHandler<HTMLDivElement> = (e) => {
+      const touch = e.touches[0];
+      let clientX = touch.pageX;
+      let clientY = touch.pageY;
+      isTouching = true;
+      setTimeout(() => {
+        if (isTouching) {
+          cb({
+            clientX,
+            clientY,
+          });
+        }
+      }, 500);
     };
     const onTouchEnd = () => {
-      if (Date.now() - t > 500) {
-        cb();
-      }
+      isTouching = false;
     };
     return {
       onTouchStart,
@@ -20,19 +28,10 @@ export const useContextMenu = (cb: Function) => {
   }
   const onContextMenu: MouseEventHandler<HTMLDivElement> = (e) => {
     e.preventDefault();
-    const menu = document.querySelector("[role=menu]")!;
-    const popper = menu.parentElement!;
-    const pageW = window.innerWidth;
-    let x = e.clientX;
-    const y = e.clientY;
-    if (x + menu.clientWidth > pageW) {
-      x -= menu.clientWidth;
-    }
-    Object.assign(popper.style, {
-      top: `${y}px`,
-      left: `${x}px`,
+    cb({
+      clientX: e.clientX,
+      clientY: e.clientY,
     });
-    cb();
   };
-  return onContextMenu;
+  return { onContextMenu };
 };

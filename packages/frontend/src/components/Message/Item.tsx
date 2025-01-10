@@ -30,27 +30,26 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
     const { Component } = temp(message, room);
     return <Component />;
   }, [message, room.member]);
-  const contextMenu = useContextMenu(() => {
-    setIsOpen(true);
-    dispatch(updateSelectedMessage(message));
-  });
-  const onContextMenu: MouseEventHandler<HTMLDivElement> = (e) => {
-    e.preventDefault();
-    setIsOpen(true);
-    const menu = document.querySelector("[role=menu]")!;
-    const popper = menu.parentElement!;
-    const pageW = window.innerWidth;
-    let x = e.clientX;
-    const y = e.clientY;
-    if (x + menu.clientWidth > pageW) {
-      x -= menu.clientWidth;
-    }
-    Object.assign(popper.style, {
-      top: `${y}px`,
-      left: `${x}px`,
-    });
-    dispatch(updateSelectedMessage(message));
-  };
+  const cb = useCallback<MouseEventHandler<HTMLDivElement>>(
+    (e) => {
+      setIsOpen(true);
+      const menu = document.querySelector("[role=menu]")!;
+      const popper = menu.parentElement!;
+      const pageW = window.innerWidth;
+      let x = e.clientX;
+      const y = e.clientY;
+      if (x + menu.clientWidth > pageW) {
+        x -= menu.clientWidth;
+      }
+      Object.assign(popper.style, {
+        top: `${y}px`,
+        left: `${x}px`,
+      });
+      dispatch(updateSelectedMessage(message));
+    },
+    [message, room]
+  );
+  const contextMenu = useContextMenu(cb);
   if (message.contentType === "SYSTEM_MESSAGE") {
     return <>{SysComponent}</>;
   }
@@ -70,7 +69,10 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
       </WithProfile>
       <div
         {...contextMenu}
-        className="mx-2.5 max-w-[60%] rounded-lg overflow-hidden whitespace-pre-wrap bg-gray-800 shadow-md"
+        className="mx-2.5 max-w-[60%] rounded-lg overflow-hidden whitespace-pre-wrap bg-gray-800 shadow-md select-none"
+        style={{
+          WebkitUserSelect: "none",
+        }}
       >
         {/* @ts-ignore */}
         <Reply className="mt-2.5" message={message.reply} />

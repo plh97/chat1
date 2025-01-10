@@ -67,6 +67,7 @@ declare global {
   const useAuth: typeof import('./src/hooks/useAuth')['default']
   const useCallback: typeof import('react')['useCallback']
   const useContext: typeof import('react')['useContext']
+  const useContextMenu: typeof import('./src/hooks/useContextMenu')['useContextMenu']
   const useDebounceDispatch: (typeof import("./src/hooks/app"))["useDebounceDispatch"]
   const useDebugValue: typeof import('react')['useDebugValue']
   const useDeferredValue: typeof import('react')['useDeferredValue']
