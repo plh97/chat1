@@ -14,6 +14,7 @@ interface IProps {
 
 export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
   const dispatch = useThunkDispatch();
+  const toast = useToast();
   const watchRef = useMsgWatch(message);
   const myUserInfo = useAppSelector((state) => state.user.data);
   const room = useAppSelector((state) => state.room.data);
@@ -58,6 +59,14 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
   }
   const handleNavigateReply = (msg: IMessage) => {
     const dom = document.querySelector(`[data-id="${msg.id}"] [data-msg]`);
+    if (!dom) {
+      toast({
+        title: "Message not found",
+        status: "error",
+        position: "top",
+      });
+      return;
+    }
     dom?.scrollIntoView({
       behavior: "smooth",
       block: "center",
