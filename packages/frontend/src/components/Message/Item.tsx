@@ -32,7 +32,6 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
   }, [message, room.member]);
   const cb = useCallback<MouseEventHandler<HTMLDivElement>>(
     (e) => {
-      setIsOpen(true);
       const menu = document.querySelector("[role=menu]")!;
       const popper = menu.parentElement!;
       const pageW = window.innerWidth;
@@ -45,6 +44,7 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
         top: `${y}px`,
         left: `${x}px`,
       });
+      setIsOpen(true);
       dispatch(updateSelectedMessage(message));
     },
     [message, room]
