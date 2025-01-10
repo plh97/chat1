@@ -6,9 +6,10 @@ interface IProps {
   message: IMessage;
   className?: string;
   onClose?: any;
+  onClick?: (m: IMessage) => void;
 }
 
-export const Reply = ({ message, className, onClose }: IProps) => {
+export const Reply = ({ message, className, onClose, onClick }: IProps) => {
   const dispatch = useThunkDispatch();
   const content = useMemo(() => {
     try {
@@ -34,7 +35,8 @@ export const Reply = ({ message, className, onClose }: IProps) => {
   }, [message]);
   if (!message) return null;
   return (
-    <div
+    <button
+      onClick={() => onClick?.(message)}
       className={clsx(
         className,
         "flex flex-row relative box-border mx-3 rounded-lg overflow-hidden items-center gap-4 bg-[rgba(149,92,219,0.1)] pr-4 "
@@ -58,6 +60,6 @@ export const Reply = ({ message, className, onClose }: IProps) => {
           icon={<FaRegWindowClose className="text-gray-500" />}
         />
       )}
-    </div>
+    </button>
   );
 };

@@ -56,9 +56,22 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
   if (message.contentType === "RECALL_MESSAGE") {
     return <>{Component}</>;
   }
+  const handleNavigateReply = (msg: IMessage) => {
+    const dom = document.querySelector(`[data-id="${msg.id}"] [data-msg]`);
+    dom?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+      inline: "center",
+    });
+    dom?.classList.add("brightness-200");
+    setTimeout(() => {
+      dom?.classList.remove("brightness-200");
+    }, 1000);
+  };
   return (
     <div
       ref={watchRef}
+      data-id={message.id}
       data-seq={message.seq}
       className={clsx("group relative flex flex-row items-start mb-2", {
         "flex-row-reverse": isMe,
@@ -70,12 +83,13 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
       <div
         {...contextMenu}
         className="mx-2.5 max-w-[60%] rounded-lg overflow-hidden whitespace-pre-wrap bg-gray-800 shadow-md select-none"
-        style={{
-          WebkitUserSelect: "none",
-        }}
+        data-msg
       >
-        {/* @ts-ignore */}
-        <Reply className="mt-2.5" message={message.reply} />
+        <Reply
+          className="mt-2.5"
+          message={message.reply!}
+          onClick={handleNavigateReply}
+        />
         {Component}
       </div>
       <Indicator message={message} />
