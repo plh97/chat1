@@ -35,15 +35,17 @@ export const Reply = ({ message, className, onClose, onClick }: IProps) => {
   }, [message]);
   if (!message) return null;
   return (
-    <button
-      onClick={() => onClick?.(message)}
+    <div
       className={clsx(
         className,
         "flex flex-row relative box-border mx-3 rounded-lg overflow-hidden items-center gap-4 bg-[rgba(149,92,219,0.1)] pr-4 "
       )}
     >
       <span className="absolute left-0 top-0 bottom-0 flex w-1 z-1 bg-[rgb(149,92,219)]" />
-      <div className="select-none pl-3 py-2 flex-1 flex flex-col w-[calc(100%-100px)] ">
+      <button
+        onClick={() => onClick?.(message)}
+        className="select-none pl-3 py-2 flex-1 flex flex-col w-[calc(100%-100px)]"
+      >
         <span className="w-full text-sm text-gray-500 font-bold break-all whitespace-nowrap text-ellipsis overflow-hidden">
           {onClose && "Reply: "}
           {message.user?.username}
@@ -51,7 +53,7 @@ export const Reply = ({ message, className, onClose, onClick }: IProps) => {
         <span className="w-full text-sm text-gray-500 mt-1 break-all whitespace-nowrap text-ellipsis overflow-hidden">
           {content}
         </span>
-      </div>
+      </button>
       {onClose && (
         <IconButton
           size="sm"
@@ -60,6 +62,6 @@ export const Reply = ({ message, className, onClose, onClick }: IProps) => {
           icon={<FaRegWindowClose className="text-gray-500" />}
         />
       )}
-    </button>
+    </div>
   );
 };
