@@ -25,7 +25,13 @@ export function formatFileSize(size?: number) {
   return `${size.toFixed(0)} Byte`;
 }
 
-export const FileIcon = ({ type, ...args }: { type: string; className?: string }) => {
+export const FileIcon = ({
+  type,
+  ...args
+}: {
+  type: string;
+  className?: string;
+}) => {
   const [type1, type2] = type.split("/");
   const iconMap: Record<string, JSX.Element | null> = {
     pdf: <FaFilePdf {...args} />,

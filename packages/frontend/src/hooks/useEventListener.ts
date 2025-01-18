@@ -19,4 +19,4 @@ export const useEventListener = (eventName: WS_EVENT, handler: CbFunction) => {
       ws.eventEmitter.off(eventName, listener);
     };
   }, [eventName]);
-}
+};

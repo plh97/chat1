@@ -8,7 +8,7 @@ export const handleRecallMsg = async (data: IMessage) => {
       data: {
         contentType: "RECALL_MESSAGE",
         recallMessage: data.recallMessage,
-      }
+      },
     });
     return message;
   }

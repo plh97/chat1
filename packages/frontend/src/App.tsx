@@ -27,9 +27,9 @@ export const App = (): React.ReactNode => {
   return (
     <Provider store={store}>
       {/* <Theme className="h-full" accentColor="indigo"> */}
-        <ChakraProvider theme={theme}>
-          <RouterProvider router={router} />
-        </ChakraProvider>
+      <ChakraProvider theme={theme}>
+        <RouterProvider router={router} />
+      </ChakraProvider>
       {/* </Theme> */}
     </Provider>
   );

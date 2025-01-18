@@ -1,23 +1,23 @@
-import type { AlertStatus } from "@chakra-ui/alert"
+import type { AlertStatus } from "@chakra-ui/alert";
 import {
   Alert,
   AlertDescription,
   AlertIcon,
   AlertTitle,
-} from "@chakra-ui/alert"
-import { CloseButton } from "@chakra-ui/close-button"
+} from "@chakra-ui/alert";
+import { CloseButton } from "@chakra-ui/close-button";
 import {
   chakra,
   ColorMode,
   ColorModeContext,
   ThemeProvider,
   useChakra,
-} from "@chakra-ui/system"
-import defaultTheme from "@chakra-ui/theme"
-import { isFunction, noop } from "@chakra-ui/utils"
-import * as React from "react"
-import { toast } from "./toast.class"
-import { RenderProps, ToastId, ToastOptions } from "./toast.types"
+} from "@chakra-ui/system";
+import defaultTheme from "@chakra-ui/theme";
+import { isFunction, noop } from "@chakra-ui/utils";
+import * as React from "react";
+import { toast } from "./toast.class";
+import { RenderProps, ToastId, ToastOptions } from "./toast.types";
 
 export interface UseToastOptions {
   /**
@@ -25,56 +25,57 @@ export interface UseToastOptions {
    *
    * @default "bottom"
    */
-  position?: ToastOptions["position"]
+  position?: ToastOptions["position"];
   /**
    * The delay before the toast hides (in milliseconds)
    * If set to `null`, toast will never dismiss.
    *
    * @default 5000 ( = 5000ms )
    */
-  duration?: ToastOptions["duration"]
+  duration?: ToastOptions["duration"];
   /**
    * Render a component toast component.
    * Any component passed will receive 2 props: `id` and `onClose`.
    */
-  render?(props: RenderProps): React.ReactNode
+  render?(props: RenderProps): React.ReactNode;
   /**
    * The title of the toast
    */
-  title?: React.ReactNode
+  title?: React.ReactNode;
   /**
    * The description of the toast
    */
-  description?: React.ReactNode
+  description?: React.ReactNode;
   /**
    * If `true`, toast will show a close button
    */
-  isClosable?: boolean
+  isClosable?: boolean;
   /**
    * The alert component `variant` to use
    */
-  variant?: string
+  variant?: string;
   /**
    * The status of the toast.
    */
-  status?: AlertStatus
+  status?: AlertStatus;
   /**
    * The `id` of the toast.
    *
    * Mostly used when you need to prevent duplicate.
    * By default, we generate a unique `id` for each toast
    */
-  id?: ToastId
+  id?: ToastId;
   /**
    * Callback function to run side effects after the toast has closed.
    */
-  onCloseComplete?: () => void
+  onCloseComplete?: () => void;
 }
 
-export type IToast = UseToastOptions
+export type IToast = UseToastOptions;
 
 const Toast: React.FC<any> = (props) => {
-  const { status, variant, id, title, isClosable, onClose, description } = props
+  const { status, variant, id, title, isClosable, onClose, description } =
+    props;
 
   return (
     <Alert
@@ -105,20 +106,20 @@ const Toast: React.FC<any> = (props) => {
         />
       )}
     </Alert>
-  )
-}
+  );
+};
 
 const defaults = {
   duration: 5000,
   position: "bottom",
   variant: "solid",
-} as const
+} as const;
 
 export type CreateStandAloneToastParam = Partial<
   {
-    setColorMode: (value: ColorMode) => void
+    setColorMode: (value: ColorMode) => void;
   } & ReturnType<typeof useChakra> & { defaultOptions: UseToastOptions }
->
+>;
 
 export const defaultStandaloneParam: Required<CreateStandAloneToastParam> = {
   theme: defaultTheme,
@@ -126,7 +127,7 @@ export const defaultStandaloneParam: Required<CreateStandAloneToastParam> = {
   toggleColorMode: noop,
   setColorMode: noop,
   defaultOptions: defaults,
-}
+};
 /**
  * Create a toast from outside of React Components
  */
@@ -139,7 +140,7 @@ export function createStandaloneToast({
 }: CreateStandAloneToastParam = defaultStandaloneParam) {
   const renderWithProviders = (
     props: React.PropsWithChildren<RenderProps>,
-    options: UseToastOptions,
+    options: UseToastOptions
   ) => (
     <ThemeProvider theme={theme}>
       <ColorModeContext.Provider
@@ -152,35 +153,35 @@ export function createStandaloneToast({
         )}
       </ColorModeContext.Provider>
     </ThemeProvider>
-  )
+  );
 
   const toastImpl = (options?: UseToastOptions) => {
-    const opts = { ...defaultOptions, ...options }
+    const opts = { ...defaultOptions, ...options };
 
     const Message: React.FC<RenderProps> = (props) =>
-      renderWithProviders(props, opts)
+      renderWithProviders(props, opts);
 
-    return toast.notify(Message, opts)
-  }
+    return toast.notify(Message, opts);
+  };
 
-  toastImpl.close = toast.close
-  toastImpl.closeAll = toast.closeAll
+  toastImpl.close = toast.close;
+  toastImpl.closeAll = toast.closeAll;
 
   // toasts can only be updated if they have a valid id
   toastImpl.update = (id: ToastId, options: Omit<UseToastOptions, "id">) => {
-    if (!id) return
+    if (!id) return;
 
-    const opts = { ...defaultOptions, ...options }
+    const opts = { ...defaultOptions, ...options };
 
     toast.update(id, {
       ...opts,
       message: (props) => renderWithProviders(props, opts),
-    })
-  }
+    });
+  };
 
-  toastImpl.isActive = toast.isActive
+  toastImpl.isActive = toast.isActive;
 
-  return toastImpl
+  return toastImpl;
 }
 
 /**
@@ -188,7 +189,7 @@ export function createStandaloneToast({
  * to show toasts in an application.
  */
 export function useToast(options?: UseToastOptions) {
-  const { theme, setColorMode, toggleColorMode, colorMode } = useChakra()
+  const { theme, setColorMode, toggleColorMode, colorMode } = useChakra();
   return React.useMemo(
     () =>
       createStandaloneToast({
@@ -198,8 +199,8 @@ export function useToast(options?: UseToastOptions) {
         toggleColorMode,
         defaultOptions: options,
       }),
-    [theme, setColorMode, toggleColorMode, colorMode, options],
-  )
+    [theme, setColorMode, toggleColorMode, colorMode, options]
+  );
 }
 
-export default useToast
+export default useToast;

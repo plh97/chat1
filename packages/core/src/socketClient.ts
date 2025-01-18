@@ -19,6 +19,21 @@ export class SocketClient {
     this.url = url;
     this.eventEmitter = new EventEmitter();
     this.init();
+
+    window.onoffline = () => {
+      this.error("offline");
+    }
+
+    window.ononline = () => {
+      this.init();
+    }
+  }
+
+  init() {
+    this.socket = new ReconnectingWebSocket(this.url, getToken());
+    this.createWS(this.open, this.close, this.error);
+    // @ts-ignore
+    window.socket = this.socket;
   }
 
   promisify = (requestId: string) => {
@@ -57,13 +72,6 @@ export class SocketClient {
     this.eventEmitter.emit(WS_EVENT.DISCONNECT);
     console.log("[WS] error", error);
     this.isError = true;
-  }
-
-  init() {
-    this.socket = new ReconnectingWebSocket(this.url, getToken());
-    this.createWS(this.open, this.close, this.error);
-    // @ts-ignore
-    window.socket = this.socket;
   }
 
   createWS = (open: CB, close: CB, error: CB): Promise<void> => {

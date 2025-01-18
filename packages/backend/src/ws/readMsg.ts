@@ -29,6 +29,6 @@ export const handleReadMsg = async (message: IMessage) => {
     readMessage: {
       ...message.readMessage,
       readSeq: readSeq,
-    }
+    },
   } as IMessage;
 };

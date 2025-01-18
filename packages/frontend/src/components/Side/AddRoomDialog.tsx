@@ -14,8 +14,8 @@ export const AddRoomDialog = ({
   useEffect(() => {
     return () => {
       setLoading(false);
-    }
-  })
+    };
+  });
   const dispatch = useThunkDispatch();
   const navigation = useNavigate();
   const toast = useToast();
@@ -73,7 +73,12 @@ export const AddRoomDialog = ({
           <Button mr={3} onClick={onClose}>
             Cancel
           </Button>
-          <Button isLoading={loading} type="button" colorScheme="blue" onClick={handleAddRoom}>
+          <Button
+            isLoading={loading}
+            type="button"
+            colorScheme="blue"
+            onClick={handleAddRoom}
+          >
             Add
           </Button>
         </ModalFooter>

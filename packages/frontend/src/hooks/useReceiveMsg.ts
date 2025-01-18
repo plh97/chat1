@@ -17,8 +17,9 @@ import { MutableRefObject } from "react";
 export const useReceiveMsg = (roomRef: MutableRefObject<IRoom>) => {
   const dispatch = useAppDispatch();
   const userInfo = useAppSelector((state) => state.user.data);
-  const onReceiveMsg = async (data: IWsData<IMessage>) => {
-    const msg = data.data;
+  const onReceiveMsg = async (data?: IWsData<IMessage>) => {
+    const msg = data?.data;
+    if (!msg) return;
     const room = roomRef.current;
     if (msg.contentType === "SYSTEM_MESSAGE") {
       const sysMsg = msg.systemMessage;
@@ -32,7 +33,7 @@ export const useReceiveMsg = (roomRef: MutableRefObject<IRoom>) => {
         sysMsg?.actionType === "ADD_MEMBER" ||
         sysMsg?.actionType === "REMOVE_MEMBER"
       ) {
-        if (sysMsg.targetList?.includes(userInfo.id)) {
+        if (sysMsg.content?.includes(userInfo.id)) {
           await dispatch(fetchUserInfoThunk());
         }
       }

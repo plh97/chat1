@@ -3,7 +3,10 @@ import { IUser } from "@/interfaces";
 import { Button, IconButton } from "@chakra-ui/react";
 import Api from "@/Api";
 
-export const AddFriendDialog = ({ isOpen, onClose }: {
+export const AddFriendDialog = ({
+  isOpen,
+  onClose,
+}: {
   isOpen: boolean;
   onClose: () => void;
 }) => {
@@ -49,11 +52,7 @@ export const AddFriendDialog = ({ isOpen, onClose }: {
                   className="mt-2 rounded-lg border-2 border-slate-900 border-solid px-0 my-2 flex gap-2 items-center justify-between flex-row"
                   key={a.id}
                 >
-                  <Avatar
-                    className="w-8 h-8"
-                    src={a.image}
-                    name={a.username}
-                  />
+                  <Avatar className="w-8 h-8" src={a.image} name={a.username} />
                   <span className="flex-1">{a.username}</span>
                   <IconButton
                     aria-label="Add Friend"

@@ -1,7 +1,10 @@
 {
-  "**/*.{json,md,html}": ["prettier --write"],
-  "**/frontend/**/*.{js,ts,tsx}": ["prettier --write"],
-  "**/backend/**/*.{js,ts,tsx}": ["prettier --write"],
+  "**/*.{json,md,html}": ["pnpm run lint:prettier --write"],
+  "**/frontend/**/*.{js,ts,tsx}": ["pnpm run lint:prettier --write"],
+  "**/backend/**/*.{js,ts,tsx}": ["pnpm run lint:prettier --write"],
   "**/*.css": "stylelint",
-  "**/*.scss": ["lint:prettier --write", "stylelint --customSyntax=post-scss"]
+  "**/*.scss": [
+    "pnpm run lint:prettier --write",
+    "stylelint --customSyntax=post-scss"
+  ]
 }

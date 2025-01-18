@@ -4,7 +4,7 @@ import {
   IMessage,
   IRoom,
   IUser,
-  MESSAGE_REQUEST,
+  MessageRequest,
 } from "@/interfaces";
 
 const { toast } = createStandaloneToast();
@@ -141,7 +141,7 @@ const Api = {
       method: "get",
       params,
     }),
-  getRoom: (params: MESSAGE_REQUEST) =>
+  getRoom: (params: MessageRequest) =>
     request<IRoom>({
       url: "/room",
       method: "get",

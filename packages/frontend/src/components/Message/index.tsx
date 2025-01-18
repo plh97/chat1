@@ -9,7 +9,7 @@ import {
 } from "@/store/reducer/room";
 import { FaRegTrashAlt, FaReply } from "react-icons/fa";
 
-export function Message() {
+export function Message({}: { className?: string }) {
   const toast = useToast();
   const dispatch = useThunkDispatch();
   const [isOpen, setIsOpen] = useState(false);

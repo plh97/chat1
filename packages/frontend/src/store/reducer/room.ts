@@ -3,7 +3,7 @@ import Api from "@/Api";
 import { AppThunk } from "@/hooks/app";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { IMessage, MESSAGE_REQUEST, IRoom } from "@/interfaces";
+import { IMessage, MessageRequest, IRoom } from "@/interfaces";
 import { fetchUserInfoThunk, shiftRoom } from "./user";
 import { IReadMessage } from "core";
 
@@ -68,7 +68,7 @@ export const getRoomInfoThunk = createAsyncThunk<void, string>(
 // 加载更多消息
 export const loadRoomMoreMessageThunk = createAsyncThunk<
   IMessage[],
-  MESSAGE_REQUEST
+  MessageRequest
 >(`loadRoomMoreMessageThunk`, async (data, { dispatch }) => {
   dispatch(changeLoading(true));
   const res = await Api.getRoom(data);
@@ -130,7 +130,7 @@ export const roomSlice = createSlice({
     // sync method, just modify state
     markReadMessage(
       state,
-      action: PayloadAction<{id: string; readSeq?: IReadMessage["readSeq"]}>
+      action: PayloadAction<{ id: string; readSeq?: IReadMessage["readSeq"] }>
     ) {
       const room = action.payload;
       if (room.id === state.id) {
