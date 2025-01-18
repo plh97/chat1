@@ -32,7 +32,10 @@ const DropdownMenuDemo = () => {
         />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content className="DropdownMenuContent" sideOffset={5}>
+        <DropdownMenu.Content
+          className="DropdownMenuContent z-30"
+          sideOffset={5}
+        >
           <DropdownMenu.Item
             onClick={() => Promise.resolve().then(onProfileOpen)}
             className="DropdownMenuItem"
