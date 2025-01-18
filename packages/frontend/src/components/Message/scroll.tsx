@@ -57,10 +57,7 @@ export function Scroll({ children }: PropsWithChildren) {
     );
   }
   return (
-    <div
-      className="overflow-y-auto flex-1 relative px-3.5 py-0"
-      ref={scrollEl}
-    >
+    <div className="overflow-y-auto flex-1 relative px-3.5 py-0" ref={scrollEl}>
       <Top />
       <div
         data-load

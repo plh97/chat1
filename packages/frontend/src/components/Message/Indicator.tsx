@@ -27,7 +27,9 @@ const formatTime = (t: Date): string => {
 export const Indicator = ({ message }: { message: IMessage }) => {
   return (
     <div className="flex h-full self-end flex-col items-end">
-      <span className="text-gray-400	opacity-0 group-hover:opacity-100 text-xs">{formatTime(message.createdAt)}</span>
+      <span className="text-gray-400	opacity-0 group-hover:opacity-100 text-xs">
+        {formatTime(message.createdAt)}
+      </span>
       <ReadIndicator message={message} />
     </div>
   );
