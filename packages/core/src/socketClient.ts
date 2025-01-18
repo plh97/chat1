@@ -19,7 +19,6 @@ export class SocketClient {
     this.url = url;
     this.eventEmitter = new EventEmitter();
     this.init();
-
     window.onoffline = () => {
       this.error("offline");
     }
