@@ -16,11 +16,11 @@ export function AddMember() {
   const [user, setUser] = useState<string[]>([]);
   const dispatch = useThunkDispatch();
   const toast = useToast();
-  const handleAddFriend = async () => {
+  const handleAddMember = async () => {
     if (!user.length) {
       toast({
         title: "Warning.",
-        description: "Please input room name",
+        description: "Please select user",
         status: "error",
         position: "top",
         duration: 1000,
@@ -57,7 +57,7 @@ export function AddMember() {
           <ModalHeader>Invite friend</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <Form onSubmit={handleAddFriend}>
+            <Form onSubmit={handleAddMember}>
               <FormControl id="name">
                 <FormLabel>Name: </FormLabel>
                 <CheckboxGroup
@@ -92,7 +92,7 @@ export function AddMember() {
             <Button mr={3} onClick={onClose}>
               Close
             </Button>
-            <Button type="button" colorScheme="blue" onClick={handleAddFriend}>
+            <Button type="button" colorScheme="blue" onClick={handleAddMember}>
               Submit
             </Button>
           </ModalFooter>

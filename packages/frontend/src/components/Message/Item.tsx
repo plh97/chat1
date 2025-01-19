@@ -91,7 +91,7 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
       </WithProfile>
       <div
         {...contextMenu}
-        className="mx-2.5 max-w-[60%] rounded-lg overflow-hidden whitespace-pre-wrap bg-gray-800 shadow-md select-none"
+        className="mx-2.5 max-w-[60%] rounded-lg overflow-hidden whitespace-pre-wrap bg-gray-800 shadow-md"
         data-msg
       >
         <Reply

@@ -7,29 +7,32 @@ import { handleReadMsg } from "./readMsg";
 import { handleSendMsg } from "./sendMsg";
 import { handleRecallMsg } from "./recallMsg";
 
-export const onMsgReceive: IOnMsgReceive = async (objMsg, ws, socket) => {
+export const onMsgReceive: IOnMsgReceive = async (
+  objMsg: IWsData<IMessage>,
+  ws,
+  socket,
+) => {
   if (socket) {
     try {
-      jwt.verify(socket.protocol, privateKey) as string;
+      jwt.verify(socket.protocol, privateKey);
     } catch (error: any) {
       socket.send(
         JSON.stringify({
+          ...objMsg,
           code: 1,
           message: error.message,
-          event: objMsg.event,
-          requestId: objMsg.requestId,
           data: null,
-        })
+        }),
       );
       return;
     }
   }
-  const { data, event } = objMsg as IWsData<IMessage>;
+  const { data, event } = objMsg;
   const room = await RoomModel.findUnique({
     where: { id: data.channelId },
     include: { message: true },
   });
-  let broadcastData = null;
+  let broadcastData: Partial<IWsData<unknown>> = {};
   if (event === WS_EVENT.SEND_MSG) {
     if (data.contentType === "RECALL_MESSAGE") {
       broadcastData = await handleRecallMsg(data);
@@ -41,14 +44,13 @@ export const onMsgReceive: IOnMsgReceive = async (objMsg, ws, socket) => {
       broadcastData = await handleSendMsg(data);
     }
   }
-  if (!broadcastData) {
+  if (broadcastData.code !== 0) {
     socket?.send(
       JSON.stringify({
-        code: 1,
         event,
         requestId: objMsg.requestId,
-        data: null,
-      })
+        ...broadcastData,
+      }),
     );
     return;
   }
@@ -62,8 +64,8 @@ export const onMsgReceive: IOnMsgReceive = async (objMsg, ws, socket) => {
           code: 0,
           event,
           requestId: objMsg.requestId,
-          data: broadcastData,
-        })
+          ...broadcastData,
+        }),
       );
     } catch (error) {
       if (error instanceof jwt.JsonWebTokenError) {
@@ -73,8 +75,8 @@ export const onMsgReceive: IOnMsgReceive = async (objMsg, ws, socket) => {
             event,
             message: "WebSocket token verify fail",
             requestId: objMsg.requestId,
-            data: broadcastData,
-          })
+            ...broadcastData,
+          }),
         );
       }
     }

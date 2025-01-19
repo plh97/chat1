@@ -9,11 +9,11 @@ export function AddAdmin() {
   const [user, setUser] = useState<string[]>([]);
   const dispatch = useThunkDispatch();
   const toast = useToast();
-  const handleAddFriend = async () => {
+  const handleAddRoomAdmin = async () => {
     if (!user.length) {
       toast({
         title: "Warning.",
-        description: "Please input room name",
+        description: "Please select user",
         status: "error",
         position: "top",
         duration: 1000,
@@ -48,7 +48,7 @@ export function AddAdmin() {
           <ModalHeader>Set Admin</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <Form onSubmit={handleAddFriend}>
+            <Form onSubmit={handleAddRoomAdmin}>
               <FormControl id="name">
                 <FormLabel>Name: </FormLabel>
                 <CheckboxGroup
@@ -83,7 +83,11 @@ export function AddAdmin() {
             <Button mr={3} onClick={onClose}>
               Close
             </Button>
-            <Button type="button" colorScheme="blue" onClick={handleAddFriend}>
+            <Button
+              type="button"
+              colorScheme="blue"
+              onClick={handleAddRoomAdmin}
+            >
               Submit
             </Button>
           </ModalFooter>

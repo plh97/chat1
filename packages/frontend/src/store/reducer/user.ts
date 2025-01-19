@@ -88,7 +88,7 @@ export const userSlice = createSlice({
         });
       }
     },
-    setLocalUserInfo(state, action) {
+    setLocalUserInfo(state, action: PayloadAction<Partial<IUser>>) {
       Object.assign(state, {
         auth: true,
         data: {

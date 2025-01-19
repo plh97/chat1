@@ -2,7 +2,7 @@ import { FiSend, FiPause } from "react-icons/fi";
 import { IconButton } from "@chakra-ui/react";
 import { FaRecordVinyl } from "react-icons/fa";
 import { useAppSelector } from "@/hooks/app";
-import { scrollToEnd } from "@/store/reducer/room";
+import { scrollToEnd, updateRoomThunk } from "@/store/reducer/room";
 import { sendMessageAction } from "@/store/action/message";
 import { formatTime, getImgFromClip } from "@/utils";
 import { useRecord } from "@/hooks/useRecord";
@@ -11,6 +11,8 @@ import { IMediaMessage } from "@/interfaces";
 import { UploadFile } from "./UploadFile";
 import { useDraft } from "./useDraft";
 import { Reply } from "../Reply";
+import { Link } from "@chakra-ui/react";
+import { setLocalUserInfo } from "@/store/reducer/user";
 
 const MAX_INPUT = 2000;
 const { toast } = createStandaloneToast();
@@ -44,7 +46,6 @@ export function InputBox({ className }: { readonly className?: string }) {
   const handleSendText = async () => {
     const trimText = text.trim();
     if (!userInfo.id || !trimText) return;
-    setText("");
     const result = await dispatch(
       sendMessageAction({
         contentType: "TEXT_MESSAGE",
@@ -57,6 +58,7 @@ export function InputBox({ className }: { readonly className?: string }) {
       })
     );
     if (sendMessageAction.rejected.match(result)) return;
+    setText("");
     dispatch(scrollToEnd());
   };
   const utilComponent = useMemo(() => {
@@ -117,16 +119,37 @@ export function InputBox({ className }: { readonly className?: string }) {
     }
     return null;
   }, [replyMsg]);
+  const isRoomMember = room.memberId.includes(userInfo.id);
+  const handleJoinRoom = () => {
+    dispatch(
+      updateRoomThunk({
+        id: room.id,
+        memberId: [userInfo.id],
+      })
+    );
+    dispatch(
+      setLocalUserInfo({
+        room: [room, ...(userInfo.room ?? [])],
+      })
+    );
+  };
+  if (!isRoomMember) {
+    return (
+      <div className={clsx("flex flex-col gap-3 flex-0", className)}>
+        <div className="box-border flex flex-row gap-3 flex-0 basis-20 pt-0 pb-5 px-3">
+          you are not room member,{" "}
+          <Link color="teal.500" className="font-bold" onClick={handleJoinRoom}>
+            Join it
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={clsx("flex flex-col gap-3 flex-0", className)}>
       {replyMessage}
-      <div
-        className={clsx(
-          "box-border flex flex-row gap-3 flex-0 basis-20 pt-0 pb-5 px-3",
-          className
-        )}
-      >
+      <div className="box-border flex flex-row gap-3 flex-0 basis-20 pt-0 pb-5 px-3">
         {!time ? (
           <Input
             maxLength={MAX_INPUT}

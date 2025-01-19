@@ -26,7 +26,7 @@ export const sendMessageAction = createAsyncThunk<void, Partial<IMessage>>(
         position: "top",
         duration: 1000,
       });
-      return;
+      return Promise.reject(wsRes.message);
     }
     const msg = wsRes.data;
     // push message to message list

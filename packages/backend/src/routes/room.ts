@@ -32,6 +32,14 @@ export const getRoom = async (ctx: Context) => {
       admin: true,
     },
   });
+  if (!data) {
+    ctx.body = {
+      code: 1,
+      message: "Cannot found this room",
+      data: null,
+    };
+    return;
+  }
   let message = data?.message ?? [];
   const totalCount = data?.message?.length ?? 0;
   if (start) {
@@ -41,7 +49,7 @@ export const getRoom = async (ctx: Context) => {
   } else {
     message = message.slice(
       totalCount < page * pageSize ? 0 : totalCount - page * pageSize,
-      totalCount - (page - 1) * pageSize
+      totalCount - (page - 1) * pageSize,
     );
   }
   ctx.body = {
@@ -80,7 +88,7 @@ export const addRoom = async (ctx: Context) => {
       message: "",
       code: 0,
     },
-    ctx.ws
+    ctx.ws,
   );
   ctx.body = {
     code: 0,
