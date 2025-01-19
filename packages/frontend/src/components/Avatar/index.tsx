@@ -29,7 +29,6 @@ export const Avatar = ({
   marginEnd = "",
   ...args
 }: IProps) => {
-  const fileRef = useRef<HTMLInputElement>(null);
   const countMemo = useMemo(() => {
     if (count < 1 || isNaN(count)) {
       return null;
@@ -44,39 +43,6 @@ export const Avatar = ({
       </span>
     );
   }, [count]);
-  const editMemo = useMemo(() => {
-    if (!onChange) return null;
-    return (
-      <span className="absolute bottom-0 left-[50%] transform translate-y-1/2 -translate-x-1/2">
-        <IconButton
-          isRound
-          variant="solid"
-          colorScheme="teal"
-          aria-label="Change Avatar"
-          fontSize="15px"
-          width="6"
-          height="6"
-          minW="6"
-          icon={<FaCamera />}
-          onClick={() => {
-            fileRef.current?.click();
-          }}
-        />
-        <input
-          ref={fileRef}
-          accept="image/*"
-          className="hidden"
-          type="file"
-          onChange={() => {
-            const files = fileRef.current?.files;
-            if (files) {
-              onChange(Array.from(files));
-            }
-          }}
-        />
-      </span>
-    );
-  }, [onChange]);
   return (
     <span className="relative">
       <AvatarComponent.Root
@@ -96,7 +62,7 @@ export const Avatar = ({
         </AvatarComponent.Fallback>
       </AvatarComponent.Root>
       {countMemo}
-      {editMemo}
+      {children}
     </span>
   );
 };

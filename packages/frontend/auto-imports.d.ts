@@ -6,127 +6,139 @@
 // biome-ignore lint: disable
 export {}
 declare global {
-  const Avatar: typeof import('@/components/Avatar')['Avatar']
-  const Axios: typeof import('axios')['default']
-  const Button: typeof import('@chakra-ui/react')['Button']
-  const ChakraProvider: typeof import('@chakra-ui/react')['ChakraProvider']
-  const ClassNames: (typeof import("clsx"))["ClassValue"]
-  const ClassValue: (typeof import("clsx"))["ClassValue"]
-  const FormControl: typeof import('@chakra-ui/react')['FormControl']
-  const FormLabel: typeof import('@chakra-ui/react')['FormLabel']
-  const Formik: (typeof import("@chakra-ui/react"))["Formik"]
-  const HomePage: typeof import('./src/views/HomePage')['HomePage']
-  const IconButton: typeof import('@chakra-ui/react')['IconButton']
-  const Input: typeof import('@chakra-ui/react')['Input']
-  const Layout: typeof import('./src/components/Layout')['Layout']
-  const Link: typeof import('react-router-dom')['Link']
-  const LoginPage: typeof import('./src/views/LoginPage')['LoginPage']
-  const Modal: typeof import('@chakra-ui/react')['Modal']
-  const ModalBody: typeof import('@chakra-ui/react')['ModalBody']
-  const ModalCloseButton: typeof import('@chakra-ui/react')['ModalCloseButton']
-  const ModalContent: typeof import('@chakra-ui/react')['ModalContent']
-  const ModalFooter: typeof import('@chakra-ui/react')['ModalFooter']
-  const ModalHeader: typeof import('@chakra-ui/react')['ModalHeader']
-  const ModalOverlay: typeof import('@chakra-ui/react')['ModalOverlay']
-  const NavLink: typeof import('react-router-dom')['NavLink']
-  const Navigate: typeof import('react-router-dom')['Navigate']
-  const Outlet: typeof import('react-router-dom')['Outlet']
-  const Popover: typeof import('@chakra-ui/react')['Popover']
-  const PopoverArrow: typeof import('@chakra-ui/react')['PopoverArrow']
-  const PopoverBody: typeof import('@chakra-ui/react')['PopoverBody']
-  const PopoverCloseButton: typeof import('@chakra-ui/react')['PopoverCloseButton']
-  const PopoverContent: typeof import('@chakra-ui/react')['PopoverContent']
-  const PopoverFooter: typeof import('@chakra-ui/react')['PopoverFooter']
-  const PopoverHeader: typeof import('@chakra-ui/react')['PopoverHeader']
-  const PopoverTrigger: typeof import('@chakra-ui/react')['PopoverTrigger']
-  const Profile: typeof import('./src/components/Profile')['Profile']
-  const RegisterPage: typeof import('./src/views/RegisterPage')['RegisterPage']
-  const Reply: typeof import('./src/components/Reply')['Reply']
-  const RoomPage: typeof import('./src/views/RoomPage')['RoomPage']
-  const Route: typeof import('react-router-dom')['Route']
-  const Routes: typeof import('react-router-dom')['Routes']
-  const Spinner: typeof import('@chakra-ui/react')['Spinner']
-  const Stack: typeof import('@chakra-ui/react')['Stack']
-  const Textarea: typeof import('@chakra-ui/react')['Textarea']
-  const WithProfile: typeof import('./src/components/WithProfile')['WithProfile']
-  const cache: (typeof import("./src/hooks/useWebsocket"))["cache"]
-  const classnames: (typeof import("classnames"))["default"]
-  const clsx: typeof import('clsx')['default']
-  const common: typeof import('./src/interfaces/common')['default']
-  const createRef: typeof import('react')['createRef']
-  const createStandaloneToast: typeof import('@chakra-ui/react')['createStandaloneToast']
-  const dayjs: (typeof import("dayjs"))["default"]
-  const extendTheme: typeof import('@chakra-ui/react')['extendTheme']
-  const forwardRef: typeof import('react')['forwardRef']
-  const lazy: typeof import('react')['lazy']
-  const memo: typeof import('react')['memo']
-  const moment: typeof import('moment')['default']
-  const startTransition: typeof import('react')['startTransition']
-  const useAppDispatch: typeof import('./src/hooks/app')['useAppDispatch']
-  const useAppSelector: typeof import('./src/hooks/app')['useAppSelector']
-  const useAuth: typeof import('./src/hooks/useAuth')['default']
-  const useCallback: typeof import('react')['useCallback']
-  const useContext: typeof import('react')['useContext']
-  const useContextMenu: typeof import('./src/hooks/useContextMenu')['useContextMenu']
-  const useDebounceDispatch: (typeof import("./src/hooks/app"))["useDebounceDispatch"]
-  const useDebugValue: typeof import('react')['useDebugValue']
-  const useDeferredValue: typeof import('react')['useDeferredValue']
-  const useDisclosure: typeof import('@chakra-ui/react')['useDisclosure']
-  const useEffect: typeof import('react')['useEffect']
-  const useEventListener: typeof import('./src/hooks/useEventListener')['useEventListener']
-  const useFixedSize: typeof import('./src/hooks/general')['useFixedSize']
-  const useHref: typeof import('react-router-dom')['useHref']
-  const useId: typeof import('react')['useId']
-  const useImperativeHandle: typeof import('react')['useImperativeHandle']
-  const useInRouterContext: typeof import('react-router-dom')['useInRouterContext']
-  const useInsertionEffect: typeof import('react')['useInsertionEffect']
-  const useIntersectionObserver: typeof import('usehooks-ts')['useIntersectionObserver']
-  const useLayoutEffect: typeof import('react')['useLayoutEffect']
-  const useLinkClickHandler: typeof import('react-router-dom')['useLinkClickHandler']
-  const useLocalStorage: typeof import('usehooks-ts')['useLocalStorage']
-  const useLocation: typeof import('react-router-dom')['useLocation']
-  const useMediaMsgStyle: typeof import('./src/hooks/general')['useMediaMsgStyle']
-  const useMediaQuery: typeof import('usehooks-ts')['useMediaQuery']
-  const useMemo: typeof import('react')['useMemo']
-  const useNavigate: typeof import('react-router-dom')['useNavigate']
-  const useNavigationType: typeof import('react-router-dom')['useNavigationType']
-  const useOutlet: typeof import('react-router-dom')['useOutlet']
-  const useOutletContext: typeof import('react-router-dom')['useOutletContext']
-  const useParams: typeof import('react-router-dom')['useParams']
-  const usePrevious: typeof import('usehooks-ts')['usePrevious']
-  const useReceiveMsg: typeof import('./src/hooks/useReceiveMsg')['useReceiveMsg']
-  const useReconnect: typeof import('./src/hooks/useReconnect')['useReconnect']
-  const useRecord: typeof import('./src/hooks/useRecord')['useRecord']
-  const useReducer: typeof import('react')['useReducer']
-  const useRef: typeof import('react')['useRef']
-  const useRequest: typeof import('./src/hooks/useRequest')['default']
-  const useResolvedPath: typeof import('react-router-dom')['useResolvedPath']
-  const useRoutes: typeof import('react-router-dom')['useRoutes']
-  const useSearchParams: typeof import('react-router-dom')['useSearchParams']
-  const useState: typeof import('react')['useState']
-  const useSyncExternalStore: typeof import('react')['useSyncExternalStore']
-  const useThunkDispatch: typeof import('./src/hooks/app')['useThunkDispatch']
-  const useToast: typeof import('@chakra-ui/react')['useToast']
-  const useTransition: typeof import('react')['useTransition']
-  const useWebsocket: typeof import('./src/hooks/useWebsocket')['default']
-  const useWindowSize: typeof import('usehooks-ts')['useWindowSize']
-  const ws: typeof import('./src/hooks/useWebsocket')['ws']
+  const Avatar: typeof import("@/components/Avatar")["Avatar"];
+  const Axios: typeof import("axios")["default"];
+  const Button: typeof import("@chakra-ui/react")["Button"];
+  const ChakraProvider: typeof import("@chakra-ui/react")["ChakraProvider"];
+  const ClassNames: typeof import("clsx")["ClassValue"];
+  const ClassValue: typeof import("clsx")["ClassValue"];
+  const FormControl: typeof import("@chakra-ui/react")["FormControl"];
+  const FormLabel: typeof import("@chakra-ui/react")["FormLabel"];
+  const Formik: typeof import("@chakra-ui/react")["Formik"];
+  const HomePage: typeof import("./src/views/HomePage")["HomePage"];
+  const IconButton: typeof import("@chakra-ui/react")["IconButton"];
+  const Input: typeof import("@chakra-ui/react")["Input"];
+  const Layout: typeof import("./src/components/Layout")["Layout"];
+  const Link: typeof import("react-router-dom")["Link"];
+  const LoginPage: typeof import("./src/views/LoginPage")["LoginPage"];
+  const Modal: typeof import("@chakra-ui/react")["Modal"];
+  const ModalBody: typeof import("@chakra-ui/react")["ModalBody"];
+  const ModalCloseButton: typeof import("@chakra-ui/react")["ModalCloseButton"];
+  const ModalContent: typeof import("@chakra-ui/react")["ModalContent"];
+  const ModalFooter: typeof import("@chakra-ui/react")["ModalFooter"];
+  const ModalHeader: typeof import("@chakra-ui/react")["ModalHeader"];
+  const ModalOverlay: typeof import("@chakra-ui/react")["ModalOverlay"];
+  const NavLink: typeof import("react-router-dom")["NavLink"];
+  const Navigate: typeof import("react-router-dom")["Navigate"];
+  const Outlet: typeof import("react-router-dom")["Outlet"];
+  const Popover: typeof import("@chakra-ui/react")["Popover"];
+  const PopoverArrow: typeof import("@chakra-ui/react")["PopoverArrow"];
+  const PopoverBody: typeof import("@chakra-ui/react")["PopoverBody"];
+  const PopoverCloseButton: typeof import("@chakra-ui/react")["PopoverCloseButton"];
+  const PopoverContent: typeof import("@chakra-ui/react")["PopoverContent"];
+  const PopoverFooter: typeof import("@chakra-ui/react")["PopoverFooter"];
+  const PopoverHeader: typeof import("@chakra-ui/react")["PopoverHeader"];
+  const PopoverTrigger: typeof import("@chakra-ui/react")["PopoverTrigger"];
+  const Profile: typeof import("./src/components/Profile")["Profile"];
+  const RegisterPage: typeof import("./src/views/RegisterPage")["RegisterPage"];
+  const Reply: typeof import("./src/components/Reply")["Reply"];
+  const RoomPage: typeof import("./src/views/RoomPage")["RoomPage"];
+  const Route: typeof import("react-router-dom")["Route"];
+  const Routes: typeof import("react-router-dom")["Routes"];
+  const Spinner: typeof import("@chakra-ui/react")["Spinner"];
+  const Stack: typeof import("@chakra-ui/react")["Stack"];
+  const Textarea: typeof import("@chakra-ui/react")["Textarea"];
+  const WithProfile: typeof import("./src/components/WithProfile")["WithProfile"];
+  const cache: typeof import("./src/hooks/useWebsocket")["cache"];
+  const classnames: typeof import("classnames")["default"];
+  const clsx: typeof import("clsx")["default"];
+  const common: typeof import("./src/interfaces/common")["default"];
+  const createRef: typeof import("react")["createRef"];
+  const createStandaloneToast: typeof import("@chakra-ui/react")["createStandaloneToast"];
+  const dayjs: typeof import("dayjs")["default"];
+  const extendTheme: typeof import("@chakra-ui/react")["extendTheme"];
+  const forwardRef: typeof import("react")["forwardRef"];
+  const lazy: typeof import("react")["lazy"];
+  const memo: typeof import("react")["memo"];
+  const moment: typeof import("moment")["default"];
+  const startTransition: typeof import("react")["startTransition"];
+  const useAppDispatch: typeof import("./src/hooks/app")["useAppDispatch"];
+  const useAppSelector: typeof import("./src/hooks/app")["useAppSelector"];
+  const useAuth: typeof import("./src/hooks/useAuth")["default"];
+  const useCallback: typeof import("react")["useCallback"];
+  const useCamero: typeof import("./src/hooks/useCamero")["default"];
+  const useContext: typeof import("react")["useContext"];
+  const useContextMenu: typeof import("./src/hooks/useContextMenu")["useContextMenu"];
+  const useDebounceDispatch: typeof import("./src/hooks/app")["useDebounceDispatch"];
+  const useDebugValue: typeof import("react")["useDebugValue"];
+  const useDeferredValue: typeof import("react")["useDeferredValue"];
+  const useDisclosure: typeof import("@chakra-ui/react")["useDisclosure"];
+  const useEffect: typeof import("react")["useEffect"];
+  const useEventListener: typeof import("./src/hooks/useEventListener")["useEventListener"];
+  const useFixedSize: typeof import("./src/hooks/general")["useFixedSize"];
+  const useHref: typeof import("react-router-dom")["useHref"];
+  const useId: typeof import("react")["useId"];
+  const useImperativeHandle: typeof import("react")["useImperativeHandle"];
+  const useInRouterContext: typeof import("react-router-dom")["useInRouterContext"];
+  const useInsertionEffect: typeof import("react")["useInsertionEffect"];
+  const useIntersectionObserver: typeof import("usehooks-ts")["useIntersectionObserver"];
+  const useLayoutEffect: typeof import("react")["useLayoutEffect"];
+  const useLinkClickHandler: typeof import("react-router-dom")["useLinkClickHandler"];
+  const useLocalStorage: typeof import("usehooks-ts")["useLocalStorage"];
+  const useLocation: typeof import("react-router-dom")["useLocation"];
+  const useMediaMsgStyle: typeof import("./src/hooks/general")["useMediaMsgStyle"];
+  const useMediaQuery: typeof import("usehooks-ts")["useMediaQuery"];
+  const useMemo: typeof import("react")["useMemo"];
+  const useNavigate: typeof import("react-router-dom")["useNavigate"];
+  const useNavigationType: typeof import("react-router-dom")["useNavigationType"];
+  const useOutlet: typeof import("react-router-dom")["useOutlet"];
+  const useOutletContext: typeof import("react-router-dom")["useOutletContext"];
+  const useParams: typeof import("react-router-dom")["useParams"];
+  const usePrevious: typeof import("usehooks-ts")["usePrevious"];
+  const useReceiveMsg: typeof import("./src/hooks/useReceiveMsg")["useReceiveMsg"];
+  const useReconnect: typeof import("./src/hooks/useReconnect")["useReconnect"];
+  const useRecord: typeof import("./src/hooks/useRecord")["useRecord"];
+  const useReducer: typeof import("react")["useReducer"];
+  const useRef: typeof import("react")["useRef"];
+  const useRequest: typeof import("./src/hooks/useRequest")["default"];
+  const useResolvedPath: typeof import("react-router-dom")["useResolvedPath"];
+  const useRoutes: typeof import("react-router-dom")["useRoutes"];
+  const useSearchParams: typeof import("react-router-dom")["useSearchParams"];
+  const useState: typeof import("react")["useState"];
+  const useSyncExternalStore: typeof import("react")["useSyncExternalStore"];
+  const useThunkDispatch: typeof import("./src/hooks/app")["useThunkDispatch"];
+  const useToast: typeof import("@chakra-ui/react")["useToast"];
+  const useTransition: typeof import("react")["useTransition"];
+  const useWebsocket: typeof import("./src/hooks/useWebsocket")["default"];
+  const useWindowSize: typeof import("usehooks-ts")["useWindowSize"];
+  const ws: typeof import("./src/hooks/useWebsocket")["ws"];
 }
 // for type re-export
 declare global {
   // @ts-ignore
-  export type { IMediaMessage, IMessage, MessageRequest, IAddMessageRequest } from './src/interfaces/IMessage'
-  import('./src/interfaces/IMessage')
+  export type {
+    IMediaMessage,
+    IMessage,
+    MessageRequest,
+    IAddMessageRequest,
+  } from "./src/interfaces/IMessage";
+  import("./src/interfaces/IMessage");
   // @ts-ignore
-  export type { IRoom } from './src/interfaces/IRoom'
-  import('./src/interfaces/IRoom')
+  export type { IRoom } from "./src/interfaces/IRoom";
+  import("./src/interfaces/IRoom");
   // @ts-ignore
-  export type { IUser } from './src/interfaces/IUser'
-  import('./src/interfaces/IUser')
+  export type { IUser } from "./src/interfaces/IUser";
+  import("./src/interfaces/IUser");
   // @ts-ignore
-  export type { ChannelType, ContentType, Message, MediaMessage, TextMessage } from './src/interfaces/index'
-  import('./src/interfaces/index')
+  export type {
+    ChannelType,
+    ContentType,
+    Message,
+    MediaMessage,
+    TextMessage,
+  } from "./src/interfaces/index";
+  import("./src/interfaces/index");
   // @ts-ignore
-  export type { AppThunk } from './src/hooks/app'
-  import('./src/hooks/app')
+  export type { AppThunk } from "./src/hooks/app";
+  import("./src/hooks/app");
 }
