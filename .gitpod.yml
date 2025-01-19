@@ -5,7 +5,18 @@
 # Learn more from ready-to-use templates: https://www.gitpod.io/docs/introduction/getting-started/quickstart
 
 tasks:
-  - init: pnpm install
+  - name: run frontend
+    openMode: split-left
+    init: pnpm install
     command: pnpm run dev
 
+  - name: run backend
+    openMode: split-right
+    init: pnpm install
+    command: pnpm run db
 
+ports:
+  - port: 9001
+    name: frontend
+    visibility: private
+    onOpen: open-preview
