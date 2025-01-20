@@ -14,16 +14,41 @@ import Api from "@/Api";
 import { updateRoomThunk } from "@/store/reducer/room";
 import { AddMember } from "./AddMemberDialog";
 import { AddAdmin } from "./AddAdminDialog";
-import { FaCamera, FaFile, FaPause, FaPauseCircle } from "react-icons/fa";
+import { FaCamera, FaImage, FaPauseCircle } from "react-icons/fa";
 import { setLocalUserInfo } from "@/store/reducer/user";
-import useCamera from "@/hooks/useCamero";
+import useCamera from "@/hooks/useCamera";
+import { captureVideo } from "@/utils/capture";
+import { Loader2 } from "lucide-react";
+
+function dataURLtoFile(base64: string, filename: string) {
+  const arr = base64.split(",");
+  const mime = arr[0].match(/:(.*?);/)?.[1];
+  const bstr = atob(arr[arr.length - 1]);
+  let n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  while (n--) {
+    u8arr[n] = bstr.charCodeAt(n);
+  }
+  return new File([u8arr], filename, { type: mime });
+}
 
 export const AvatarEditButton = () => {
+  const [captureLoading, setCaptureLoading] = useState(false);
   const dispatch = useThunkDispatch();
   const fileRef = useRef<HTMLInputElement>(null);
   const room = useAppSelector((state) => state.room.data);
   const user = useAppSelector((state) => state.user.data);
-  const { videoRef, startCamera, stopCamera, error, isStreaming } = useCamera();
+  const { videoRef, startCamera, stopCamera, isStreaming } = useCamera();
+  const handleStopCamera = async () => {
+    const { base64 } = captureVideo(videoRef.current!, "image/jpeg");
+    const blob = dataURLtoFile(base64, "avatar.jpg");
+    setCaptureLoading(true);
+    await onChange([blob]);
+    setTimeout(() => {
+      stopCamera();
+      setCaptureLoading(false);
+    }, 1000);
+  };
   const onChange = async (files: File[]) => {
     const file = files?.[0];
     if (!file) return;
@@ -51,6 +76,9 @@ export const AvatarEditButton = () => {
   };
   return (
     <>
+      {captureLoading && (
+        <Loader2 className="flex absolute top-[calc(50%-16px)] left-[calc(50%-16px)] text-2xl w-8 h-8 text-gray-200 animate-spin dark:text-gray-600" />
+      )}
       <video
         ref={videoRef}
         className="w-full h-full flex absolute top-0 rounded-full"
@@ -68,7 +96,7 @@ export const AvatarEditButton = () => {
           width="6"
           height="6"
           minW="6"
-          icon={<FaFile />}
+          icon={<FaImage />}
           onClick={() => {
             fileRef.current?.click();
           }}
@@ -85,9 +113,9 @@ export const AvatarEditButton = () => {
             }
           }}
         />
-        {error && <p style={{ color: "red" }}>Error: {error}</p>}
         {!isStreaming ? (
           <IconButton
+            className="ml-1"
             isRound
             variant="solid"
             colorScheme="teal"
@@ -101,6 +129,7 @@ export const AvatarEditButton = () => {
           />
         ) : (
           <IconButton
+            className="ml-1"
             isRound
             variant="solid"
             colorScheme="teal"
@@ -110,7 +139,7 @@ export const AvatarEditButton = () => {
             height="6"
             minW="6"
             icon={<FaPauseCircle />}
-            onClick={stopCamera}
+            onClick={handleStopCamera}
           />
         )}
       </span>

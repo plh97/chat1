@@ -66,7 +66,7 @@ declare global {
   const useAppSelector: typeof import("./src/hooks/app")["useAppSelector"];
   const useAuth: typeof import("./src/hooks/useAuth")["default"];
   const useCallback: typeof import("react")["useCallback"];
-  const useCamero: typeof import("./src/hooks/useCamero")["default"];
+  const useCamero: typeof import("./src/hooks/useCamera")["default"];
   const useContext: typeof import("react")["useContext"];
   const useContextMenu: typeof import("./src/hooks/useContextMenu")["useContextMenu"];
   const useDebounceDispatch: typeof import("./src/hooks/app")["useDebounceDispatch"];

@@ -15,7 +15,14 @@ const useCamera = () => {
   const startCamera = async () => {
     try {
       setError(null); // Clear any previous error
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 640 }, // 期望640x640
+          height: { ideal: 640 },
+          aspectRatio: 1, // 强制 1:1 宽高比
+          facingMode: "user", // 前置摄像头
+        },
+      });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.play();
