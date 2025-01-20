@@ -1,7 +1,7 @@
+import { Form } from "react-router-dom";
 import Api from "@/Api";
 import { IUser } from "@/interfaces";
 import { setUserInfoThunk } from "@/store/reducer/user";
-import { Form } from "react-router-dom";
 
 export const Profile = ({
   edit = false,

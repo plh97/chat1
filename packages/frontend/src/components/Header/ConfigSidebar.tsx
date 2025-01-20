@@ -14,42 +14,31 @@ import Api from "@/Api";
 import { updateRoomThunk } from "@/store/reducer/room";
 import { AddMember } from "./AddMemberDialog";
 import { AddAdmin } from "./AddAdminDialog";
-import { FaCamera, FaImage, FaPauseCircle } from "react-icons/fa";
 import { setLocalUserInfo } from "@/store/reducer/user";
-import useCamera from "@/hooks/useCamera";
-import { captureVideo } from "@/utils/capture";
-import { Loader2 } from "lucide-react";
 
-function dataURLtoFile(base64: string, filename: string) {
-  const arr = base64.split(",");
-  const mime = arr[0].match(/:(.*?);/)?.[1];
-  const bstr = atob(arr[arr.length - 1]);
-  let n = bstr.length;
-  const u8arr = new Uint8Array(n);
-  while (n--) {
-    u8arr[n] = bstr.charCodeAt(n);
-  }
-  return new File([u8arr], filename, { type: mime });
-}
-
-export const AvatarEditButton = () => {
-  const [captureLoading, setCaptureLoading] = useState(false);
+export const ConfigSidebar = ({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) => {
   const dispatch = useThunkDispatch();
-  const fileRef = useRef<HTMLInputElement>(null);
   const room = useAppSelector((state) => state.room.data);
-  const user = useAppSelector((state) => state.user.data);
-  const { videoRef, startCamera, stopCamera, isStreaming } = useCamera();
-  const handleStopCamera = async () => {
-    const { base64 } = captureVideo(videoRef.current!, "image/jpeg");
-    const blob = dataURLtoFile(base64, "avatar.jpg");
-    setCaptureLoading(true);
-    await onChange([blob]);
-    setTimeout(() => {
-      stopCamera();
-      setCaptureLoading(false);
-    }, 1000);
+  const [localName, setLocalName] = useState(room.name);
+  useEffect(() => {
+    setLocalName(room.name);
+  }, [setLocalName, room.name]);
+  const handleNameChange = () => {
+    dispatch(
+      updateRoomThunk({
+        id: room.id,
+        name: localName,
+      })
+    );
   };
-  const onChange = async (files: File[]) => {
+  const user = useAppSelector((state) => state.user.data);
+  const onAvatarChange = async (files: File[]) => {
     const file = files?.[0];
     if (!file) return;
     const { url } = await Api.uploadFile(file);
@@ -75,100 +64,6 @@ export const AvatarEditButton = () => {
     );
   };
   return (
-    <>
-      {captureLoading && (
-        <Loader2 className="flex absolute top-[calc(50%-16px)] left-[calc(50%-16px)] text-2xl w-8 h-8 text-gray-200 animate-spin dark:text-gray-600" />
-      )}
-      <video
-        ref={videoRef}
-        className="w-full h-full flex absolute top-0 rounded-full"
-        style={{
-          visibility: isStreaming ? "visible" : "hidden",
-        }}
-      />
-      <span className="absolute bottom-[3px] left-[50%] transform translate-y-1/2 -translate-x-1/2 inline-flex">
-        <IconButton
-          isRound
-          variant="solid"
-          colorScheme="teal"
-          aria-label="Change Avatar"
-          fontSize="15px"
-          width="6"
-          height="6"
-          minW="6"
-          icon={<FaImage />}
-          onClick={() => {
-            fileRef.current?.click();
-          }}
-        />
-        <input
-          ref={fileRef}
-          accept="image/*"
-          className="hidden"
-          type="file"
-          onChange={() => {
-            const files = fileRef.current?.files;
-            if (files) {
-              onChange(Array.from(files));
-            }
-          }}
-        />
-        {!isStreaming ? (
-          <IconButton
-            className="ml-1"
-            isRound
-            variant="solid"
-            colorScheme="teal"
-            aria-label="Change Avatar"
-            fontSize="15px"
-            width="6"
-            height="6"
-            minW="6"
-            icon={<FaCamera />}
-            onClick={startCamera}
-          />
-        ) : (
-          <IconButton
-            className="ml-1"
-            isRound
-            variant="solid"
-            colorScheme="teal"
-            aria-label="Change Avatar"
-            fontSize="15px"
-            width="6"
-            height="6"
-            minW="6"
-            icon={<FaPauseCircle />}
-            onClick={handleStopCamera}
-          />
-        )}
-      </span>
-    </>
-  );
-};
-
-export const ConfigSidebar = ({
-  isOpen,
-  onClose,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-}) => {
-  const dispatch = useThunkDispatch();
-  const room = useAppSelector((state) => state.room.data);
-  const [localName, setLocalName] = useState(room.name);
-  useEffect(() => {
-    setLocalName(room.name);
-  }, [setLocalName, room.name]);
-  const handleNameChange = () => {
-    dispatch(
-      updateRoomThunk({
-        id: room.id,
-        name: localName,
-      })
-    );
-  };
-  return (
     <Drawer key={2} isOpen={isOpen} placement="right" onClose={onClose}>
       <DrawerOverlay />
       <DrawerContent>
@@ -177,9 +72,12 @@ export const ConfigSidebar = ({
         <DrawerBody>
           <Form className={clsx("flex flex-col gap-2")}>
             <FormControl className="relative flex justify-center mb-5">
-              <Avatar size="lg" name={room.name} src={room.image ?? ""}>
-                <AvatarEditButton />
-              </Avatar>
+              <Avatar
+                onChange={onAvatarChange}
+                size="lg"
+                name={room.name}
+                src={room.image ?? ""}
+              />
             </FormControl>
             <FormControl>
               <FormLabel>Group Name</FormLabel>
