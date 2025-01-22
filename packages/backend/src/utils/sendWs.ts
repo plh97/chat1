@@ -16,7 +16,7 @@ export const sendWs = async (data: any, ws: WebSocketServer, room: IRoom) => {
           event: WS_EVENT.SEND_MSG,
           requestId: generateTemplateId(),
           data,
-        }),
+        })
       );
     } catch (error) {
       if (error instanceof jwt.JsonWebTokenError) {
@@ -27,7 +27,7 @@ export const sendWs = async (data: any, ws: WebSocketServer, room: IRoom) => {
             message: "WebSocket token verify fail",
             requestId: generateTemplateId(),
             data,
-          }),
+          })
         );
       } else {
         console.log(111, error);

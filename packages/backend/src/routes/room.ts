@@ -49,7 +49,7 @@ export const getRoom = async (ctx: Context) => {
   } else {
     message = message.slice(
       totalCount < page * pageSize ? 0 : totalCount - page * pageSize,
-      totalCount - (page - 1) * pageSize,
+      totalCount - (page - 1) * pageSize
     );
   }
   ctx.body = {
@@ -88,7 +88,7 @@ export const addRoom = async (ctx: Context) => {
       message: "",
       code: 0,
     },
-    ctx.ws,
+    ctx.ws
   );
   ctx.body = {
     code: 0,

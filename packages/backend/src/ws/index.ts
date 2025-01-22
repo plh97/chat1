@@ -10,7 +10,7 @@ import { handleRecallMsg } from "./recallMsg";
 export const onMsgReceive: IOnMsgReceive = async (
   objMsg: IWsData<IMessage>,
   ws,
-  socket,
+  socket
 ) => {
   if (socket) {
     try {
@@ -22,7 +22,7 @@ export const onMsgReceive: IOnMsgReceive = async (
           code: 1,
           message: error.message,
           data: null,
-        }),
+        })
       );
       return;
     }
@@ -50,7 +50,7 @@ export const onMsgReceive: IOnMsgReceive = async (
         event,
         requestId: objMsg.requestId,
         ...broadcastData,
-      }),
+      })
     );
     return;
   }
@@ -65,7 +65,7 @@ export const onMsgReceive: IOnMsgReceive = async (
           event,
           requestId: objMsg.requestId,
           ...broadcastData,
-        }),
+        })
       );
     } catch (error) {
       if (error instanceof jwt.JsonWebTokenError) {
@@ -76,7 +76,7 @@ export const onMsgReceive: IOnMsgReceive = async (
             message: "WebSocket token verify fail",
             requestId: objMsg.requestId,
             ...broadcastData,
-          }),
+          })
         );
       }
     }
