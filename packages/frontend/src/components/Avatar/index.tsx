@@ -32,9 +32,42 @@ function dataURLtoFile(base64: string, filename: string) {
   return new File([u8arr], filename, { type: mime });
 }
 
+const FileButton = ({ onChange }: any) => {
+  const fileRef = useRef<HTMLInputElement>(null);
+  return (
+    <>
+      <IconButton
+        isRound
+        variant="solid"
+        colorScheme="teal"
+        aria-label="Change Avatar"
+        fontSize="15px"
+        width="6"
+        height="6"
+        minW="6"
+        icon={<FaImage />}
+        onClick={() => {
+          fileRef.current?.click();
+        }}
+      />
+      <input
+        ref={fileRef}
+        accept="image/*"
+        className="hidden"
+        type="file"
+        onChange={() => {
+          const files = fileRef.current?.files;
+          if (files) {
+            onChange(Array.from(files));
+          }
+        }}
+      />
+    </>
+  );
+};
+
 export const AvatarEditButton = ({ onChange }: any) => {
   const [captureLoading, setCaptureLoading] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
   const { videoRef, startCamera, stopCamera, isStreaming } = useCamera();
   const handleStopCamera = async () => {
     const { base64 } = captureVideo(videoRef.current!, "image/jpeg");
@@ -46,6 +79,8 @@ export const AvatarEditButton = ({ onChange }: any) => {
       setCaptureLoading(false);
     }, 1000);
   };
+  const isLaptop = useMediaQuery("(min-width: 768px)");
+  if (!onChange) return null;
   return (
     <>
       {captureLoading && (
@@ -59,61 +94,37 @@ export const AvatarEditButton = ({ onChange }: any) => {
         }}
       />
       <span className="absolute bottom-[3px] left-[50%] transform translate-y-1/2 -translate-x-1/2 inline-flex">
-        <IconButton
-          isRound
-          variant="solid"
-          colorScheme="teal"
-          aria-label="Change Avatar"
-          fontSize="15px"
-          width="6"
-          height="6"
-          minW="6"
-          icon={<FaImage />}
-          onClick={() => {
-            fileRef.current?.click();
-          }}
-        />
-        <input
-          ref={fileRef}
-          accept="image/*"
-          className="hidden"
-          type="file"
-          onChange={() => {
-            const files = fileRef.current?.files;
-            if (files) {
-              onChange(Array.from(files));
-            }
-          }}
-        />
-        {!isStreaming ? (
-          <IconButton
-            className="ml-1"
-            isRound
-            variant="solid"
-            colorScheme="teal"
-            aria-label="Change Avatar"
-            fontSize="15px"
-            width="6"
-            height="6"
-            minW="6"
-            icon={<FaCamera />}
-            onClick={startCamera}
-          />
-        ) : (
-          <IconButton
-            className="ml-1"
-            isRound
-            variant="solid"
-            colorScheme="teal"
-            aria-label="Change Avatar"
-            fontSize="15px"
-            width="6"
-            height="6"
-            minW="6"
-            icon={<FaPauseCircle />}
-            onClick={handleStopCamera}
-          />
-        )}
+        <FileButton onChange={onChange} />
+        {isLaptop &&
+          (!isStreaming ? (
+            <IconButton
+              className="ml-1"
+              isRound
+              variant="solid"
+              colorScheme="teal"
+              aria-label="Change Avatar"
+              fontSize="15px"
+              width="6"
+              height="6"
+              minW="6"
+              icon={<FaCamera />}
+              onClick={startCamera}
+            />
+          ) : (
+            <IconButton
+              className="ml-1"
+              isRound
+              variant="solid"
+              colorScheme="teal"
+              aria-label="Change Avatar"
+              fontSize="15px"
+              width="6"
+              height="6"
+              minW="6"
+              icon={<FaPauseCircle />}
+              onClick={handleStopCamera}
+            />
+          ))}
       </span>
     </>
   );
@@ -163,7 +174,7 @@ export const Avatar = ({
         </AvatarComponent.Fallback>
       </AvatarComponent.Root>
       {countMemo}
-      {onChange && <AvatarEditButton onChange={onChange} />}
+      <AvatarEditButton onChange={onChange} />
       {children}
     </span>
   );
