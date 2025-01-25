@@ -5,6 +5,13 @@
 # Learn more from ready-to-use templates: https://www.gitpod.io/docs/introduction/getting-started/quickstart
 
 tasks:
+
+  - init: |
+      export EDITOR="command gp open -w" VISUAL="command gp open -w"
+      cp -f /workspace/ohmyzsh/templates/zshrc.zsh-template ~/.zshrc
+      ln -sf /workspace/ohmyzsh ~/.oh-my-zsh
+    command: exec zsh
+
   - name: run frontend
     openMode: split-left
     init: pnpm install
