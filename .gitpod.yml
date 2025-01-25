@@ -9,10 +9,9 @@ image:
 
 tasks:
 
-  - init: |
-      export EDITOR="command gp open -w" VISUAL="command gp open -w"
-      cp -f /workspace/ohmyzsh/templates/zshrc.zsh-template ~/.zshrc
-      ln -sf /workspace/ohmyzsh ~/.oh-my-zsh
+  - init: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+
     command: exec zsh
 
   - name: run frontend
