@@ -33,12 +33,19 @@ export const Top = () => {
   );
 };
 
+// const useOnce = (cb: Function, deps: any[]) => {
+//   useEffect(() => {
+//     cb();
+//   }, deps);
+// }
+
 export function Scroll({ children }: PropsWithChildren) {
   const dispatch = useThunkDispatch();
   const { id = "" } = useParams();
   const { isPrepend, handleScroll } = useLoadMore();
   const { scrollEl } = useScroll();
   const myUserInfo = useAppSelector((state) => state.user.data);
+  const room = useAppSelector((state) => state.room.data);
   // init message list
   useEffect(() => {
     if (!id) return;
@@ -46,13 +53,15 @@ export function Scroll({ children }: PropsWithChildren) {
     dispatch(initialMessage({ message: [], totalCount: 0 }));
     dispatch(getRoomInfoThunk(id));
   }, [id]);
+  const runRef = useRef(true);
   useEffect(() => {
-    if (myUserInfo?.id) {
+    if (myUserInfo && room.message.length && runRef.current) {
       setTimeout(() => {
+        runRef.current = false;
         dispatch(scrollToEnd(false));
       });
     }
-  }, [myUserInfo?.id]);
+  }, [myUserInfo, room.message]);
   const { loadingMessage } = useAppSelector((state) => state.room);
   const { message, totalCount } = useAppSelector((state) => state.room.data);
   const hasMessage = totalCount > message.length;
