@@ -59,7 +59,7 @@ export function InputBox({ className }: { readonly className?: string }) {
       })
     );
     if (sendMessageAction.rejected.match(result)) return;
-    dispatch(scrollToEnd());
+    dispatch(scrollToEnd(false));
   };
   const utilComponent = useMemo(() => {
     if (text) {

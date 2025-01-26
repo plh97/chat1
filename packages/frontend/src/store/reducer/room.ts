@@ -1,7 +1,7 @@
 import type { Room } from "db";
 import Api from "@/Api";
 import { AppThunk } from "@/hooks/app";
-import type { PayloadAction } from "@reduxjs/toolkit";
+import type { Action, PayloadAction } from "@reduxjs/toolkit";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { IMessage, MessageRequest, IRoom } from "@/interfaces";
 import { fetchUserInfoThunk, shiftRoom } from "./user";
@@ -62,7 +62,7 @@ export const getRoomInfoThunk = createAsyncThunk<void, string>(
     // 将当前房间基本信息存到store里面
     dispatch(initialMessage(res));
     // div元素撑开后，滚动到底部
-    dispatch(scrollToEnd());
+    dispatch(scrollToEnd(true));
   }
 );
 // 加载更多消息
@@ -108,11 +108,11 @@ export const roomSlice = createSlice({
     changeLoading(state, action: PayloadAction<boolean>) {
       state.loadingMessage = action.payload;
     },
-    scrollToEnd(state) {
-      state.scrollToEnd = Math.random();
+    scrollToTop(state, action) {
+      state.scrollToTop = action.payload > 0 ? Math.random() : -Math.random();
     },
-    scrollToTop(state) {
-      state.scrollToTop = Math.random();
+    scrollToEnd(state, action) {
+      state.scrollToEnd = action.payload > 0 ? Math.random() : -Math.random();
     },
     loadMoreMessage(state, action: PayloadAction<IMessage[]>) {
       state.data.message = [...action.payload, ...state.data.message];

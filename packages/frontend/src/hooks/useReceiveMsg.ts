@@ -45,7 +45,7 @@ export const useReceiveMsg = (roomRef: MutableRefObject<IRoom>) => {
     ) {
       if (msg?.channelId === room.id) {
         dispatch(addMessage(msg));
-        dispatch(scrollToEnd());
+        dispatch(scrollToEnd(true));
       }
       dispatch(topUserRoom(msg));
       if (msg.userId === userInfo.id) {

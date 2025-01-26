@@ -1,60 +1,51 @@
+import { VListHandle } from "virtua";
 import {
-  IState,
   loadMoreMessage,
   loadRoomMoreMessageThunk,
 } from "@/store/reducer/room";
-import { IMessage, IRoom } from "@/interfaces";
+import { IMessage } from "@/interfaces";
 import { markReadMessageThunk } from "@/store/action/message";
 
 export const useScroll = () => {
-  const scrollEl = useRef<HTMLDivElement>(null);
-  const { scrollToTop, scrollToEnd } = useAppSelector((state) => state.room);
+  const scrollEl = useRef<VListHandle>(null);
+  const {
+    scrollToTop,
+    scrollToEnd,
+    data: { message },
+  } = useAppSelector((state) => state.room);
   const handleScrollToTop = () => {
-    if (scrollEl.current?.scrollTop !== undefined) {
-      scrollEl.current?.scrollTo({ top: 0 });
+    scrollEl.current?.scrollTo(0);
+  };
+  const handleScrollToBottom = (isStick = false) => {
+    if (isStick) {
+      const endIndex = scrollEl.current?.findEndIndex() ?? 0;
+      if (endIndex === message.length - 1) {
+        scrollEl.current?.scrollToIndex(message.length, {
+          align: "end",
+        });
+      }
+      return;
     }
-  };
-  const handleScrollToBottom = () => {
-    scrollEl.current?.scrollTo({ top: 999999999 });
-  };
-  const getBottomSpace = () => {
-    if (scrollEl.current?.scrollTop !== undefined) {
-      return scrollEl.current.scrollHeight - scrollEl.current.scrollTop;
-    }
-    return NaN;
-  };
-  const getTopSpace = () => {
-    return scrollEl.current?.scrollTop;
+    scrollEl.current?.scrollToIndex(message.length, {
+      align: "end",
+    });
   };
   useEffect(() => {
-    handleScrollToTop();
+    scrollToTop && handleScrollToTop();
   }, [scrollToTop]);
   useEffect(() => {
-    handleScrollToBottom();
-  }, [scrollToEnd]);
+    scrollToEnd && handleScrollToBottom(scrollToEnd! > 0);
+  }, [scrollToEnd, message, scrollEl.current]);
   return {
-    getTopSpace,
-    getBottomSpace,
-    handleScrollToTop,
-    handleScrollToBottom,
     scrollEl,
   };
 };
 
 export const useLoadMore = () => {
-  const { loadingMessage } = useAppSelector<IState>((state) => state.room);
-  const { message, totalCount } = useAppSelector<IRoom>(
-    (state) => state.room.data
-  );
-  const hasMessage = totalCount > message.length;
-  const dispatch = useThunkDispatch();
+  const { message } = useAppSelector((state) => state.room.data);
   const { id = "" } = useParams();
-  const { getBottomSpace, getTopSpace, scrollEl } = useScroll();
-  const [distanceToBottom, setDistanceToBottom] = useState<number | null>(null);
-  const { isIntersecting, ref } = useIntersectionObserver({
-    threshold: 0.5,
-    rootMargin: "200%",
-  });
+  const isPrepend = useRef(false);
+  const dispatch = useAppDispatch();
   const requestMore = async () => {
     const { payload } = await dispatch(
       loadRoomMoreMessageThunk({
@@ -63,33 +54,20 @@ export const useLoadMore = () => {
         id: id,
       })
     );
-    const distanceToTop = getTopSpace();
-    // @ts-ignore
-    dispatch(loadMoreMessage(payload));
-    if (Number(distanceToTop) === 0) {
-      setDistanceToBottom(getBottomSpace());
-    }
+    isPrepend.current = true;
+    dispatch(loadMoreMessage(payload as IMessage[]));
   };
-  useEffect(() => {
-    if (isIntersecting && !loadingMessage && message.length && hasMessage) {
-      console.log("load more");
+  const handleScroll = (offset: number) => {
+    if (offset < 100) {
       requestMore();
     }
-  }, [isIntersecting]);
-
+  };
   useLayoutEffect(() => {
-    if (
-      scrollEl.current?.scrollTop !== undefined &&
-      distanceToBottom !== null
-    ) {
-      scrollEl.current.scrollTop =
-        scrollEl.current.scrollHeight - distanceToBottom;
-      setDistanceToBottom(null);
-    }
-  }, [distanceToBottom]);
+    isPrepend.current = false;
+  });
   return {
-    scrollEl,
-    loadMoreTriggerRef: ref,
+    handleScroll,
+    isPrepend,
   };
 };
 

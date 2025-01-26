@@ -7,12 +7,11 @@ import {
   useDisclosure,
 } from "@chakra-ui/react";
 import { updateRoomThunk } from "@/store/reducer/room";
-import type { IRoom, IUser } from "@/interfaces";
 
 export function AddMember() {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const roomInfo = useAppSelector<IRoom>((state) => state.room.data);
-  const userInfo = useAppSelector<IUser>((state) => state.user.data);
+  const roomInfo = useAppSelector((state) => state.room.data);
+  const userInfo = useAppSelector((state) => state.user.data);
   const [user, setUser] = useState<string[]>([]);
   const dispatch = useThunkDispatch();
   const toast = useToast();

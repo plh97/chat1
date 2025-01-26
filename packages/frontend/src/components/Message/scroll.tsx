@@ -1,11 +1,12 @@
+import { PropsWithChildren } from "react";
+import { VList } from "virtua";
+import { Loader2 } from "lucide-react";
 import {
   scrollToEnd,
   getRoomInfoThunk,
   initialMessage,
 } from "@/store/reducer/room";
-import { Loader2 } from "lucide-react";
-import { useLoadMore } from "./hook";
-import { PropsWithChildren } from "react";
+import { useLoadMore, useScroll } from "./hook";
 
 export const Top = () => {
   const { loadingMessage, data } = useAppSelector((state) => state.room);
@@ -35,7 +36,8 @@ export const Top = () => {
 export function Scroll({ children }: PropsWithChildren) {
   const dispatch = useThunkDispatch();
   const { id = "" } = useParams();
-  const { scrollEl, loadMoreTriggerRef } = useLoadMore();
+  const { isPrepend, handleScroll } = useLoadMore();
+  const { scrollEl } = useScroll();
   const myUserInfo = useAppSelector((state) => state.user.data);
   // init message list
   useEffect(() => {
@@ -46,9 +48,12 @@ export function Scroll({ children }: PropsWithChildren) {
   }, [id]);
   useEffect(() => {
     if (myUserInfo?.id) {
-      dispatch(scrollToEnd());
+      dispatch(scrollToEnd(false));
     }
   }, [myUserInfo?.id]);
+  const { loadingMessage } = useAppSelector((state) => state.room);
+  const { message, totalCount } = useAppSelector((state) => state.room.data);
+  const hasMessage = totalCount > message.length;
   if (!myUserInfo?.id) {
     return (
       <div className="overflow-y-auto flex-1 relative px-3.5 py-0 flex items-center justify-center flex-col">
@@ -56,18 +61,21 @@ export function Scroll({ children }: PropsWithChildren) {
       </div>
     );
   }
+  const handleScroll1 = (offset: number) => {
+    if (!loadingMessage && message.length && hasMessage) {
+      handleScroll(offset);
+    }
+  };
   return (
-    <div className="overflow-y-auto flex-1 relative px-3.5 py-0" ref={scrollEl}>
+    <VList
+      reverse
+      shift={isPrepend.current}
+      className="overflow-y-auto flex-1 relative px-3.5 py-0"
+      ref={scrollEl}
+      onScroll={handleScroll1}
+    >
       <Top />
-      <div
-        data-load
-        ref={loadMoreTriggerRef}
-        style={{
-          margin: "200px",
-          position: "absolute",
-        }}
-      />
       {children}
-    </div>
+    </VList>
   );
 }

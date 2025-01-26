@@ -75,30 +75,30 @@ export function Message({}: { className?: string }) {
     return config;
   }, [selectedMessage]);
   return (
-    <Scroll>
-      <Menu
-        isOpen={isOpen}
-        onClose={() => {
-          setIsOpen(false);
-        }}
-      >
+    <Menu
+      isOpen={isOpen}
+      onClose={() => {
+        setIsOpen(false);
+      }}
+    >
+      <Scroll>
         {room.message.map((msg) => (
           <Item key={msg.id} setIsOpen={setIsOpen} data={msg} />
         ))}
-        <Portal>
-          <MenuList>
-            {menuList.map((item) => (
-              <MenuItem
-                key={item.label}
-                onClick={item.onClick}
-                className="flex flex-row justify-between box-border"
-              >
-                {item.label} {item.icon}
-              </MenuItem>
-            ))}
-          </MenuList>
-        </Portal>
-      </Menu>
-    </Scroll>
+      </Scroll>
+      <Portal>
+        <MenuList>
+          {menuList.map((item) => (
+            <MenuItem
+              key={item.label}
+              onClick={item.onClick}
+              className="flex flex-row justify-between box-border"
+            >
+              {item.label} {item.icon}
+            </MenuItem>
+          ))}
+        </MenuList>
+      </Portal>
+    </Menu>
   );
 }

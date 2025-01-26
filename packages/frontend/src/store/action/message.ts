@@ -46,7 +46,7 @@ export const sendMessageAction = createAsyncThunk<void, Partial<IMessage>>(
         },
       })
     );
-    dispatch(scrollToEnd());
+    dispatch(scrollToEnd(false));
     // remove reply message
     dispatch(updateReplyMessage());
   }
