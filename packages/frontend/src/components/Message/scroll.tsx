@@ -61,18 +61,17 @@ export function Scroll({ children }: PropsWithChildren) {
       </div>
     );
   }
-  const handleScroll1 = (offset: number) => {
-    if (!loadingMessage && message.length && hasMessage) {
-      handleScroll(offset);
-    }
-  };
   return (
     <VList
       reverse
       shift={isPrepend.current}
       className="overflow-y-auto flex-1 relative px-3.5 py-0"
       ref={scrollEl}
-      onScroll={handleScroll1}
+      onScroll={(offset) => {
+        if (!loadingMessage && message.length && hasMessage) {
+          handleScroll(offset);
+        }
+      }}
     >
       <Top />
       {children}

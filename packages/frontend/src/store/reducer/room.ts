@@ -1,7 +1,7 @@
 import type { Room } from "db";
 import Api from "@/Api";
 import { AppThunk } from "@/hooks/app";
-import type { Action, PayloadAction } from "@reduxjs/toolkit";
+import type { PayloadAction } from "@reduxjs/toolkit";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { IMessage, MessageRequest, IRoom } from "@/interfaces";
 import { fetchUserInfoThunk, shiftRoom } from "./user";
