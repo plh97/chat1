@@ -14,9 +14,11 @@ export const useScroll = () => {
     data: { message },
   } = useAppSelector((state) => state.room);
   const handleScrollToTop = () => {
+    if (scrollToTop === undefined) return;
     scrollEl.current?.scrollTo(0);
   };
   const handleScrollToBottom = (isStick = false) => {
+    if (scrollToEnd === undefined) return;
     if (isStick) {
       const endIndex = scrollEl.current?.findEndIndex() ?? 0;
       if (endIndex === message.length - 1) {
@@ -31,11 +33,11 @@ export const useScroll = () => {
     });
   };
   useEffect(() => {
-    scrollToTop && handleScrollToTop();
+    handleScrollToTop();
   }, [scrollToTop]);
   useEffect(() => {
-    scrollToEnd && handleScrollToBottom(scrollToEnd! > 0);
-  }, [scrollToEnd, message, scrollEl.current]);
+    handleScrollToBottom(scrollToEnd! > 0);
+  }, [scrollToEnd]);
   return {
     scrollEl,
   };

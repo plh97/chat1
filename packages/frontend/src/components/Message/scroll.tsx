@@ -48,7 +48,9 @@ export function Scroll({ children }: PropsWithChildren) {
   }, [id]);
   useEffect(() => {
     if (myUserInfo?.id) {
-      dispatch(scrollToEnd(false));
+      setTimeout(() => {
+        dispatch(scrollToEnd(false));
+      });
     }
   }, [myUserInfo?.id]);
   const { loadingMessage } = useAppSelector((state) => state.room);
