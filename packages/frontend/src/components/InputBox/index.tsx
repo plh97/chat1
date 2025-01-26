@@ -46,6 +46,7 @@ export function InputBox({ className }: { readonly className?: string }) {
   const handleSendText = async () => {
     const trimText = text.trim();
     if (!userInfo.id || !trimText) return;
+    setText("");
     const result = await dispatch(
       sendMessageAction({
         contentType: "TEXT_MESSAGE",
@@ -58,7 +59,6 @@ export function InputBox({ className }: { readonly className?: string }) {
       })
     );
     if (sendMessageAction.rejected.match(result)) return;
-    setText("");
     dispatch(scrollToEnd());
   };
   const utilComponent = useMemo(() => {
