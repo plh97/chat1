@@ -109,10 +109,10 @@ export const roomSlice = createSlice({
       state.loadingMessage = action.payload;
     },
     scrollToTop(state, action) {
-      state.scrollToTop = action.payload > 0 ? Math.random() : -Math.random();
+      state.scrollToTop = action.payload ? Math.random() : -Math.random();
     },
     scrollToEnd(state, action) {
-      state.scrollToEnd = action.payload > 0 ? Math.random() : -Math.random();
+      state.scrollToEnd = action.payload ? Math.random() : -Math.random();
     },
     loadMoreMessage(state, action: PayloadAction<IMessage[]>) {
       state.data.message = [...action.payload, ...state.data.message];
