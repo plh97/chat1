@@ -8,11 +8,7 @@ image:
   file: .gitpod.Dockerfile
 
 tasks:
-  - init: |
-      aptcurl -L https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh | sh
-      wget https://gist.github.com/ricardocabral/0d431a9b78363b9457363df72f047eef/raw/219b0dabb56662a56ff749ae1c3e7020c0051001/mitsuhiko.zsh-theme -P  ~/.oh-my-zsh/themes
-      sed -ri 's/robbyrussell/mitsuhiko/' ~/.zshrc
-      
+  - init: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"      
     command: exec zsh
 
   - name: run frontend
