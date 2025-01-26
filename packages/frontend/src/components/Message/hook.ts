@@ -13,22 +13,22 @@ export const useScroll = () => {
     scrollToEnd,
     data: { message },
   } = useAppSelector((state) => state.room);
+  const virtual = scrollEl.current;
   const handleScrollToTop = () => {
     if (scrollToTop === undefined) return;
-    scrollEl.current?.scrollTo(0);
+    virtual?.scrollTo(0);
   };
-  const handleScrollToBottom = (isStick = false) => {
+  const handleScrollToBottom = (stick = false) => {
     if (scrollToEnd === undefined) return;
-    if (isStick) {
-      const endIndex = scrollEl.current?.findEndIndex() ?? 0;
-      if (endIndex === message.length - 1) {
-        scrollEl.current?.scrollToIndex(message.length, {
+    if (stick) {
+      if (virtual?.findEndIndex() === message.length - 1) {
+        virtual?.scrollToIndex(message.length, {
           align: "end",
         });
       }
       return;
     }
-    scrollEl.current?.scrollToIndex(message.length, {
+    virtual?.scrollToIndex(message.length, {
       align: "end",
     });
   };
@@ -60,7 +60,7 @@ export const useLoadMore = () => {
     dispatch(loadMoreMessage(payload as IMessage[]));
   };
   const handleScroll = (offset: number) => {
-    if (offset < 100) {
+    if (offset < 1000) {
       requestMore();
     }
   };
