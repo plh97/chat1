@@ -5,9 +5,11 @@
   "eslint.format.enable": true,
   "git.ignoreLimitWarning": true,
   "cSpell.words": [
+    "chakra",
     "cmdk",
     "plhh",
     "unplugin",
+    "virtua",
     "VITE",
     "Xmark"
   ]

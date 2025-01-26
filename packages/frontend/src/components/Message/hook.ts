@@ -52,7 +52,7 @@ export const useLoadMore = () => {
     const { payload } = await dispatch(
       loadRoomMoreMessageThunk({
         start: message?.length ?? 0,
-        pageSize: 20,
+        pageSize: 50,
         id: id,
       })
     );
@@ -61,6 +61,7 @@ export const useLoadMore = () => {
   };
   const handleScroll = (offset: number) => {
     if (offset < 1000) {
+      console.log(offset);
       requestMore();
     }
   };

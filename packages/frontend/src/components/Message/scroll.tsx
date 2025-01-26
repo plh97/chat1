@@ -33,12 +33,6 @@ export const Top = () => {
   );
 };
 
-// const useOnce = (cb: Function, deps: any[]) => {
-//   useEffect(() => {
-//     cb();
-//   }, deps);
-// }
-
 export function Scroll({ children }: PropsWithChildren) {
   const dispatch = useThunkDispatch();
   const { id = "" } = useParams();

@@ -43,21 +43,27 @@ export function InputBox({ className }: { readonly className?: string }) {
     const file = await getImgFromClip();
     handleSendMedia(file);
   };
-  const handleSendText = async () => {
-    const trimText = text.trim();
-    if (!userInfo.id || !trimText) return;
-    setText("");
-    const result = await dispatch(
+
+  const sendMsg = (text: string) => {
+    return dispatch(
       sendMessageAction({
         contentType: "TEXT_MESSAGE",
         userId: userInfo.id,
         channelId: room.id,
         textMessage: {
-          text: trimText,
+          text,
           mention: [],
         },
       })
     );
+  };
+  // @ts-ignore
+  window.sendMsg = sendMsg;
+  const handleSendText = async () => {
+    const trimText = text.trim();
+    if (!userInfo.id || !trimText) return;
+    setText("");
+    const result = await sendMsg(trimText);
     if (sendMessageAction.rejected.match(result)) return;
     dispatch(scrollToEnd(false));
   };
