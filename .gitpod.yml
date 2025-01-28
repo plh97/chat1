@@ -8,7 +8,7 @@ image:
   file: .gitpod.Dockerfile
 
 tasks:
-  - init: sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" && exit
+  - init: echo y | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
     command: exec zsh
 
   - name: run frontend
