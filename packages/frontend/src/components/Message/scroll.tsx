@@ -6,6 +6,7 @@ import {
   getRoomInfoThunk,
   initialMessage,
 } from "@/store/reducer/room";
+
 import { useLoadMore, useScroll } from "./hook";
 
 export const Top = () => {
@@ -18,7 +19,7 @@ export const Top = () => {
         <div className="text-center m-4">---------- END ----------</div>
       )}
       {loadingMessage && (
-        <div className="mt-2 mb-2 right-0 top-0 absolute w-full flex justify-center">
+        <div className="mt-2 mb-2 w-full flex justify-center">
           <Loader2 className="text-2xl w-8 h-8 text-gray-200 animate-spin dark:text-gray-600" />
           {/* <Spinner
             thickness="4px"
@@ -38,12 +39,12 @@ export function Scroll({ children }: PropsWithChildren) {
   const { id = "" } = useParams();
   const { isPrepend, handleScroll } = useLoadMore();
   const { scrollEl } = useScroll();
-  const myUserInfo = useAppSelector((state) => state.user.data);
+  const room = useAppSelector((state) => state.room.data);
   // init message list
   useEffect(() => {
     if (!id) return;
     // 清空旧的信息
-    dispatch(initialMessage({ message: [], totalCount: 0 }));
+    dispatch(initialMessage({ message: [], totalCount: 0, id: undefined }));
     dispatch(getRoomInfoThunk(id)).then(() => {
       dispatch(scrollToEnd(false));
     });
@@ -51,7 +52,7 @@ export function Scroll({ children }: PropsWithChildren) {
   const { loadingMessage } = useAppSelector((state) => state.room);
   const { message, totalCount } = useAppSelector((state) => state.room.data);
   const hasMessage = totalCount > message.length;
-  if (!myUserInfo?.id) {
+  if (!room?.id) {
     return (
       <div className="overflow-y-auto flex-1 relative px-3.5 py-0 flex items-center justify-center flex-col">
         <Loader2 className="text-2xl w-8 h-8 text-gray-200 animate-spin dark:text-gray-600" />
