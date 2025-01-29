@@ -39,23 +39,15 @@ export function Scroll({ children }: PropsWithChildren) {
   const { isPrepend, handleScroll } = useLoadMore();
   const { scrollEl } = useScroll();
   const myUserInfo = useAppSelector((state) => state.user.data);
-  const room = useAppSelector((state) => state.room.data);
   // init message list
   useEffect(() => {
     if (!id) return;
     // 清空旧的信息
     dispatch(initialMessage({ message: [], totalCount: 0 }));
-    dispatch(getRoomInfoThunk(id));
+    dispatch(getRoomInfoThunk(id)).then(() => {
+      dispatch(scrollToEnd(false));
+    });
   }, [id]);
-  const runRef = useRef(true);
-  useEffect(() => {
-    if (myUserInfo && room.message.length && runRef.current) {
-      setTimeout(() => {
-        runRef.current = false;
-        dispatch(scrollToEnd(false));
-      });
-    }
-  }, [myUserInfo, room.message]);
   const { loadingMessage } = useAppSelector((state) => state.room);
   const { message, totalCount } = useAppSelector((state) => state.room.data);
   const hasMessage = totalCount > message.length;
