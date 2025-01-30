@@ -1,6 +1,6 @@
 # route 53 variables
 variable "domain_name" {
-  default     = "plhh.org"
+  default     = "plhh.xyz"
   # default     = "plhh.link"
   # default     = "plh.ninja"
   description = "domain name"
