@@ -6,16 +6,17 @@ export function Config() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const room = useAppSelector((state) => state.room.data);
   const isGroup = room?.channelType === "GROUP";
+  if (!isGroup) {
+    return;
+  }
   return (
     <>
-      {isGroup && (
-        <IconButton
-          key={1}
-          onClick={onOpen}
-          aria-label="config button"
-          icon={<FiSettings className="text-2xl" />}
-        />
-      )}
+      <IconButton
+        key={1}
+        onClick={onOpen}
+        aria-label="config button"
+        icon={<FiSettings className="text-2xl" />}
+      />
       <ConfigSidebar isOpen={isOpen} onClose={onClose} />
     </>
   );

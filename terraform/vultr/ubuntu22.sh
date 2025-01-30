@@ -8,7 +8,7 @@ dockerd
 
 # certbot
 apt-get install -y certbot
-certbot certonly --standalone --agree-tos --redirect -m pengliheng111@gmail.com -d plhh.xyz --non-interactive
+certbot certonly --standalone --agree-tos --redirect -m pengliheng111@gmail.com -d plhh.org --non-interactive
 
 
 curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash - &&\

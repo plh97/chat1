@@ -8,7 +8,7 @@ dockerd
 
 # certbot
 # sudo apt-get install -y certbot
-# sudo certbot certonly --standalone --agree-tos --redirect -m pengliheng111@gmail.com -d plhh.xyz --non-interactive
+# sudo certbot certonly --standalone --agree-tos --redirect -m pengliheng111@gmail.com -d plhh.org --non-interactive
 
 
 sudo apt-get install -y gcc g++ make

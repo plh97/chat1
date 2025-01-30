@@ -42,7 +42,7 @@ export function Scroll({ children }: PropsWithChildren) {
   const room = useAppSelector((state) => state.room.data);
   const userInfo = useAppSelector((state) => state.user.data);
   // init message list
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!id) return;
     // 清空旧的信息
     dispatch(initialMessage({ message: [], totalCount: 0, id: undefined }));
