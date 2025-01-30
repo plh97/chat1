@@ -35,4 +35,4 @@ ports:
   - port: 9001
     name: frontend
     visibility: private
-    onOpen: open-preview
+    # onOpen: open-preview

@@ -40,6 +40,7 @@ export function Scroll({ children }: PropsWithChildren) {
   const { isPrepend, handleScroll } = useLoadMore();
   const { scrollEl } = useScroll();
   const room = useAppSelector((state) => state.room.data);
+  const userInfo = useAppSelector((state) => state.user.data);
   // init message list
   useEffect(() => {
     if (!id) return;
@@ -52,7 +53,7 @@ export function Scroll({ children }: PropsWithChildren) {
   const { loadingMessage } = useAppSelector((state) => state.room);
   const { message, totalCount } = useAppSelector((state) => state.room.data);
   const hasMessage = totalCount > message.length;
-  if (!room?.id) {
+  if (!room?.id || !userInfo?.id) {
     return (
       <div className="overflow-y-auto flex-1 relative px-3.5 py-0 flex items-center justify-center flex-col">
         <Loader2 className="text-2xl w-8 h-8 text-gray-200 animate-spin dark:text-gray-600" />

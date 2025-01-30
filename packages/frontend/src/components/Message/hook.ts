@@ -61,7 +61,6 @@ export const useLoadMore = () => {
   };
   const handleScroll = (offset: number) => {
     if (offset < 1000) {
-      console.log(offset);
       requestMore();
     }
   };
