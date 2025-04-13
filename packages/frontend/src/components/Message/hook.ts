@@ -24,6 +24,7 @@ export const useScroll = () => {
       if (virtual?.findEndIndex() >= message.length - 1) {
         virtual?.scrollToIndex(message.length, {
           align: "end",
+          smooth: true,
         });
       }
       return;
