@@ -19,9 +19,9 @@ export const useScroll = () => {
     virtual?.scrollTo(0);
   };
   const handleScrollToBottom = (stick = false) => {
-    if (scrollToEnd === undefined) return;
+    if (scrollToEnd === undefined || !virtual?.findEndIndex()) return;
     if (stick) {
-      if (virtual?.findEndIndex() === message.length - 1) {
+      if (virtual?.findEndIndex() >= message.length - 1) {
         virtual?.scrollToIndex(message.length, {
           align: "end",
         });

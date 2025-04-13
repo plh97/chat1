@@ -4,6 +4,7 @@ import {
   createReactRouterV6DataOptions,
   ReactIntegration,
   getWebInstrumentations,
+  WebVitalsInstrumentation,
 } from "@grafana/faro-react";
 import { TracingInstrumentation } from "@grafana/faro-web-tracing";
 
@@ -14,7 +15,6 @@ initializeFaro({
     version: "1.0.0",
     environment: "production",
   },
-
   instrumentations: [
     // Mandatory, omits default instrumentations otherwise.
     ...getWebInstrumentations(),
@@ -28,5 +28,6 @@ initializeFaro({
         matchRoutes,
       }),
     }),
+    new WebVitalsInstrumentation(), // 启用 Web Vitals 监控，并设置 reportAllChanges 捕获所有变化
   ],
 });
