@@ -24,6 +24,7 @@ export const App = (): React.ReactNode => {
       element: <RoomPage />,
     },
   ]);
+  // const browserRouter = withFaroRouterInstrumentation(reactBrowserRouter);
   return (
     <Provider store={store}>
       {/* <Theme className="h-full" accentColor="indigo"> */}

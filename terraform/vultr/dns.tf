@@ -1,5 +1,5 @@
 resource "vultr_dns_domain" "my_domain" {
-  domain = "plhh.xyz"
+  domain = "plhh.org"
   ip     = vultr_instance.instance.main_ip
 }
 

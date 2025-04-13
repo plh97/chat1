@@ -2,6 +2,7 @@ import react from "@vitejs/plugin-react";
 import path from "path";
 import AutoImports from "unplugin-auto-import/vite";
 import { defineConfig } from "vite";
+import faroUploader from "@grafana/faro-rollup-plugin";
 // import { VitePWA } from "vite-plugin-pwa";
 // import viteCompression from "vite-plugin-compression";
 
@@ -113,6 +114,16 @@ export default defineConfig({
       eslintrc: {
         enabled: true,
       },
+    }),
+    faroUploader({
+      appName: "undefined",
+      endpoint: "https://faro-api-prod-ap-northeast-0.grafana.net/faro/api/v1",
+      appId: "undefined",
+      stackId: "1227052",
+      // instructions on how to obtain your API key are in the documentation
+      // https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/sourcemap-upload-plugins/#obtain-an-api-key
+      apiKey: "$your-api-key",
+      gzipContents: true,
     }),
   ],
   server: {
