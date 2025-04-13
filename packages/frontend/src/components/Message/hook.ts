@@ -29,9 +29,11 @@ export const useScroll = () => {
       }
       return;
     }
-    virtual?.scrollToIndex(message.length, {
-      align: "end",
-    });
+    setTimeout(() => {
+      virtual?.scrollToIndex(message.length, {
+        align: "end",
+      });
+    }, 0);
   };
   useEffect(() => {
     handleScrollToTop();
