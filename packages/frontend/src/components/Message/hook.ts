@@ -19,9 +19,12 @@ export const useScroll = () => {
     virtual?.scrollTo(0);
   };
   const handleScrollToBottom = (stick = false) => {
-    if (scrollToEnd === undefined || !virtual?.findEndIndex()) return;
+    if (scrollToEnd === undefined) return;
     if (stick) {
-      if (virtual?.findEndIndex() >= message.length - 1) {
+      if (
+        virtual?.findEndIndex() &&
+        virtual?.findEndIndex() >= message.length - 1
+      ) {
         virtual?.scrollToIndex(message.length, {
           align: "end",
           smooth: true,
@@ -29,11 +32,9 @@ export const useScroll = () => {
       }
       return;
     }
-    setTimeout(() => {
-      virtual?.scrollToIndex(message.length, {
-        align: "end",
-      });
-    }, 0);
+    virtual?.scrollToIndex(message.length, {
+      align: "end",
+    });
   };
   useEffect(() => {
     handleScrollToTop();
