@@ -8,41 +8,41 @@ export const useReconnect = (ws: SocketClient) => {
   const dispatch = useAppDispatch();
   const onReconnect = () => {
     toast.closeAll();
-    toast({
-      duration: 1000,
-      title: "WS ReConnect",
-      status: "success",
-      position: "top",
-    });
+    // toast({
+    //   duration: 1000,
+    //   title: "WS ReConnect",
+    //   status: "success",
+    //   position: "top",
+    // });
     dispatch(fetchUserInfoThunk());
     if (id) {
       dispatch(getRoomInfoThunk(id));
     }
   };
   const onError = () => {
-    toast.closeAll();
-    toast({
-      isClosable: true,
-      status: "error",
-      duration: 99999999999,
-      position: "top",
-      title: (
-        <>
-          <span>WS Disconnect</span>
-          <Button
-            colorScheme="black"
-            variant="link"
-            onClick={() => {
-              ws?.socket?.reconnect();
-            }}
-            size="sm"
-            ml={2}
-          >
-            Reconnect
-          </Button>
-        </>
-      ),
-    });
+    // toast.closeAll();
+    // toast({
+    //   isClosable: true,
+    //   status: "error",
+    //   duration: 99999999999,
+    //   position: "top",
+    //   title: (
+    //     <>
+    //       <span>WS Disconnect</span>
+    //       <Button
+    //         colorScheme="black"
+    //         variant="link"
+    //         onClick={() => {
+    //           ws?.socket?.reconnect();
+    //         }}
+    //         size="sm"
+    //         ml={2}
+    //       >
+    //         Reconnect
+    //       </Button>
+    //     </>
+    //   ),
+    // });
   };
   useEventListener(WS_EVENT.RECONNECT, onReconnect);
   useEventListener(WS_EVENT.DISCONNECT, onError);
