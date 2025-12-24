@@ -64,5 +64,4 @@ ansible-playbook cicd.yml
 - [ ] remove room admin/member
 - [ ] transfer room owner
 - [ ] virtual scroll
-- [ ] make simple-git-hooks can work
-
+- [x] make simple-git-hooks can work
