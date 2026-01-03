@@ -7,10 +7,12 @@ export const Profile = ({
   edit = false,
   profile,
   className,
+  onClose,
 }: {
   edit?: boolean;
   profile?: IUser;
   className?: string;
+  onClose?: () => void;
 }) => {
   const dispatch = useThunkDispatch();
   const config = useMemo(() => {
@@ -18,7 +20,7 @@ export const Profile = ({
     return [
       {
         label: "Username",
-        value: profile.username,
+        value: profile.userName,
         name: "username",
       },
       {
@@ -46,6 +48,11 @@ export const Profile = ({
         value: profile.permission,
         name: "permission",
       },
+      {
+        label: "Email",
+        value: profile.email,
+        name: "email",
+      },
     ];
   }, [profile]);
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -56,12 +63,21 @@ export const Profile = ({
       return { ...acc, [key]: value };
     }, {} as IUser);
     dispatch(setUserInfoThunk(data));
+    // close dialog
+    onClose?.();
   };
   const handleChangeAvatar = async (files: File[]) => {
     const file = files?.[0];
     if (!file) return;
-    const { url } = await Api.uploadFile(file);
-    dispatch(setUserInfoThunk({ image: url }));
+    const { pre_signed_url, endpoint_url } = await Api.getPreSignUrl({
+      file_ext: "png",
+      upload_scene: 1,
+    });
+    await fetch(pre_signed_url, {
+      method: "PUT",
+      body: file,
+    });
+    dispatch(setUserInfoThunk({ image: endpoint_url }));
   };
   if (!profile) return null;
   return (
@@ -72,7 +88,7 @@ export const Profile = ({
       <FormControl className="relative flex justify-center mb-5">
         <Avatar
           size="lg"
-          name={profile.username}
+          name={profile.userName}
           src={profile.image}
           className="relative"
           onChange={edit ? handleChangeAvatar : undefined}

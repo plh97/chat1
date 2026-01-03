@@ -97,14 +97,14 @@ export const useMsgWatch = (message: IMessage) => {
   const dispatch = useAppDispatch();
   const debounceRead = debounce(() => {
     const readSeqMap = room.readSeq as Record<string, number>;
-    const isRead = readSeqMap[myUserInfo.id] >= message.seq;
-    const isMyMsg = myUserInfo.id === message.userId;
+    const isRead = readSeqMap[myUserInfo.userId] >= message.seq;
+    const isMyMsg = myUserInfo.userId === message.userId;
     if (!isRead && isIntersecting && !isMyMsg) {
       dispatch(
         markReadMessageThunk({
           channelId: room.id,
           readMessage: {
-            operator: myUserInfo.id,
+            operator: myUserInfo.userId,
             lastReadSeq: message.seq,
             readSeq: {},
           },

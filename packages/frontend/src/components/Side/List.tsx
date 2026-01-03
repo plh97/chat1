@@ -15,7 +15,7 @@ export const List = () => {
   }
   const draftMap = useAppSelector((state) => state.user.draftMap);
   const myUserInfo = useAppSelector((state) => state.user.data);
-  if (!myUserInfo.id) {
+  if (!myUserInfo.UserId) {
     return <Loading />;
   }
   if (myUserInfo.room?.length === 0) {

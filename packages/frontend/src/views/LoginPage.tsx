@@ -26,8 +26,8 @@ const style: { [key: string]: Properties } = {
 };
 
 export function LoginPage() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@gmail.com");
+  const [password, setPassword] = useState("123456");
   const [imageUrl, setImageUrl] = useState("");
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -35,10 +35,10 @@ export function LoginPage() {
   useAuth();
   const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!username || !password) {
+    if (!email || !password) {
       toast({
         title: "Warning.",
-        description: "Please Input Username & password.",
+        description: "Please Input Email & password.",
         status: "error",
         position: "top",
         duration: 1000,
@@ -47,7 +47,7 @@ export function LoginPage() {
     }
     dispatch(
       loginThunk({
-        username,
+        email,
         password,
       })
     );
@@ -55,9 +55,9 @@ export function LoginPage() {
   const handleRegister = () => {
     return navigate("/register");
   };
-  async function handleInputUsername(e: ChangeEvent<HTMLInputElement>) {
+  async function handleInputEmail(e: ChangeEvent<HTMLInputElement>) {
     const input = e.target.value;
-    setUsername(input);
+    setEmail(input);
     const userImage = await Api.getUserImage(input);
     setImageUrl(userImage);
   }
@@ -69,14 +69,14 @@ export function LoginPage() {
         </div>
         <h1 className="text-4xl">Login</h1>
         <form onSubmit={handleLogin} className="flex flex-col gap-2">
-          <FormControl id="username" isRequired>
-            <FormLabel>User Name</FormLabel>
+          <FormControl id="email" isRequired>
+            <FormLabel>Email</FormLabel>
             <Input
-              type="text"
+              type="email"
               autoComplete="off"
               autoFocus
-              value={username}
-              onChange={handleInputUsername}
+              value={email}
+              onChange={handleInputEmail}
             />
           </FormControl>
           <FormControl id="password" isRequired>

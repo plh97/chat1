@@ -6,14 +6,32 @@ import {
   IUser,
   MessageRequest,
 } from "@/interfaces";
+import { getToken } from "./utils";
+import { ws } from "@/hooks/useWebsocket";
+import { store } from "./store";
+import { logout } from "@/store/reducer/user";
 
 const { toast } = createStandaloneToast();
 
 export const axios = Axios.create({
-  baseURL: "/api",
+  baseURL: "/api/v1",
   timeout: 10000,
   withCredentials: true,
 });
+
+// Add request interceptor to dynamically set Authorization header
+axios.interceptors.request.use(
+  (config) => {
+    const token = getToken();
+    if (token) {
+      config.headers.Authorization = token;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 export interface IResponse<T> {
   code: number;
@@ -23,8 +41,10 @@ export interface IResponse<T> {
 
 axios.interceptors.response.use(
   (response) => {
-    const res = response.data;
-    if (res.code === 1) {
+    const res = response.data as IResponse<unknown>;
+
+    // Handle business errors (code !== 0)
+    if (res.code !== 0) {
       if (response.config?.fetchOptions?.alert !== false) {
         toast({
           description: res.message ?? "Backend throw unexpected error.",
@@ -33,28 +53,35 @@ axios.interceptors.response.use(
           duration: 1000,
         });
       }
-    } else if (res.code === 0) {
-      res.message &&
-        toast({
-          description: res.message,
-          status: "success",
-          position: "top",
-          duration: 1000,
-        });
+      // Reject promise for business errors so the caller can handle them
+      return Promise.reject({ ...res, isBusinessError: true, response });
     }
-    return res;
+
+    // Handle success (code === 0)
+    if (res.message && response.config?.fetchOptions?.alert !== false) {
+      toast({
+        description: res.message,
+        status: "success",
+        position: "top",
+        duration: 1000,
+      });
+    }
+
+    // Return only response.data
+    return response.data;
   },
-  async (error: AxiosError) => {
+  async (error: AxiosError<IResponse<unknown>>) => {
     if (error?.response?.status === 401) {
-      // to fix the cycle import
-      const { store } = await import("@/store");
-      const { logout } = await import("@/store/reducer/user");
       store.dispatch(logout());
-      ws.destroy();
+      ws?.destroy();
     }
     if (error.config?.fetchOptions?.alert !== false) {
+      const errorMessage =
+        error.response?.data?.message ??
+        error.message ??
+        "Unexpected network error.";
       toast({
-        description: error.message ?? "Unexpected network error.",
+        description: errorMessage,
         status: "error",
         position: "top",
         duration: 1000,
@@ -72,13 +99,13 @@ export async function request<RESPONSE>(
 }
 
 interface ILoginRequestParameters {
-  username: string;
+  email: string;
   password: string;
 }
 
 const Api = {
   login: (data: ILoginRequestParameters) =>
-    request({
+    request<{ accessToken: string }>({
       url: "/login",
       method: "post",
       data,
@@ -96,7 +123,7 @@ const Api = {
     }),
   getMyUserInfo: () =>
     request<IUser>({
-      url: "/userInfo",
+      url: "/profile",
       method: "get",
       fetchOptions: {
         alert: false,
@@ -104,9 +131,24 @@ const Api = {
     }),
   setMyUserInfo: (user: Partial<IUser>) =>
     request<IUser>({
-      url: "/userInfo",
-      method: "post",
+      url: "/profile",
+      method: "put",
       data: user,
+    }),
+  updateProfile: (data: {
+    userName?: string;
+    email?: string;
+    bio?: string;
+    github?: string;
+    qq?: string;
+    wechat?: string;
+    permission?: string;
+    image?: string;
+  }) =>
+    request({
+      url: "/profile",
+      method: "put",
+      data,
     }),
   upload: (data: FormData) =>
     request<{ url: string; extension: string; name: string; size: number }>({
@@ -124,6 +166,12 @@ const Api = {
     }
     return Api.upload(form) as Promise<MediaMessage>;
   },
+  getPreSignUrl: (data: { file_ext: string; upload_scene: number }) =>
+    request<{ endpoint_url: string; pre_signed_url: string }>({
+      url: "/upload",
+      method: "post",
+      data,
+    }),
   getUserImage: (username: string) =>
     request<string>({
       url: "/userImage",
@@ -135,7 +183,7 @@ const Api = {
         alert: false,
       },
     }),
-  queryUser: (params: { username: string }) =>
+  queryUser: (params: { userName: string }) =>
     request<IUser[]>({
       url: "/user",
       method: "get",

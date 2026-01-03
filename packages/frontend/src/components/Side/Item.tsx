@@ -35,7 +35,7 @@ const ItemOriginal = ({ myId, room, active, draft, unreadCount }: IProps) => {
     const user = room.member?.find((u) => u.id !== myId);
     if (user) {
       image = user.image;
-      name = user.username;
+      name = user.userName;
     }
   }
   return (

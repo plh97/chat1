@@ -3,6 +3,7 @@ import Api from "@/Api";
 import { STATUS } from "@/enum/common";
 import { IRoom, IUser } from "@/interfaces";
 import { IMessage } from "@/interfaces/IMessage";
+import { setToken } from "@/utils";
 
 export interface IState {
   error: string | null;
@@ -16,11 +17,12 @@ const initialState: IState = {
   auth: null,
   draftMap: {},
   data: {
-    id: "",
+    userId: "",
     room: [],
     friend: [],
     image: "",
-    username: "",
+    email: "",
+    userName: "",
     bio: "",
     QQ: "",
     WeChat: "",
@@ -28,6 +30,7 @@ const initialState: IState = {
     permission: "",
     friendId: [],
     UserId: [],
+    id: "",
   },
 };
 
@@ -41,23 +44,26 @@ export const fetchUserInfoThunk = createAsyncThunk(
 
 export const loginThunk = createAsyncThunk<
   void,
-  { username: string; password: string }
+  { email: string; password: string }
 >(`login`, async (data, { dispatch }) => {
-  const isSuc = await Api.login(data);
-  if (!isSuc) return;
+  const datajson = await Api.login(data);
+  if (!datajson?.accessToken) return;
+  setToken(datajson.accessToken);
   dispatch(fetchUserInfoThunk());
 });
+
 export const logoutThunk = createAsyncThunk(
   `logout`,
   async (_, { dispatch }) => {
     await Api.logout();
+    setToken("");
     dispatch(logout());
   }
 );
 
 export const registerThunk = createAsyncThunk<
   void,
-  { username: string; password: string }
+  { email: string; password: string }
 >(`register`, async (data, { dispatch }) => {
   const isSuc = await Api.register(data);
   if (!isSuc) return;
@@ -67,8 +73,8 @@ export const registerThunk = createAsyncThunk<
 export const setUserInfoThunk = createAsyncThunk<void, Partial<IUser>>(
   `setUserInfoThunk`,
   async (data, { dispatch }) => {
-    const userInfo = await Api.setMyUserInfo(data);
-    dispatch(setLocalUserInfo(userInfo));
+    await Api.setMyUserInfo(data);
+    dispatch(setLocalUserInfo(data));
   }
 );
 

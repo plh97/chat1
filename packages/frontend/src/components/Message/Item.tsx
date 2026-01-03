@@ -18,7 +18,7 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
   const watchRef = useMsgWatch(message);
   const myUserInfo = useAppSelector((state) => state.user.data);
   const room = useAppSelector((state) => state.room.data);
-  const isMe = myUserInfo?.id === message?.user?.id;
+  const isMe = myUserInfo?.userId === message?.user?.userId;
   const Component = useMemo(() => {
     const temp = MessageTemplate[message.contentType];
     if (!temp) return null;
@@ -87,7 +87,7 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
       })}
     >
       <WithProfile profile={message.user}>
-        <Avatar name={message?.user?.username} src={message?.user?.image} />
+        <Avatar name={message?.user?.userName} src={message?.user?.image} />
       </WithProfile>
       <div
         {...contextMenu}

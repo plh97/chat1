@@ -28,16 +28,16 @@ const style: { [key: string]: CSS.Properties } = {
 
 export function RegisterPage() {
   useAuth();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const dispatch = useAppDispatch();
   const toast = useToast();
   const handleRegister = async (e: SyntheticEvent) => {
     e.preventDefault();
-    if (!username || !password) {
+    if (!email || !password) {
       toast({
         title: "Warning.",
-        description: "Please Input Username & password.",
+        description: "Please Input Email & password.",
         status: "error",
         position: "top",
         duration: 1000,
@@ -46,7 +46,7 @@ export function RegisterPage() {
     }
     dispatch(
       registerThunk({
-        username,
+        email,
         password,
       }) as any
     );
@@ -55,9 +55,9 @@ export function RegisterPage() {
   function handleLogin() {
     return navigate("/login");
   }
-  async function handleInputUsername(e: ChangeEvent<HTMLInputElement>) {
+  async function handleInputEmail(e: ChangeEvent<HTMLInputElement>) {
     const input = e.target.value;
-    setUsername(input);
+    setEmail(input);
   }
   return (
     <div style={style.container} data-testid="register">
@@ -67,14 +67,14 @@ export function RegisterPage() {
         </div>
         <h1 className="text-4xl">Register</h1>
         <form onSubmit={handleRegister} className="flex flex-col gap-2">
-          <FormControl id="username" isRequired>
-            <FormLabel>User Name</FormLabel>
+          <FormControl id="email" isRequired>
+            <FormLabel>Email</FormLabel>
             <Input
-              type="text"
+              type="email"
               autoComplete="off"
               autoFocus
-              value={username}
-              onChange={handleInputUsername}
+              value={email}
+              onChange={handleInputEmail}
             />
           </FormControl>
           <FormControl id="password" isRequired>

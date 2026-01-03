@@ -32,6 +32,9 @@ if (typeof window === "undefined") {
     prisma = global.prisma;
   }
   prisma.user.findFirst().then((user) => {
-    console.log(`[DB] User count: ${user?.username}`);
+    console.log(`[DB] User count: ${user}`);
+  })
+  .catch((err) => {
+    console.error("[DB] Connection failed:", err);
   });
 }

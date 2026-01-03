@@ -4,12 +4,12 @@ import { IMessage } from "@/interfaces/IMessage";
 const Component = ({ message, room }: { message: IMessage; room?: IRoom }) => {
   const myUserInfo = useAppSelector((state) => state.user.data);
   const recallMsg = message.recallMessage;
-  if (recallMsg?.operator === myUserInfo.id) {
+  if (recallMsg?.operator === myUserInfo.userId) {
     return `You recall this message`;
   }
   const member = room?.member ?? [];
   const operator =
-    member.find((m) => m.id === recallMsg?.operator)?.username ??
+    member.find((m) => m.id === recallMsg?.operator)?.userName ??
     recallMsg?.operator ??
     "operator";
   if (!recallMsg) return "un-reconized system message";

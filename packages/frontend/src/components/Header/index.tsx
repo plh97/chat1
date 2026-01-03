@@ -17,7 +17,7 @@ export function Content() {
   if (room.channelType === "PRIVATE") {
     const user = room.member?.find((u) => u.id !== userinfo.id);
     if (user) {
-      name = user.username;
+      name = user.userName;
       image = user.image;
     }
   }

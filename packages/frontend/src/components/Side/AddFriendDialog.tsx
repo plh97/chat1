@@ -17,7 +17,7 @@ export const AddFriendDialog = ({
       setAcc([]);
       return;
     }
-    const res = await Api.queryUser({ username: v });
+    const res = await Api.queryUser({ userName: v });
     setAcc(res ?? []);
   };
   const handleAddFriend = async (id: string) => {
@@ -52,8 +52,8 @@ export const AddFriendDialog = ({
                   className="mt-2 rounded-lg border-2 border-slate-900 border-solid px-0 my-2 flex gap-2 items-center justify-between flex-row"
                   key={a.id}
                 >
-                  <Avatar className="w-8 h-8" src={a.image} name={a.username} />
-                  <span className="flex-1">{a.username}</span>
+                  <Avatar className="w-8 h-8" src={a.image} name={a.userName} />
+                  <span className="flex-1">{a.userName}</span>
                   <IconButton
                     aria-label="Add Friend"
                     onClick={() => {

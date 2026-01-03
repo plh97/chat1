@@ -48,7 +48,7 @@ export const Reply = ({ message, className, onClose, onClick }: IProps) => {
       >
         <span className="w-full text-sm text-gray-500 font-bold break-all whitespace-nowrap text-ellipsis overflow-hidden">
           {onClose && "Reply: "}
-          {message.user?.username}
+          {message.user?.userName}
         </span>
         <span className="w-full text-sm text-gray-500 mt-1 break-all whitespace-nowrap text-ellipsis overflow-hidden">
           {content}

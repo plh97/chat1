@@ -1,5 +1,8 @@
 import { UIEvent } from "react";
 
+export * from "./formatTime";
+export * from "./utils";
+
 export const throttle = (
   cb: (event: UIEvent<HTMLDivElement>, ...args: unknown[]) => void,
   ms = 200

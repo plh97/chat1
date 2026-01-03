@@ -1,0 +1,48 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Server",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/packages/backend-go/cmd/server",
+      "cwd": "${workspaceFolder}/packages/backend-go",
+      "env": {
+        "APP_CONF": "${workspaceFolder}/packages/backend-go/config/local.yml"
+      },
+      "args": []
+    },
+    {
+      "name": "Debug Migration",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/packages/backend-go/cmd/migration",
+      "cwd": "${workspaceFolder}/packages/backend-go",
+      "env": {
+        "APP_CONF": "${workspaceFolder}/packages/backend-go/config/local.yml"
+      },
+      "args": []
+    },
+    {
+      "name": "Debug Task",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/packages/backend-go/cmd/task",
+      "cwd": "${workspaceFolder}/packages/backend-go",
+      "env": {
+        "APP_CONF": "${workspaceFolder}/packages/backend-go/config/local.yml"
+      },
+      "args": []
+    },
+    {
+      "name": "Attach to Process",
+      "type": "go",
+      "request": "attach",
+      "mode": "local",
+      "processId": "${command:pickProcess}"
+    }
+  ]
+}

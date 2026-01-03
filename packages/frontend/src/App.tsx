@@ -4,6 +4,7 @@ import { store } from "./store";
 // import { Theme } from "@radix-ui/themes";
 import "@radix-ui/themes/styles.css";
 import theme from "./theme";
+import { StrictMode } from "react";
 
 export const App = (): React.ReactNode => {
   const router = createBrowserRouter([
@@ -26,12 +27,14 @@ export const App = (): React.ReactNode => {
   ]);
   // const browserRouter = withFaroRouterInstrumentation(reactBrowserRouter);
   return (
-    <Provider store={store}>
-      {/* <Theme className="h-full" accentColor="indigo"> */}
-      <ChakraProvider theme={theme}>
-        <RouterProvider router={router} />
-      </ChakraProvider>
-      {/* </Theme> */}
-    </Provider>
+    <StrictMode>
+      <Provider store={store}>
+        {/* <Theme className="h-full" accentColor="indigo"> */}
+        <ChakraProvider theme={theme}>
+          <RouterProvider router={router} />
+        </ChakraProvider>
+        {/* </Theme> */}
+      </Provider>
+    </StrictMode>
   );
 };

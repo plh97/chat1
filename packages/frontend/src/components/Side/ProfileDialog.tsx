@@ -15,7 +15,7 @@ export const ProfileDialog = ({
         <ModalHeader>Edit Profile</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          <Profile profile={myInfo} edit />
+          <Profile profile={myInfo} edit onClose={onClose} />
         </ModalBody>
       </ModalContent>
     </Modal>

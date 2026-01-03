@@ -14,8 +14,8 @@ const Component = ({ message, room }: { message: IMessage; room?: IRoom }) => {
   const sysMsg = message.systemMessage;
   const formatSysMessage = (msg: string) => {
     const idMap: Record<string, string> = {};
-    Object.entries(room?.member ?? {}).forEach(([_, { id, username }]) => {
-      idMap[id] = username;
+    Object.entries(room?.member ?? {}).forEach(([_, { id, userName }]) => {
+      idMap[id] = userName;
     });
     return replaceString(msg, {
       ...idMap,

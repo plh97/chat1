@@ -15,7 +15,7 @@ const ReadIndicator = ({ message }: { message: IMessage }) => {
     return 100 * (readUser.length / totalUser.length);
   }, [readSeq]);
   if (!(room?.member.length > 1)) return <></>;
-  if (myUserInfo.id !== message?.userId) return <></>;
+  if (myUserInfo.userId !== message?.userId) return <></>;
   return <CircularProgress size={4} value={readPrecent} />;
 };
 

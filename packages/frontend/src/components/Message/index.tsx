@@ -16,14 +16,14 @@ export function Message({}: { className?: string }) {
   const room = useAppSelector((state) => state.room.data);
   const selectedMessage = useAppSelector((state) => state.room.selectedMessage);
   const myUserInfo = useAppSelector((state) => state.user.data);
-  const isMe = myUserInfo?.id === selectedMessage?.user.id;
+  const isMe = myUserInfo?.userId === selectedMessage?.user.id;
   const handleRecall = () => {
     if (!selectedMessage) return;
     dispatch(
       recallMessageThunk({
         channelId: selectedMessage.channelId,
         recallMessage: {
-          operator: myUserInfo.id,
+          operator: myUserInfo.userId,
           recallMsgId: selectedMessage.id,
         },
       })

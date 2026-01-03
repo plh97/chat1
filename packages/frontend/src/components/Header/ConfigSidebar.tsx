@@ -106,7 +106,7 @@ export const ConfigSidebar = ({
               <div className="flex flex-row gap-2">
                 <AvatarGroup size="md" max={4}>
                   {room.admin.map((m) => (
-                    <Avatar key={m.id} src={m.image} name={m.username} />
+                    <Avatar key={m.id} src={m.image} name={m.userName} />
                   ))}
                 </AvatarGroup>
                 <AddAdmin />
@@ -117,7 +117,7 @@ export const ConfigSidebar = ({
               <div className="flex flex-row gap-2">
                 <AvatarGroup size="md" max={4}>
                   {room.member.map((m) => (
-                    <Avatar key={m.id} src={m.image} name={m.username} />
+                    <Avatar key={m.id} src={m.image} name={m.userName} />
                   ))}
                 </AvatarGroup>
                 <AddMember />
