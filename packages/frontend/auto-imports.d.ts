@@ -110,6 +110,7 @@ declare global {
   const useThunkDispatch: typeof import("./src/hooks/app")["useThunkDispatch"];
   const useToast: typeof import("@chakra-ui/react")["useToast"];
   const useTransition: typeof import("react")["useTransition"];
+  const useUploadFile: typeof import("./src/hooks/useUploadFile")["useUploadFile"];
   const useWebsocket: typeof import("./src/hooks/useWebsocket")["default"];
   const useWindowSize: typeof import("usehooks-ts")["useWindowSize"];
   const ws: typeof import("./src/hooks/useWebsocket")["ws"];

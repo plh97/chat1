@@ -1,7 +1,6 @@
 import type { MediaMessage } from "db";
 import { IMediaMessage, IMessage } from "@/interfaces";
-import { previewImage, previewVideo } from "./capture";
-import Api from "@/Api";
+import { previewImage, previewVideo, previewAudio } from "./capture";
 
 const formatMediaMessage = async (
   mediaMessage?: IMediaMessage
@@ -16,11 +15,10 @@ const formatMediaMessage = async (
     return previewVideo(file);
   }
   if (fileType.startsWith("audio")) {
-    return Api.uploadFile(file, {
-      duration: mediaMessage.duration?.toString() ?? "",
-    });
+    return previewAudio(file, +mediaMessage?.duration!);
   }
-  return Api.uploadFile(file);
+  // Fallback for other file types
+  throw new Error(`Unsupported file type: ${fileType}`);
 };
 
 export const formatMessage = async (message: Partial<IMessage>) => {

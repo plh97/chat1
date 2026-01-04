@@ -1,7 +1,9 @@
 import { UIEvent } from "react";
+import { SUPPORTED_MEDIA_TYPES } from "./uploadFile";
 
 export * from "./formatTime";
 export * from "./utils";
+export * from "./uploadFile";
 
 export const throttle = (
   cb: (event: UIEvent<HTMLDivElement>, ...args: unknown[]) => void,
@@ -20,19 +22,67 @@ export const throttle = (
   };
 };
 
-export async function getImgFromClip(): Promise<File> {
-  return new Promise((resolve) => {
-    (async () => {
-      const res = await navigator.clipboard.read();
-      const item = res[0];
-      const type = item.types[0];
-      if (type === "image/png") {
-        item.getType(type).then((blob) => {
-          resolve(blob as File);
-        });
+export async function getFileFromClip(
+  allowedTypes: string[] = [
+    ...SUPPORTED_MEDIA_TYPES.image,
+    ...SUPPORTED_MEDIA_TYPES.audio,
+    ...SUPPORTED_MEDIA_TYPES.video,
+  ]
+): Promise<File | null> {
+  try {
+    const clipboardItems = await navigator.clipboard.read();
+    for (const item of clipboardItems) {
+      for (const type of item.types) {
+        if (allowedTypes.includes(type)) {
+          const blob = await item.getType(type);
+          return blob as File;
+        }
       }
-    })();
-  });
+    }
+  } catch (error) {
+    console.error("Failed to read from clipboard:", error);
+  }
+  return null;
+}
+
+/**
+ * Get file from clipboard via DataTransfer (works better for drag-drop and paste events)
+ */
+export async function getFileFromClipboardEvent(
+  event: ClipboardEvent | DragEvent,
+  allowedTypes: string[] = [
+    ...SUPPORTED_MEDIA_TYPES.image,
+    ...SUPPORTED_MEDIA_TYPES.audio,
+    ...SUPPORTED_MEDIA_TYPES.video,
+  ]
+): Promise<File | null> {
+  try {
+    const dataTransfer =
+      (event as ClipboardEvent).clipboardData ||
+      (event as DragEvent).dataTransfer;
+    if (!dataTransfer) return null;
+
+    for (const file of Array.from(dataTransfer.files)) {
+      if (allowedTypes.includes(file.type)) {
+        return file;
+      }
+    }
+  } catch (error) {
+    console.error("Failed to get file from clipboard event:", error);
+  }
+  return null;
+}
+
+export async function getImgFromClip(): Promise<File | null> {
+  return getFileFromClip(SUPPORTED_MEDIA_TYPES.image);
+}
+
+export async function getVideoFromClip(): Promise<File | null> {
+  return getFileFromClip(SUPPORTED_MEDIA_TYPES.video);
+}
+
+export async function getAudioFromClip(): Promise<File | null> {
+  return getFileFromClip(SUPPORTED_MEDIA_TYPES.audio);
 }
 
 // with cent second

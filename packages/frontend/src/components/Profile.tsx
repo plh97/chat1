@@ -1,7 +1,6 @@
 import { Form } from "react-router-dom";
-import Api from "@/Api";
 import { IUser } from "@/interfaces";
-import { setUserInfoThunk } from "@/store/reducer/user";
+import { setUserInfoThunk, uploadImageThunk } from "@/store/reducer/user";
 
 export const Profile = ({
   edit = false,
@@ -69,15 +68,7 @@ export const Profile = ({
   const handleChangeAvatar = async (files: File[]) => {
     const file = files?.[0];
     if (!file) return;
-    const { pre_signed_url, endpoint_url } = await Api.getPreSignUrl({
-      file_ext: "png",
-      upload_scene: 1,
-    });
-    await fetch(pre_signed_url, {
-      method: "PUT",
-      body: file,
-    });
-    dispatch(setUserInfoThunk({ image: endpoint_url }));
+    dispatch(uploadImageThunk({ file, updateUserImage: true }));
   };
   if (!profile) return null;
   return (

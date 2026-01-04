@@ -78,6 +78,21 @@ export const setUserInfoThunk = createAsyncThunk<void, Partial<IUser>>(
   }
 );
 
+export const uploadImageThunk = createAsyncThunk<
+  string,
+  { file: File; upload_scene?: number; updateUserImage?: boolean }
+>(
+  `uploadImage`,
+  async ({ file, upload_scene = 1, updateUserImage = true }, { dispatch }) => {
+    const { uploadFileWithPresignedUrl } = await import("@/utils/uploadFile");
+    const endpoint_url = await uploadFileWithPresignedUrl(file, upload_scene);
+    if (updateUserImage) {
+      dispatch(setLocalUserInfo({ image: endpoint_url }));
+    }
+    return endpoint_url;
+  }
+);
+
 export const userSlice = createSlice({
   name: "user",
   initialState,

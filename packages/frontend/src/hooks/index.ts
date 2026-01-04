@@ -8,3 +8,4 @@ export * from "./useRecord";
 export * from "./useRequest";
 export * from "./useWebsocket";
 export * from "./useContextMenu";
+export * from "./useUploadFile";

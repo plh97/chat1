@@ -41,6 +41,9 @@ export function InputBox({ className }: { readonly className?: string }) {
   };
   const handlePaste = async () => {
     const file = await getImgFromClip();
+    if (!file) {
+      throw new Error("No image in clipboard");
+    }
     handleSendMedia(file);
   };
 

@@ -1,5 +1,5 @@
-import Api from "@/Api";
 import { isSafari } from "@/config";
+import { uploadFileWithPresignedUrl } from "./uploadFile";
 
 export const videoMaxWidth = 70;
 export const videoMaxHeight = 70;
@@ -49,12 +49,19 @@ export const previewImage = (
       canvas.height = thumbnailY;
       ctx.drawImage(image, 0, 0, w, h, 0, 0, thumbnailX, thumbnailY);
       const base64 = ctx.canvas.toDataURL(file.type, 0.8);
-      const fileInfo = await Api.uploadFile(file);
+      const endpoint_url = await uploadFileWithPresignedUrl(file, 1);
+      const fileExt = file.type.split("/")[1] || "png";
+
       resolve({
-        ...fileInfo,
+        url: endpoint_url,
+        extension: fileExt,
+        name: file.name,
+        size: file.size,
         thumbnail: base64,
         width: w / 2,
         height: h / 2,
+        fileType: file.type,
+        duration: null,
       });
       cleanUp();
     };
@@ -100,12 +107,57 @@ export const previewVideo = (file: File): Promise<MediaMessage> => {
     video.onerror = cleanUp;
     video.oncanplaythrough = async () => {
       const { base64, w, h } = captureVideo(video, file.type);
-      const fileInfo = await Api.uploadFile(file);
+      const endpoint_url = await uploadFileWithPresignedUrl(file, 3);
+      const duration = !isNaN(video.duration)
+        ? Math.ceil(video.duration)
+        : null;
+      const fileExt = file.type.split("/")[1] || "mp4";
+
       resolve({
-        ...fileInfo,
+        url: endpoint_url,
+        extension: fileExt,
+        name: file.name,
+        size: file.size,
         thumbnail: base64,
         width: w,
         height: h,
+        fileType: file.type,
+        duration: duration?.toString() || null,
+      });
+      cleanUp();
+    };
+  });
+};
+
+export const previewAudio = (
+  file: File,
+  duration: null | number
+): Promise<MediaMessage> => {
+  const audio = document.createElement("audio");
+  audio.src = URL.createObjectURL(file);
+  const cleanUp = () => {
+    audio.pause();
+    audio.remove();
+    URL.revokeObjectURL(audio.src);
+  };
+  return new Promise((resolve) => {
+    audio.onerror = cleanUp;
+    audio.oncanplaythrough = async () => {
+      const endpoint_url = await uploadFileWithPresignedUrl(file, 2);
+      const fileExt = file.type.split("/")[1] || "mp3";
+      const audioDuration =
+        duration || (!isNaN(audio.duration) ? Math.ceil(audio.duration) : null);
+
+      resolve({
+        url: endpoint_url,
+        extension: fileExt,
+        name: file.name,
+        size: file.size,
+        thumbnail: null,
+        width: null,
+        height: null,
+        fileType: file.type,
+        duration: audioDuration?.toString() || null,
       });
       cleanUp();
     };
