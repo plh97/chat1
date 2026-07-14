@@ -203,8 +203,9 @@ const Api = {
     }),
   deleteRoom: (id: string) =>
     request({
-      url: "/room/" + id,
+      url: "/room",
       method: "delete",
+      params: { id },
     }),
   updateRoom: (data: Partial<IRoom>) =>
     request<IRoom>({
@@ -212,7 +213,7 @@ const Api = {
       method: "patch",
       data,
     }),
-  joinRoom: (data: { name?: string; member?: string[] }) =>
+  joinRoom: (data: { id?: string }) =>
     request<IRoom>({
       url: "/joinRoom",
       method: "post",

@@ -4,8 +4,10 @@ import (
 	"backend-go/internal/model"
 	"backend-go/internal/repository"
 	"context"
+	"errors"
 
 	v1 "backend-go/api/v1"
+	"gorm.io/gorm"
 )
 
 type RoomService interface {
@@ -13,6 +15,7 @@ type RoomService interface {
 	GetRoomByID(ctx context.Context, id uint) (interface{}, error)
 	ListRooms(ctx context.Context) (interface{}, error)
 	UpdateRoom(ctx context.Context, req v1.RoomUpdateRequest) (interface{}, error)
+	JoinRoom(ctx context.Context, userID, roomID uint) (interface{}, error)
 	DeleteRoom(ctx context.Context, id uint) error
 }
 
@@ -24,6 +27,52 @@ func NewRoomService(service *Service) RoomService {
 
 type roomService struct {
 	*Service
+}
+
+func uniqueUintIDs(ids []uint, excluded ...uint) []uint {
+	excludedSet := make(map[uint]struct{}, len(excluded))
+	for _, id := range excluded {
+		excludedSet[id] = struct{}{}
+	}
+
+	unique := make([]uint, 0, len(ids))
+	seen := make(map[uint]struct{}, len(ids))
+	for _, id := range ids {
+		if id == 0 {
+			continue
+		}
+		if _, skip := excludedSet[id]; skip {
+			continue
+		}
+		if _, exists := seen[id]; exists {
+			continue
+		}
+		seen[id] = struct{}{}
+		unique = append(unique, id)
+	}
+
+	return unique
+}
+
+func upsertRoomMember(db *gorm.DB, roomID, userID uint, role string) error {
+	var roomMember model.RoomMember
+	err := db.Where("room_id = ? AND user_id = ?", roomID, userID).First(&roomMember).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return db.Create(&model.RoomMember{
+				RoomID: roomID,
+				UserID: userID,
+				Role:   role,
+			}).Error
+		}
+		return err
+	}
+
+	if roomMember.Role == role {
+		return nil
+	}
+
+	return db.Model(&roomMember).Update("role", role).Error
 }
 
 // 假设房间表名为 rooms，字段有 id, name, created_at, updated_at
@@ -41,6 +90,7 @@ func (s *roomService) CreateRoom(ctx context.Context, req v1.RoomCreateRequest) 
 	// 1. 创建房间
 	room := &model.Room{
 		Name: req.Name,
+		Image: req.Image,
 	}
 	if err := db.Create(room).Error; err != nil {
 		return nil, err
@@ -56,28 +106,22 @@ func (s *roomService) CreateRoom(ctx context.Context, req v1.RoomCreateRequest) 
 	}
 
 	// 3. 添加管理员
-	for _, adminID := range req.AdminIDs {
-		if err := db.Create(&model.RoomMember{
-			RoomID: room.ID,
-			UserID: adminID,
-			Role:   model.Admin,
-		}).Error; err != nil {
+	adminIDs := uniqueUintIDs(req.GetAdminIDs(), req.CreatorID)
+	for _, adminID := range adminIDs {
+		if err := upsertRoomMember(db, room.ID, adminID, model.Admin); err != nil {
 			return nil, err
 		}
 	}
 
 	// 4. 添加普通成员
-	for _, memberID := range req.MemberIDs {
-		if err := db.Create(&model.RoomMember{
-			RoomID: room.ID,
-			UserID: memberID,
-			Role:   model.Member,
-		}).Error; err != nil {
+	memberIDs := uniqueUintIDs(req.GetMemberIDs(), req.CreatorID)
+	for _, memberID := range memberIDs {
+		if err := upsertRoomMember(db, room.ID, memberID, model.Member); err != nil {
 			return nil, err
 		}
 	}
 
-	return room, nil
+	return s.GetRoomByID(ctx, room.ID)
 }
 
 func (s *roomService) GetRoomByID(ctx context.Context, id uint) (interface{}, error) {
@@ -114,43 +158,61 @@ func (s *roomService) UpdateRoom(ctx context.Context, req v1.RoomUpdateRequest) 
 		return nil, err
 	}
 
-	// 1. 更新房间基本信息
-	room.Name = req.Name
-	if err := db.Save(&room).Error; err != nil {
-		return nil, err
+	updates := map[string]interface{}{}
+	if req.Name != "" {
+		updates["name"] = req.Name
 	}
-
-	// 2. 删除旧的成员关系（除了创建者）
-	if err := db.Where("room_id = ? AND role != ?", room.ID, "creator").Delete(&model.RoomMember{}).Error; err != nil {
-		return nil, err
+	if req.Image != "" {
+		updates["image"] = req.Image
 	}
-
-	// 3. 重新添加管理员
-	for _, adminID := range req.AdminIDs {
-		if err := db.Create(&model.RoomMember{
-			RoomID: room.ID,
-			UserID: adminID,
-			Role:   "admin",
-		}).Error; err != nil {
+	if len(updates) > 0 {
+		if err := db.Model(&room).Updates(updates).Error; err != nil {
 			return nil, err
 		}
 	}
 
-	// 4. 重新添加普通成员
-	for _, memberID := range req.MemberIDs {
-		if err := db.Create(&model.RoomMember{
-			RoomID: room.ID,
-			UserID: memberID,
-			Role:   "member",
-		}).Error; err != nil {
+	adminIDs := uniqueUintIDs(req.GetAdminIDs(), req.CreatorID)
+	for _, adminID := range adminIDs {
+		if err := upsertRoomMember(db, room.ID, adminID, model.Admin); err != nil {
 			return nil, err
 		}
 	}
 
-	return room, nil
+	memberIDs := uniqueUintIDs(req.GetMemberIDs(), req.CreatorID)
+	for _, memberID := range memberIDs {
+		if err := upsertRoomMember(db, room.ID, memberID, model.Member); err != nil {
+			return nil, err
+		}
+	}
+
+	return s.GetRoomByID(ctx, room.ID)
+}
+
+func (s *roomService) JoinRoom(ctx context.Context, userID, roomID uint) (interface{}, error) {
+	db := s.tm.(*repository.Repository).DB(ctx)
+	var room model.Room
+	query := db.Model(&model.Room{})
+	if roomID == 0 {
+		if err := query.Order("id ASC").First(&room).Error; err != nil {
+			return nil, err
+		}
+	} else {
+		if err := query.Where("id = ?", roomID).First(&room).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	if err := upsertRoomMember(db, room.ID, userID, model.Member); err != nil {
+		return nil, err
+	}
+
+	return s.GetRoomByID(ctx, room.ID)
 }
 
 func (s *roomService) DeleteRoom(ctx context.Context, id uint) error {
 	db := s.tm.(*repository.Repository).DB(ctx)
+	if err := db.Where("room_id = ?", id).Delete(&model.RoomMember{}).Error; err != nil {
+		return err
+	}
 	return db.Delete(&model.Room{}, id).Error
 }

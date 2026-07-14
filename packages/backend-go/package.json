@@ -1,7 +1,9 @@
 {
   "name": "backend-go",
   "scripts": {
-    "dev": "make bootstrap"
+    "bootstrap": "make bootstrap",
+    "migrate-reset": "make migrate-reset",
+    "dev": "make dev"
   },
   "devDependencies": {
     "@types/node": "22.10.2",

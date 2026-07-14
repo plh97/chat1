@@ -4,6 +4,7 @@ import (
 	v1 "backend-go/api/v1"
 	"backend-go/internal/service"
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/topfreegames/pitaya/v2"
 	"github.com/topfreegames/pitaya/v2/timer"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 type RoomHandler struct {
@@ -182,8 +184,26 @@ func (h *RoomHandler) DeleteRoom(ctx *gin.Context) {
 // @Success 200 {object} v1.Response
 // @Router /joinRoom [post]
 func (h *RoomHandler) JoinRoom(ctx *gin.Context) {
-	// TODO: 实现加入房间逻辑
-	v1.HandleSuccess(ctx, map[string]interface{}{"msg": "not implemented"})
+	req := v1.JoinRoomRequest{}
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		v1.HandleError(ctx, 400, v1.ErrBadRequest, nil)
+		return
+	}
+	userID := GetUserIdFromCtx(ctx)
+	if userID == 0 {
+		v1.HandleError(ctx, 401, v1.ErrEmptyUserId, nil)
+		return
+	}
+	room, err := h.roomService.JoinRoom(ctx, uint(userID), req.ID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			v1.HandleError(ctx, 404, v1.ErrNotFound, nil)
+			return
+		}
+		v1.HandleError(ctx, 500, err, nil)
+		return
+	}
+	v1.HandleSuccess(ctx, room, "Joined room successfully")
 }
 
 // DeleteMessage godoc

@@ -10,8 +10,11 @@ type (
 	// RoomCreateRequest 用于创建房间的请求体
 	RoomCreateRequest struct {
 		Name      string `json:"name"`
+		Image     string `json:"image"`
 		CreatorID uint    `json:"creatorId"`
+		AdminID   []uint  `json:"adminId"`
 		AdminIDs  []uint  `json:"adminIds"`
+		MemberID  []uint  `json:"memberId"`
 		MemberIDs []uint  `json:"memberIds"`
 	}
 
@@ -19,9 +22,17 @@ type (
 	RoomUpdateRequest struct {
 		ID        uint   `json:"id"`
 		Name      string `json:"name"`
-		CreatorID uint    `json:"creatorId"`
+		Image     string `json:"image"`
+		CreatorID uint   `json:"creatorId"`
+		AdminID   []uint `json:"adminId"`
 		AdminIDs  []uint  `json:"adminIds"`
+		MemberID  []uint `json:"memberId"`
 		MemberIDs []uint  `json:"memberIds"`
+	}
+
+	// JoinRoomRequest 用于加入房间的请求体
+	JoinRoomRequest struct {
+		ID uint `json:"id"`
 	}
 
 	// NewUser message will be received when new user join room
@@ -34,3 +45,31 @@ type (
 		Members []string `json:"members"`
 	}
 )
+
+func (r RoomCreateRequest) GetAdminIDs() []uint {
+	if len(r.AdminIDs) > 0 {
+		return r.AdminIDs
+	}
+	return r.AdminID
+}
+
+func (r RoomCreateRequest) GetMemberIDs() []uint {
+	if len(r.MemberIDs) > 0 {
+		return r.MemberIDs
+	}
+	return r.MemberID
+}
+
+func (r RoomUpdateRequest) GetAdminIDs() []uint {
+	if len(r.AdminIDs) > 0 {
+		return r.AdminIDs
+	}
+	return r.AdminID
+}
+
+func (r RoomUpdateRequest) GetMemberIDs() []uint {
+	if len(r.MemberIDs) > 0 {
+		return r.MemberIDs
+	}
+	return r.MemberID
+}

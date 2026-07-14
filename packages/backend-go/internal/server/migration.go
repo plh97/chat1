@@ -54,6 +54,11 @@ func (m *Migrate) Start(ctx context.Context) error {
 		return err
 	}
 
+	if err := m.createSeedRooms(); err != nil {
+		m.log.Error("create seed rooms error", zap.Error(err))
+		return err
+	}
+
 	os.Exit(0)
 	return nil
 }
@@ -122,5 +127,50 @@ func (m *Migrate) createSeedUsers() error {
 		m.log.Info("Dev user already exists")
 	}
 
+	return nil
+}
+
+// createSeedRooms 创建基础房间数据
+func (m *Migrate) createSeedRooms() error {
+	var count int64
+	m.db.Model(&model.Room{}).Where("name = ?", "Common Room").Count(&count)
+	if count > 0 {
+		m.log.Info("Default room already exists", zap.String("name", "Common Room"))
+		return nil
+	}
+
+	var adminUser model.User
+	if err := m.db.Where("username = ?", "admin").First(&adminUser).Error; err != nil {
+		return err
+	}
+
+	defaultRoom := &model.Room{
+		Name:        "Common Room",
+		ChannelType: model.RoomTypeGroup,
+	}
+	if err := m.db.Create(defaultRoom).Error; err != nil {
+		return err
+	}
+
+	if err := m.db.Create(&model.RoomMember{
+		RoomID: defaultRoom.ID,
+		UserID: adminUser.ID,
+		Role:   model.Creator,
+	}).Error; err != nil {
+		return err
+	}
+
+	var devUser model.User
+	if err := m.db.Where("username = ?", "dev").First(&devUser).Error; err == nil {
+		if err := m.db.Create(&model.RoomMember{
+			RoomID: defaultRoom.ID,
+			UserID: devUser.ID,
+			Role:   model.Member,
+		}).Error; err != nil {
+			return err
+		}
+	}
+
+	m.log.Info("Created default room", zap.String("name", defaultRoom.Name))
 	return nil
 }

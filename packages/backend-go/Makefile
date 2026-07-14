@@ -7,7 +7,15 @@ init:
 .PHONY: bootstrap
 bootstrap:
 	cd ./deploy/docker-compose && docker compose up -d && cd ../../
+	$(MAKE) migrate-reset
+	$(MAKE) dev
+
+.PHONY: migrate-reset
+migrate-reset:
 	go run ./cmd/migration
+
+.PHONY: dev
+dev:
 	nunu run ./cmd/server
 
 .PHONY: mock
