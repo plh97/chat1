@@ -4,28 +4,67 @@ on:
   push:
     branches:
       - "main"
+  workflow_dispatch:
+    inputs:
+      playbook:
+        description: "Which Ansible playbook to run"
+        required: true
+        default: cicd.yml
+        type: choice
+        options:
+          - init.yml
+          - cicd.yml
 jobs:
   Ansible-Actions:
     runs-on: ubuntu-latest
+    env:
+      ANSIBLE_HOST_KEY_CHECKING: "False"
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST || '45.76.110.22' }}
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
+      - name: Install Ansible
+        run: python3 -m pip install --user ansible
 
       - name: Install SSH Key
         uses: shimataro/ssh-key-action@v2
         with:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          name: id_ed25519
           known_hosts: "just-a-placeholder-so-we-dont-get-errors"
-          config: |
-            Host aws
-              HostName ${{ secrets.SSH_HOST }}
-              CheckHostIP no
-              User ubuntu
-              Port 22
 
       - name: Adding Known Hosts
-        run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+        run: ssh-keyscan -H ${{ env.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
-      - name: run ansible
+      - name: Prepare Ansible inventory
+        working-directory: ansible
         run: |
-          cd ansible && ansible-playbook cicd.yml
+          cat > inventory.vultr <<'EOF'
+          vultr
+          EOF
+          cat > ssh_config_ci <<EOF
+          Host vultr
+            HostName ${{ env.DEPLOY_HOST }}
+            User root
+            Port 22
+            IdentityFile ~/.ssh/id_ed25519
+            IdentitiesOnly yes
+            CheckHostIP no
+            StrictHostKeyChecking no
+          EOF
+          cat > ansible-ci.cfg <<'EOF'
+          [defaults]
+          log_path=./ansible.log
+
+          [ssh_connection]
+          ssh_args = -F ./ssh_config_ci
+          EOF
+
+      - name: Run ansible
+        working-directory: ansible
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          export ANSIBLE_CONFIG="$PWD/ansible-ci.cfg"
+          PLAYBOOK="${{ github.event.inputs.playbook || 'cicd.yml' }}"
+          ansible-playbook -i inventory.vultr "$PLAYBOOK"

@@ -1,42 +1,148 @@
 ---
-- hosts: aws
-  # user: ubuntu
-  # gather_facts: False
-  remote_user: ubuntu
-  become: yes
+- hosts: "{{ target_hosts | default('vultr') }}"
+  gather_facts: true
+  become: "{{ (ansible_user | default('root')) != 'root' }}"
   become_method: sudo
+  vars:
+    repo_url: https://github.com/plh97/chat1.git
+    deploy_branch: main
+    app_root: /opt/chat2
+    backend_root: /opt/chat2/packages/backend-go
+    backend_binary: /opt/chat2/packages/backend-go/bin/server
+    backend_service_name: chat2-backend
+    nginx_site_name: chat2
+    app_domain: ""
+    certbot_email: ""
   tasks:
-    - name: Get running containers
-      docker_host_info:
-        containers: yes
-      register: docker_info
-    - name: Stop running containers
-      docker_container:
-        name: "{{ item }}"
-        state: stopped
-      loop: "{{ docker_info.containers | map(attribute='Id') | list }}"
-    # - name: Delete content & directory
-    #   file:
-    #     state: absent
-    #     path: ~/chatroom/
-    - name: pull latest code on develop branch
+    - name: Ensure app directory exists
+      file:
+        path: "{{ app_root }}"
+        state: directory
+        mode: "0755"
+
+    - name: Pull latest application code
       git:
-        repo: https://github.com/plh2/c.git
-        dest: ~/c
+        repo: "{{ repo_url }}"
+        dest: "{{ app_root }}"
         force: true
-        version: develop
+        version: "{{ deploy_branch }}"
+        accept_hostkey: true
 
-    - name: install dependences
+    - name: Install workspace dependencies
       command:
-        cmd: pnpm run bootstrap
-        chdir: ~/c
+        cmd: pnpm install --frozen-lockfile
+        chdir: "{{ app_root }}"
 
-    # - name: build
-    #   command:
-    #     chdir: ~/c
-    #     cmd: npm run build
-
-    - name: deploy
+    - name: Start backend dependencies
       command:
-        chdir: ~/c
-        cmd: npm run deploy
+        cmd: docker compose up -d
+        chdir: "{{ backend_root }}/deploy/docker-compose"
+
+    - name: Ensure backend log directory exists
+      file:
+        path: "{{ backend_root }}/storage/logs"
+        state: directory
+        mode: "0755"
+
+    - name: Build backend server
+      command:
+        cmd: make build
+        chdir: "{{ backend_root }}"
+
+    - name: Run database migration
+      command:
+        cmd: go run ./cmd/migration
+        chdir: "{{ backend_root }}"
+
+    - name: Install backend systemd service
+      copy:
+        dest: "/etc/systemd/system/{{ backend_service_name }}.service"
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Chat2 backend service
+          After=network.target docker.service
+          Wants=docker.service
+
+          [Service]
+          Type=simple
+          WorkingDirectory={{ backend_root }}
+          ExecStart={{ backend_binary }} -conf {{ backend_root }}/config/prod.yml
+          Restart=always
+          RestartSec=5
+          Environment=GIN_MODE=release
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd
+      systemd:
+        daemon_reload: true
+
+    - name: Restart backend service
+      systemd:
+        name: "{{ backend_service_name }}"
+        enabled: true
+        state: restarted
+
+    - name: Check if TLS certificate already exists
+      stat:
+        path: "/etc/letsencrypt/live/{{ app_domain }}/fullchain.pem"
+      register: letsencrypt_cert
+      when: app_domain | length > 0 and certbot_email | length > 0
+
+    - name: Install nginx site config
+      template:
+        src: templates/chat2.nginx.conf.j2
+        dest: "/etc/nginx/sites-available/{{ nginx_site_name }}"
+        mode: "0644"
+      vars:
+        nginx_enable_https: "{{ app_domain | length > 0 and certbot_email | length > 0 and (letsencrypt_cert.stat.exists | default(false)) }}"
+
+    - name: Enable nginx site
+      file:
+        src: "/etc/nginx/sites-available/{{ nginx_site_name }}"
+        dest: "/etc/nginx/sites-enabled/{{ nginx_site_name }}"
+        state: link
+
+    - name: Disable default nginx site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+
+    - name: Validate nginx config
+      command: nginx -t
+      changed_when: false
+
+    - name: Reload nginx before certbot
+      service:
+        name: nginx
+        state: reloaded
+
+    - name: Request Let's Encrypt certificate
+      command:
+        cmd: certbot certonly --nginx -d {{ app_domain }} --email {{ certbot_email }} --agree-tos --non-interactive
+      when: app_domain | length > 0 and certbot_email | length > 0 and not (letsencrypt_cert.stat.exists | default(false))
+
+    - name: Re-check TLS certificate after certbot
+      stat:
+        path: "/etc/letsencrypt/live/{{ app_domain }}/fullchain.pem"
+      register: letsencrypt_cert_after
+      when: app_domain | length > 0 and certbot_email | length > 0
+
+    - name: Install final nginx site config
+      template:
+        src: templates/chat2.nginx.conf.j2
+        dest: "/etc/nginx/sites-available/{{ nginx_site_name }}"
+        mode: "0644"
+      vars:
+        nginx_enable_https: "{{ app_domain | length > 0 and certbot_email | length > 0 and (letsencrypt_cert_after.stat.exists | default(letsencrypt_cert.stat.exists | default(false))) }}"
+
+    - name: Validate final nginx config
+      command: nginx -t
+      changed_when: false
+
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted

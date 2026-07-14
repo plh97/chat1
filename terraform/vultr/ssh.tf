@@ -18,3 +18,11 @@ resource "local_sensitive_file" "pem_file" {
   directory_permission = "700"
   content    = tls_private_key.example.private_key_pem
 }
+
+resource "local_file" "ansible_vultr_inventory" {
+  filename        = "${path.module}/../../ansible/hosts.vultr"
+  file_permission = "0644"
+  content = <<-EOT
+vultr ansible_host=${vultr_instance.instance.main_ip} ansible_user=root ansible_ssh_private_key_file=${local_sensitive_file.pem_file.filename}
+EOT
+}

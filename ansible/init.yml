@@ -1,43 +1,106 @@
 ---
-- hosts: aws
-  # user: ubuntu
-  # gather_facts: False
-  remote_user: ubuntu
-  become: yes
+- hosts: "{{ target_hosts | default('vultr') }}"
+  gather_facts: true
+  become: "{{ (ansible_user | default('root')) != 'root' }}"
   become_method: sudo
+  vars:
+    go_version: 1.24.5
   tasks:
-    - name: Get running containers
+    - name: Update apt cache
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install base packages
+      apt:
+        name:
+          - ca-certificates
+          - certbot
+          - curl
+          - git
+          - gnupg
+          - make
+          - nginx
+          - python3-docker
+          - python3-certbot-nginx
+          - python3-pip
+          - rsync
+        state: present
+
+    - name: Install Docker
+      shell: curl -fsSL https://get.docker.com | sh
+      args:
+        creates: /usr/bin/docker
+
+    - name: Download Go toolchain
+      get_url:
+        url: "https://go.dev/dl/go{{ go_version }}.linux-amd64.tar.gz"
+        dest: "/tmp/go{{ go_version }}.linux-amd64.tar.gz"
+        mode: "0644"
+
+    - name: Remove old Go installation
+      file:
+        path: /usr/local/go
+        state: absent
+
+    - name: Install Go toolchain
+      unarchive:
+        src: "/tmp/go{{ go_version }}.linux-amd64.tar.gz"
+        dest: /usr/local
+        remote_src: true
+
+    - name: Symlink Go binary
+      file:
+        src: /usr/local/go/bin/go
+        dest: /usr/local/bin/go
+        state: link
+
+    - name: Symlink Gofmt binary
+      file:
+        src: /usr/local/go/bin/gofmt
+        dest: /usr/local/bin/gofmt
+        state: link
+
+    - name: Start Docker service
+      service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Start nginx service
+      service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Check running containers
       docker_host_info:
-        containers: yes
+        containers: true
       register: docker_info
 
     - name: Stop running containers
       docker_container:
-        name: "{{ item }}"
+        name: "{{ item.Names[0] | regex_replace('^/', '') }}"
         state: stopped
-      loop: "{{ docker_info.containers | map(attribute='Id') | list }}"
-    - name: Delete content & directory
-      file:
-        state: absent
-        path: ~/chatroom/
-    - name: Clone Repository
-      git:
-        repo: https://github.com/plh97/c.git
-        dest: ~/chatroom
-        clone: yes
-        update: yes
-        version: feat/terraform-aws
+      loop: "{{ docker_info.containers }}"
+      when: docker_info.containers | length > 0
 
-    - name: install dependences
-      command:
-        cmd: pnpm i
-        chdir: ~/chatroom
-    # - name: build
-    #   command:
-    #     chdir: ~/chatroom
-    #     cmd: npm run build
-    - name: deploy
-      command:
-        chdir: ~/chatroom
-        cmd: pnpm run deploy
+    - name: Install Node.js 20
+      shell: curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+      args:
+        creates: /etc/apt/sources.list.d/nodesource.list
+
+    - name: Install Node.js
+      apt:
+        name: nodejs
+        state: present
+        update_cache: true
+
+    - name: Enable corepack
+      command: corepack enable
+      changed_when: false
+
+    - name: Activate pnpm
+      command: corepack prepare pnpm@10.0.0-alpha.2 --activate
+      changed_when: false
 ...

@@ -4,12 +4,17 @@ terraform {
       source  = "vultr/vultr"
       version = "2.12.0"
     }
-    ssh = {
-      source = "loafoe/ssh"
+    tls = {
+      source  = "hashicorp/tls"
+      version = "~> 4.0"
     }
-    acme = {
-      source  = "vancluever/acme"
-      version = "~> 2.5.3"
+    local = {
+      source  = "hashicorp/local"
+      version = "~> 2.5"
+    }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.2"
     }
   }
 }

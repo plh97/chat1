@@ -4,13 +4,12 @@ const filePath = process.argv[2];
 const ip = process.argv[3];
 const ipRegex = /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/g;
 
-fs.readFile(filePath, "utf8", function (err, data) {
-  if (err) {
-    return console.log(err);
-  }
-  var result = data.replace(ipRegex, ip);
+try {
+  const data = fs.readFileSync(filePath, "utf8");
+  const result = data.replace(ipRegex, ip);
 
-  fs.writeFile(filePath, result, "utf8", function (err) {
-    if (err) return console.log(err);
-  });
-});
+  fs.writeFileSync(filePath, result, "utf8");
+} catch (err) {
+  console.log(err);
+  process.exit(1);
+}
