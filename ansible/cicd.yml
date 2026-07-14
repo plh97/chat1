@@ -11,8 +11,8 @@
     backend_binary: /opt/chat2/packages/backend-go/bin/server
     backend_service_name: chat2-backend
     nginx_site_name: chat2
-    app_domain: ""
-    certbot_email: ""
+    app_domain: "c.plhh.org"
+    certbot_email: "pengliheng111@gmail.com"
   tasks:
     - name: Ensure app directory exists
       file:

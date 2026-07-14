@@ -25,6 +25,7 @@
           - python3-certbot-nginx
           - python3-pip
           - rsync
+          - ufw
         state: present
 
     - name: Install Docker
@@ -72,6 +73,53 @@
         name: nginx
         state: started
         enabled: true
+
+    - name: Allow OpenSSH through firewall
+      community.general.ufw:
+        rule: allow
+        name: OpenSSH
+
+    - name: Allow HTTP through firewall
+      community.general.ufw:
+        rule: allow
+        port: "80"
+        proto: tcp
+
+    - name: Allow HTTPS through firewall
+      community.general.ufw:
+        rule: allow
+        port: "443"
+        proto: tcp
+
+    - name: Allow port 8000 through firewall
+      community.general.ufw:
+        rule: allow
+        port: "8000"
+        proto: tcp
+
+    - name: Allow port 8001 through firewall
+      community.general.ufw:
+        rule: allow
+        port: "8001"
+        proto: tcp
+
+    - name: Allow port 8080 through firewall
+      community.general.ufw:
+        rule: allow
+        port: "8080"
+        proto: tcp
+
+    - name: Allow port 8081 through firewall
+      community.general.ufw:
+        rule: allow
+        port: "8081"
+        proto: tcp
+
+    - name: Enable firewall
+      community.general.ufw:
+        state: enabled
+        policy: deny
+        direction: incoming
 
     - name: Check running containers
       docker_host_info:
