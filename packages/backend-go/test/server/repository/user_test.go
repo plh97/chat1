@@ -1,125 +1,136 @@
 package repository
 
 import (
-	"context"
-	"backend-go/pkg/log"
-	"testing"
-	"time"
-
-	"github.com/DATA-DOG/go-sqlmock"
+	v1 "backend-go/api/v1"
 	"backend-go/internal/model"
 	"backend-go/internal/repository"
+	"backend-go/pkg/log"
+	"context"
+	"testing"
+
+	"github.com/glebarez/sqlite"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
 var logger *log.Logger
 
-func setupRepository(t *testing.T) (repository.UserRepository, sqlmock.Sqlmock) {
-	mockDB, mock, err := sqlmock.New()
-	if err != nil {
-		t.Fatalf("failed to create sqlmock: %v", err)
-	}
-
-	db, err := gorm.Open(mysql.New(mysql.Config{
-		Conn:                      mockDB,
-		SkipInitializeWithVersion: true,
-	}), &gorm.Config{})
+func setupRepository(t *testing.T) repository.UserRepository {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	if err != nil {
 		t.Fatalf("failed to open gorm connection: %v", err)
 	}
-
-	//rdb, _ := redismock.NewClientMock()
+	if err := db.AutoMigrate(&model.User{}, &model.Room{}, &model.RoomMember{}); err != nil {
+		t.Fatalf("failed to migrate schema: %v", err)
+	}
 
 	repo := repository.NewRepository(logger, db)
-	userRepo := repository.NewUserRepository(repo)
-
-	return userRepo, mock
+	return repository.NewUserRepository(repo)
 }
 
 func TestUserRepository_Create(t *testing.T) {
-	userRepo, mock := setupRepository(t)
+	userRepo := setupRepository(t)
 
 	ctx := context.Background()
 	user := &model.User{
-		Id:        1,
-		UserId:    "123",
-		Nickname:  "Test",
-		Password:  "password",
-		Email:     "test@example.com",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		UserName: "Test",
+		Password: "password",
+		Email:    "test@example.com",
 	}
-
-	mock.ExpectBegin()
-	mock.ExpectExec("INSERT INTO `users`").
-		WithArgs(user.UserId, user.Nickname, user.Password, user.Email, user.CreatedAt, user.UpdatedAt, user.DeletedAt, user.Id).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectCommit()
 
 	err := userRepo.Create(ctx, user)
 	assert.NoError(t, err)
-
-	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.NotZero(t, user.ID)
 }
 
 func TestUserRepository_Update(t *testing.T) {
-	userRepo, mock := setupRepository(t)
+	userRepo := setupRepository(t)
 
 	ctx := context.Background()
 	user := &model.User{
-		Id:        1,
-		UserId:    "123",
-		Nickname:  "Test",
-		Password:  "password",
-		Email:     "test@example.com",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		UserName: "Test",
+		Password: "password",
+		Email:    "test@example.com",
 	}
+	assert.NoError(t, userRepo.Create(ctx, user))
 
-	mock.ExpectBegin()
-	mock.ExpectExec("UPDATE `users`").WillReturnResult(sqlmock.NewResult(1, 1))
-	mock.ExpectCommit()
-
+	user.Email = "updated@example.com"
 	err := userRepo.Update(ctx, user)
 	assert.NoError(t, err)
 
-	assert.NoError(t, mock.ExpectationsWereMet())
+	fetched, err := userRepo.GetByEmail(ctx, "updated@example.com")
+	assert.NoError(t, err)
+	assert.NotNil(t, fetched)
+	assert.Equal(t, "updated@example.com", fetched.Email)
 }
 
 func TestUserRepository_GetById(t *testing.T) {
-	userRepo, mock := setupRepository(t)
+	userRepo := setupRepository(t)
 
 	ctx := context.Background()
-	userId := "123"
+	user := &model.User{
+		UserName: "test",
+		Password: "password",
+		Email:    "test@example.com",
+	}
+	assert.NoError(t, userRepo.Create(ctx, user))
 
-	rows := sqlmock.NewRows([]string{"id", "user_id", "username", "nickname", "password", "email", "created_at", "updated_at"}).
-		AddRow(1, "123", "test", "Test", "password", "test@example.com", time.Now(), time.Now())
-	mock.ExpectQuery("SELECT \\* FROM `users`").WillReturnRows(rows)
-
-	user, err := userRepo.GetByID(ctx, userId)
+	fetched, err := userRepo.GetByID(ctx, int(user.ID))
 	assert.NoError(t, err)
-	assert.NotNil(t, user)
-	assert.Equal(t, "123", user.UserId)
-
-	assert.NoError(t, mock.ExpectationsWereMet())
+	assert.NotNil(t, fetched)
+	assert.Equal(t, user.Email, fetched.Email)
 }
 
 func TestUserRepository_GetByUsername(t *testing.T) {
-	userRepo, mock := setupRepository(t)
+	userRepo := setupRepository(t)
 
 	ctx := context.Background()
 	email := "test@example.com"
+	user := &model.User{
+		UserName: "test",
+		Password: "password",
+		Email:    email,
+	}
+	assert.NoError(t, userRepo.Create(ctx, user))
 
-	rows := sqlmock.NewRows([]string{"id", "user_id", "username", "nickname", "password", "email", "created_at", "updated_at"}).
-		AddRow(1, "123", "test", "Test", "password", "test@example.com", time.Now(), time.Now())
-	mock.ExpectQuery("SELECT \\* FROM `users`").WillReturnRows(rows)
-
-	user, err := userRepo.GetByEmail(ctx, email)
+	fetched, err := userRepo.GetByEmail(ctx, email)
 	assert.NoError(t, err)
-	assert.NotNil(t, user)
-	assert.Equal(t, "test@example.com", user.Email)
+	assert.NotNil(t, fetched)
+	assert.Equal(t, "test@example.com", fetched.Email)
+}
 
-	assert.NoError(t, mock.ExpectationsWereMet())
+func TestUserRepository_UpdateFields(t *testing.T) {
+	userRepo := setupRepository(t)
+
+	ctx := context.Background()
+	user := &model.User{
+		UserName: "test",
+		Password: "password",
+		Email:    "test@example.com",
+	}
+	assert.NoError(t, userRepo.Create(ctx, user))
+
+	err := userRepo.UpdateFields(ctx, int(user.ID), map[string]interface{}{
+		"username": "updated-name",
+		"email":    "updated@example.com",
+	})
+	assert.NoError(t, err)
+
+	fetched, err := userRepo.GetByID(ctx, int(user.ID))
+	assert.NoError(t, err)
+	assert.Equal(t, "updated-name", fetched.UserName)
+	assert.Equal(t, "updated@example.com", fetched.Email)
+}
+
+func TestUserRepository_List(t *testing.T) {
+	userRepo := setupRepository(t)
+
+	ctx := context.Background()
+	assert.NoError(t, userRepo.Create(ctx, &model.User{UserName: "alice", Password: "password", Email: "alice@example.com"}))
+	assert.NoError(t, userRepo.Create(ctx, &model.User{UserName: "bob", Password: "password", Email: "bob@example.com"}))
+
+	users, err := userRepo.List(ctx, v1.ListUsersRequest{UserName: "ali"})
+	assert.NoError(t, err)
+	assert.Len(t, users, 1)
+	assert.Equal(t, "alice", users[0].UserName)
 }
