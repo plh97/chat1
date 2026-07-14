@@ -124,6 +124,7 @@ declare global {
     MessageRequest,
     MessageWindowRequest,
     MessageWindowResponse,
+    MessagePageResponse,
     IAddMessageRequest,
   } from "./src/interfaces/IMessage";
   import("./src/interfaces/IMessage");

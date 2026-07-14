@@ -18,7 +18,7 @@ const (
 	seedFakeUserCount       = 4000
 	seedFakeUserBatchSize   = 200
 	seedRoomMemberBatchSize = 1000
-	seedMessageCount        = 1000000
+	seedMessageCount        = 100000
 	seedMessageBatchSize    = 1000
 )
 
