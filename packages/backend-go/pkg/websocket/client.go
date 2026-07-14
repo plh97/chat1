@@ -167,6 +167,19 @@ func (h *Hub) handleSendMessage(ctx context.Context, envelope wsEnvelope) ([]byt
 			Data:      mustMarshalRawMessage(responseData),
 		})
 	case "READ_MESSAGE":
+		var readBody struct {
+			Operator    string                 `json:"operator"`
+			LastReadSeq int                    `json:"lastReadSeq"`
+			ReadSeq     map[string]interface{} `json:"readSeq"`
+		}
+		if err := json.Unmarshal(payload.ReadMessage, &readBody); err != nil {
+			return nil, err
+		}
+		if readBody.Operator != "" && readBody.LastReadSeq > 0 {
+			if err := h.messageService.MarkAsRead(ctx, channelID, readBody.Operator, readBody.LastReadSeq); err != nil {
+				return nil, err
+			}
+		}
 		responsePayload := map[string]interface{}{
 			"id":            payload.ID,
 			"seq":           payload.Seq,

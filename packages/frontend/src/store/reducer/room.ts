@@ -27,6 +27,7 @@ const initialState: IState = {
   data: {
     id: "",
     message: [],
+    hasMoreMessage: true,
     totalCount: 0,
     image: "",
     name: "",
@@ -54,26 +55,35 @@ export const getRoomInfoThunk = createAsyncThunk<void, string>(
     dispatch(changeLoading(true));
     // 获取当前房间基本信息
     const res = await Api.getRoom({
-      pageSize: 50,
       id: id,
     });
-    // 加载结束
-    dispatch(changeLoading(false));
     // 将当前房间基本信息存到store里面
     dispatch(initialMessage(res));
+    const messagePage = await Api.getRoomMessages({
+      pageSize: 50,
+      id,
+    });
+    dispatch(
+      initialMessage({
+        message: messagePage.message,
+        hasMoreMessage: messagePage.hasMore,
+      })
+    );
+    // 加载结束
+    dispatch(changeLoading(false));
     // div元素撑开后，滚动到底部
     dispatch(scrollToEnd(true));
   }
 );
 // 加载更多消息
 export const loadRoomMoreMessageThunk = createAsyncThunk<
-  IMessage[],
+  { message: IMessage[]; hasMore: boolean },
   MessageRequest
 >(`loadRoomMoreMessageThunk`, async (data, { dispatch }) => {
   dispatch(changeLoading(true));
-  const res = await Api.getRoom(data);
+  const res = await Api.getRoomMessages(data);
   dispatch(changeLoading(false));
-  return res.message;
+  return res;
 });
 
 export const addRoomThunk = createAsyncThunk<IRoom, Partial<IRoom>>(
@@ -117,12 +127,79 @@ export const roomSlice = createSlice({
     loadMoreMessage(state, action: PayloadAction<IMessage[]>) {
       state.data.message = [...action.payload, ...state.data.message];
     },
+    setHasMoreMessage(state, action: PayloadAction<boolean>) {
+      state.data.hasMoreMessage = action.payload;
+    },
+    mergeMessages(state, action: PayloadAction<IMessage[]>) {
+      const merged = [...state.data.message, ...action.payload];
+      const unique = new Map<string, IMessage>();
+      for (const message of merged) {
+        unique.set(String(message.id), message);
+      }
+      state.data.message = Array.from(unique.values()).sort(
+        (a, b) => a.seq - b.seq
+      );
+    },
     changeRoomId(state, action) {
       state.id = action.payload;
     },
     addMessage(state, action: PayloadAction<IMessage>) {
       state.data.message.push(action.payload);
       return state;
+    },
+    replaceMessage(
+      state,
+      action: PayloadAction<{ id: string; message: IMessage }>
+    ) {
+      const index = state.data.message.findIndex(
+        (message) => String(message.id) === String(action.payload.id)
+      );
+      if (index >= 0) {
+        state.data.message[index] = action.payload.message;
+        return state;
+      }
+      state.data.message.push(action.payload.message);
+      return state;
+    },
+    updateMessageStatus(
+      state,
+      action: PayloadAction<{
+        id: string;
+        localStatus: IMessage["localStatus"];
+      }>
+    ) {
+      const message = state.data.message.find(
+        (item) => String(item.id) === String(action.payload.id)
+      );
+      if (message) {
+        message.localStatus = action.payload.localStatus;
+      }
+    },
+    appendRoomUsers(
+      state,
+      action: PayloadAction<{
+        role: "member" | "admin";
+        users: IRoom["member"];
+        totalCount?: number;
+      }>
+    ) {
+      const key = action.payload.role === "admin" ? "admin" : "member";
+      const totalKey =
+        action.payload.role === "admin"
+          ? "adminTotalCount"
+          : "memberTotalCount";
+      const currentUsers = state.data[key] ?? [];
+      const unique = new Map<string, IRoom["member"][number]>();
+      for (const user of currentUsers) {
+        unique.set(String(user.id), user);
+      }
+      for (const user of action.payload.users ?? []) {
+        unique.set(String(user.id), user);
+      }
+      state.data[key] = Array.from(unique.values()) as any;
+      if (typeof action.payload.totalCount === "number") {
+        state.data[totalKey] = action.payload.totalCount as any;
+      }
     },
     initialMessage(state, action: PayloadAction<Partial<IRoom>>) {
       state.data = { ...state.data, ...action.payload };
@@ -164,11 +241,16 @@ export const {
   scrollToTop,
   scrollToEnd,
   addMessage,
+  replaceMessage,
   loadMoreMessage,
+  setHasMoreMessage,
+  mergeMessages,
+  appendRoomUsers,
   initialMessage,
   changeLoading,
   changeRoomId,
   markReadMessage,
+  updateMessageStatus,
   updateSelectedMessage,
   recallExistMessage,
   updateReplyMessage,

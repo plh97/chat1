@@ -90,9 +90,12 @@ func NewHTTPServer(
 			strictAuthRouter.DELETE("/friend", userHandler.DeleteFriend)
 			strictAuthRouter.POST("/room", roomHandler.AddRoom)
 			strictAuthRouter.GET("/room", roomHandler.GetRoom)
+			strictAuthRouter.GET("/room/messages", roomHandler.GetRoomMessages)
+			strictAuthRouter.GET("/room/member", roomHandler.GetRoomMembers)
 			strictAuthRouter.PATCH("/room", roomHandler.UpdateRoom)
 			strictAuthRouter.DELETE("/room", roomHandler.DeleteRoom)
 			strictAuthRouter.POST("/joinRoom", roomHandler.JoinRoom)
+			strictAuthRouter.GET("/room/message", roomHandler.GetMessage)
 			strictAuthRouter.DELETE("/room/message", roomHandler.DeleteMessage)
 		}
 	}

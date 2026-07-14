@@ -68,12 +68,17 @@ export function LoginPage() {
           <Avatar size="xl" name="?" src={imageUrl} />
         </div>
         <h1 className="text-4xl">Login</h1>
-        <form onSubmit={handleLogin} className="flex flex-col gap-2">
+        <form
+          autoComplete="on"
+          onSubmit={handleLogin}
+          className="flex flex-col gap-2"
+        >
           <FormControl id="email" isRequired>
             <FormLabel>Email</FormLabel>
             <Input
               type="email"
-              autoComplete="off"
+              name="username"
+              autoComplete="username"
               autoFocus
               value={email}
               onChange={handleInputEmail}
@@ -83,7 +88,8 @@ export function LoginPage() {
             <FormLabel>Password</FormLabel>
             <Input
               type="password"
-              autoComplete="true"
+              name="current-password"
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />

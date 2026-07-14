@@ -2,37 +2,51 @@ import { VListHandle } from "virtua";
 import {
   loadMoreMessage,
   loadRoomMoreMessageThunk,
+  markReadMessage as markReadMessageLocally,
+  setHasMoreMessage,
 } from "@/store/reducer/room";
 import { IMessage } from "@/interfaces";
 import { markReadMessageThunk } from "@/store/action/message";
+import { updateUserRoomReadSeq } from "@/store/reducer/user";
+
+const sharedScrollEl: { current: VListHandle | null } = {
+  current: null,
+};
+
+export const scrollToMessageIndex = (index: number) => {
+  if (index < 0) return;
+  sharedScrollEl.current?.scrollToIndex(index + 1, {
+    align: "center",
+    smooth: true,
+  });
+};
 
 export const useScroll = () => {
-  const scrollEl = useRef<VListHandle>(null);
+  const scrollEl = sharedScrollEl;
   const {
     scrollToTop,
     scrollToEnd,
     data: { message },
   } = useAppSelector((state) => state.room);
-  const virtual = scrollEl.current;
   const handleScrollToTop = () => {
     if (scrollToTop === undefined) return;
-    virtual?.scrollTo(0);
+    scrollEl.current?.scrollTo(0);
   };
   const handleScrollToBottom = (stick = false) => {
     if (scrollToEnd === undefined) return;
     if (stick) {
       if (
-        virtual?.findEndIndex() &&
-        virtual?.findEndIndex() >= message.length - 1
+        scrollEl.current?.findEndIndex() !== undefined &&
+        scrollEl.current.findEndIndex() >= message.length - 1
       ) {
-        virtual?.scrollToIndex(message.length, {
+        scrollEl.current?.scrollToIndex(message.length, {
           align: "end",
           smooth: true,
         });
       }
       return;
     }
-    virtual?.scrollToIndex(message.length, {
+    scrollEl.current?.scrollToIndex(message.length, {
       align: "end",
     });
   };
@@ -51,8 +65,13 @@ export const useLoadMore = () => {
   const { message } = useAppSelector((state) => state.room.data);
   const { id = "" } = useParams();
   const isPrepend = useRef(false);
+  const isRequesting = useRef(false);
   const dispatch = useAppDispatch();
   const requestMore = async () => {
+    if (isRequesting.current || !id) {
+      return;
+    }
+    isRequesting.current = true;
     const { payload } = await dispatch(
       loadRoomMoreMessageThunk({
         start: message?.length ?? 0,
@@ -60,11 +79,17 @@ export const useLoadMore = () => {
         id: id,
       })
     );
-    isPrepend.current = true;
-    dispatch(loadMoreMessage(payload as IMessage[]));
+    const nextPage = payload as { message: IMessage[]; hasMore: boolean };
+    const nextMessages = nextPage?.message ?? [];
+    dispatch(setHasMoreMessage(Boolean(nextPage?.hasMore)));
+    if (nextMessages.length) {
+      isPrepend.current = true;
+      dispatch(loadMoreMessage(nextMessages));
+    }
+    isRequesting.current = false;
   };
   const handleScroll = (offset: number) => {
-    if (offset < 1000) {
+    if (offset < 200) {
       requestMore();
     }
   };
@@ -77,43 +102,71 @@ export const useLoadMore = () => {
   };
 };
 
-let timer: NodeJS.Timeout;
-const debounce = (fn: Function, delay = 100) => {
-  return (...args: any) => {
-    clearTimeout(timer);
-    timer = setTimeout(() => {
-      fn(...args);
-    }, delay);
-  };
-};
-
 export const useMsgWatch = (message: IMessage) => {
   const myUserInfo = useAppSelector((state) => state.user.data);
   const room = useAppSelector((state) => state.room.data);
-  const readSeq = room?.readSeq;
   const { isIntersecting, ref } = useIntersectionObserver({
     threshold: 0.5,
   });
   const dispatch = useAppDispatch();
-  const debounceRead = debounce(() => {
-    const readSeqMap = room.readSeq as Record<string, number>;
-    const isRead = readSeqMap[myUserInfo.userId] >= message.seq;
-    const isMyMsg = myUserInfo.userId === message.userId;
-    if (!isRead && isIntersecting && !isMyMsg) {
-      dispatch(
-        markReadMessageThunk({
-          channelId: room.id,
-          readMessage: {
-            operator: myUserInfo.userId,
-            lastReadSeq: message.seq,
-            readSeq: {},
-          },
-        })
-      );
-    }
-  }, 100);
+  const lastReportedSeqRef = useRef(0);
+
   useEffect(() => {
-    debounceRead();
-  }, [readSeq, isIntersecting]);
+    const roomId = room?.id;
+    const myUserId = myUserInfo?.userId;
+    if (!roomId || !myUserId || !isIntersecting) {
+      return;
+    }
+
+    const readSeqMap = (room.readSeq ?? {}) as Record<string, number>;
+    const currentReadSeq = Number(readSeqMap[myUserId] ?? 0);
+    const isMyMsg = myUserId === message.userId;
+    if (isMyMsg || currentReadSeq >= message.seq) {
+      return;
+    }
+    if (lastReportedSeqRef.current >= message.seq) {
+      return;
+    }
+
+    const nextReadSeq = {
+      [myUserId]: message.seq,
+    };
+
+    lastReportedSeqRef.current = message.seq;
+    dispatch(
+      markReadMessageLocally({
+        id: roomId,
+        readSeq: nextReadSeq,
+      })
+    );
+    dispatch(
+      updateUserRoomReadSeq({
+        channelId: roomId,
+        readMessage: {
+          operator: myUserId,
+          lastReadSeq: message.seq,
+          readSeq: nextReadSeq,
+        },
+      })
+    );
+    dispatch(
+      markReadMessageThunk({
+        channelId: roomId,
+        readMessage: {
+          operator: myUserId,
+          lastReadSeq: message.seq,
+          readSeq: nextReadSeq,
+        },
+      })
+    );
+  }, [
+    dispatch,
+    isIntersecting,
+    message.seq,
+    message.userId,
+    myUserInfo?.userId,
+    room?.id,
+    room?.readSeq,
+  ]);
   return ref;
 };

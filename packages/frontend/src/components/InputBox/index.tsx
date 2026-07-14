@@ -128,7 +128,8 @@ export function InputBox({ className }: { readonly className?: string }) {
     }
     return null;
   }, [replyMsg]);
-  const isRoomMember = room.member.find((m) => m.id === userInfo.id);
+  const isRoomMember =
+    room.isMember ?? room.member.find((m) => m.id === userInfo.id);
   const handleJoinRoom = () => {
     dispatch(
       updateRoomThunk({

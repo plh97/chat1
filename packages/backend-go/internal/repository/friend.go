@@ -10,7 +10,7 @@ import (
 
 // 接口保持不变
 type FriendRepository interface {
-	AddFriend(ctx context.Context, userId, friendId uint) error
+	AddFriend(ctx context.Context, userId, friendId uint) (*model.Room, error)
 	DeleteFriend(ctx context.Context, userId, friendId uint) error
 	GetFriends(ctx context.Context, userId uint) ([]*model.User, error) // 返回值变了，直接返回 User 列表
 	IsFriend(ctx context.Context, userId, friendId uint) (bool, error)
@@ -27,18 +27,20 @@ func NewFriendRepository(r *Repository) FriendRepository {
 const RoomTypePrivate = 1
 
 // AddFriend 添加好友 + 创建私聊房间
-func (r *friendRepository) AddFriend(ctx context.Context, userId, friendId uint) error {
+func (r *friendRepository) AddFriend(ctx context.Context, userId, friendId uint) (*model.Room, error) {
 	if userId == friendId {
-		return errors.New("cannot add self as friend")
+		return nil, errors.New("cannot add self as friend")
 	}
 
 	// 检查是否已经是好友 (复用之前的逻辑，建议加上)
 	isFriend, _ := r.IsFriend(ctx, userId, friendId)
 	if isFriend {
-		return errors.New("already friends")
+		return nil, errors.New("already friends")
 	}
 
-	return r.DB(ctx).Transaction(func(tx *gorm.DB) error {
+	var createdRoom *model.Room
+
+	err := r.DB(ctx).Transaction(func(tx *gorm.DB) error {
 		user := model.User{ID: userId}
 		friend := model.User{ID: friendId}
 
@@ -65,8 +67,18 @@ func (r *friendRepository) AddFriend(ctx context.Context, userId, friendId uint)
 			return err
 		}
 
+		if err := tx.Preload("Members").Preload("Admins").Preload("CreatorList").First(&privateRoom, privateRoom.ID).Error; err != nil {
+			return err
+		}
+		createdRoom = &privateRoom
+
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return createdRoom, nil
 }
 
 // DeleteFriend 删除好友 + 删除私聊房间

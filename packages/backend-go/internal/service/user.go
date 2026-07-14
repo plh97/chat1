@@ -19,7 +19,7 @@ type UserService interface {
 	GetProfile(ctx context.Context, id int) (*v1.GetProfileResponseData, error)
 	UpdateProfile(ctx context.Context, id int, req *v1.UpdateProfileRequest) (*v1.GetProfileResponseData, error)
 	ListUsers(ctx context.Context, req v1.ListUsersRequest) ([]model.User, error)
-	AddFriend(ctx context.Context, userId uint, req *v1.AddFriendRequest) error
+	AddFriend(ctx context.Context, userId uint, req *v1.AddFriendRequest) (*model.Room, error)
 	DeleteFriend(ctx context.Context, userId uint, req *v1.DeleteFriendRequest) error
 	UploadPresignedUrl(fileExt string, scene int) (string, string, error)
 }
@@ -62,6 +62,7 @@ func (s *userService) Register(ctx context.Context, req *v1.RegisterRequest) err
 		return err
 	}
 	user = &model.User{
+		UserName: req.Email,
 		Email:    req.Email,
 		Password: string(hashedPassword),
 	}
@@ -188,29 +189,31 @@ func (s *userService) ListUsers(ctx context.Context, req v1.ListUsersRequest) ([
 	return users, nil
 }
 
-func (s *userService) AddFriend(ctx context.Context, userId uint, req *v1.AddFriendRequest) error {
+func (s *userService) AddFriend(ctx context.Context, userId uint, req *v1.AddFriendRequest) (*model.Room, error) {
+	friendID := req.GetFriendID()
 	// Validate that user is not adding themselves
-	if userId == req.FriendID {
-		return v1.ErrBadRequest
+	if userId == friendID {
+		return nil, v1.ErrBadRequest
 	}
 
 	// Check if friend user exists
-	_, err := s.userRepo.GetByID(ctx, int(req.FriendID))
+	_, err := s.userRepo.GetByID(ctx, int(friendID))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Add friend
-	if err := s.friendRepo.AddFriend(ctx, userId, req.FriendID); err != nil {
-		return err
+	room, err := s.friendRepo.AddFriend(ctx, userId, friendID)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	return room, nil
 }
 
 func (s *userService) DeleteFriend(ctx context.Context, userId uint, req *v1.DeleteFriendRequest) error {
 	// Delete friend
-	if err := s.friendRepo.DeleteFriend(ctx, userId, req.FriendID); err != nil {
+	if err := s.friendRepo.DeleteFriend(ctx, userId, req.GetFriendID()); err != nil {
 		return err
 	}
 

@@ -1,4 +1,5 @@
 import { IWsData, WS_EVENT } from "core";
+import { normalizeMessage } from "@/Api";
 import { IMessage, IRoom } from "@/interfaces";
 import {
   fetchUserInfoThunk,
@@ -18,7 +19,7 @@ export const useReceiveMsg = (roomRef: MutableRefObject<IRoom>) => {
   const dispatch = useAppDispatch();
   const userInfo = useAppSelector((state) => state.user.data);
   const onReceiveMsg = async (data?: IWsData<IMessage>) => {
-    const msg = data?.data;
+    const msg = data?.data ? normalizeMessage(data.data) : undefined;
     if (!msg) return;
     const room = roomRef.current;
     if (msg.contentType === "SYSTEM_MESSAGE") {

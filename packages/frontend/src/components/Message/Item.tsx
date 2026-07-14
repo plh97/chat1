@@ -1,9 +1,10 @@
 import React, { MouseEventHandler } from "react";
+import Api from "@/Api";
 import { MessageTemplate } from "@/messages";
 import { IMessage } from "@/interfaces/IMessage";
 import { Indicator } from "./Indicator";
-import { useMsgWatch } from "./hook";
-import { updateSelectedMessage } from "@/store/reducer/room";
+import { scrollToMessageIndex, useMsgWatch } from "./hook";
+import { mergeMessages, updateSelectedMessage } from "@/store/reducer/room";
 import { WithProfile } from "../WithProfile";
 import { useContextMenu } from "@/hooks";
 
@@ -57,11 +58,67 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
   if (message.contentType === "RECALL_MESSAGE") {
     return <>{Component}</>;
   }
-  const handleNavigateReply = (msg: IMessage) => {
+
+  const navigateToMessage = (messageId: string, index: number) => {
+    window.requestAnimationFrame(() => {
+      scrollToMessageIndex(index);
+      window.requestAnimationFrame(() => {
+        const target = document.querySelector(
+          `[data-id="${messageId}"] [data-msg]`
+        );
+        target?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+          inline: "center",
+        });
+        target?.classList.add("brightness-200");
+        window.setTimeout(() => {
+          target?.classList.remove("brightness-200");
+        }, 1000);
+      });
+    });
+  };
+
+  const handleNavigateReply = async (msg: IMessage) => {
+    const targetIndex = room.message.findIndex((item) => item.id === msg.id);
+    if (targetIndex >= 0) {
+      navigateToMessage(String(msg.id), targetIndex);
+      return;
+    }
+
+    if (room.id) {
+      try {
+        const windowData = await Api.getRoomMessageWindow({
+          id: String(msg.id),
+          roomId: String(room.id),
+          pageSize: 50,
+        });
+        dispatch(mergeMessages(windowData.message));
+        const merged = [...room.message, ...windowData.message];
+        const unique = new Map<string, IMessage>();
+        for (const item of merged) {
+          unique.set(String(item.id), item);
+        }
+        const sortedMessages = Array.from(unique.values()).sort(
+          (a, b) => a.seq - b.seq
+        );
+        const loadedTargetIndex = sortedMessages.findIndex(
+          (item) => item.id === msg.id
+        );
+        if (loadedTargetIndex >= 0) {
+          navigateToMessage(String(msg.id), loadedTargetIndex);
+          return;
+        }
+      } catch (error) {
+        // Fall through to toast below if lookup fails.
+      }
+    }
+
     const dom = document.querySelector(`[data-id="${msg.id}"] [data-msg]`);
     if (!dom) {
       toast({
         title: "Message not found",
+        description: "The original message is not loaded in the current list.",
         status: "error",
         position: "top",
       });

@@ -2,8 +2,11 @@ import { AxiosError, AxiosRequestConfig } from "axios";
 import {
   IAddMessageRequest,
   IMessage,
+  MessagePageResponse,
   IRoom,
   IUser,
+  MessageWindowRequest,
+  MessageWindowResponse,
   MessageRequest,
 } from "@/interfaces";
 import { getToken } from "./utils";
@@ -56,7 +59,7 @@ const normalizeUser = (user: any): IUser => {
   };
 };
 
-const normalizeMessage = (message: any): IMessage => {
+export const normalizeMessage = (message: any): IMessage => {
   if (!message) return message;
   return {
     ...message,
@@ -93,6 +96,17 @@ const normalizeRoom = (room: any): IRoom => {
       ? room.message.map(normalizeMessage)
       : room.message,
     lastMsg: room.lastMsg ? normalizeMessage(room.lastMsg) : room.lastMsg,
+  };
+};
+
+const normalizeMessageWindow = (window: any): MessageWindowResponse => {
+  if (!window) return window;
+  return {
+    ...window,
+    targetId: normalizeId(window.targetId),
+    message: Array.isArray(window.message)
+      ? window.message.map(normalizeMessage)
+      : window.message,
   };
 };
 
@@ -240,18 +254,63 @@ const Api = {
         alert: false,
       },
     }),
-  queryUser: (params: { userName: string }) =>
+  queryUser: (params: {
+    userName?: string;
+    channelId?: string;
+    role?: "member" | "admin" | "creator";
+    pageSize?: number;
+    start?: number;
+  }) =>
     request<IUser[]>({
       url: "/user",
       method: "get",
       params,
     }).then((users) => users.map(normalizeUser)),
-  getRoom: (params: MessageRequest) =>
+  getRoom: (params: {
+    id: string;
+    memberPageSize?: number;
+    memberStart?: number;
+    adminPageSize?: number;
+    adminStart?: number;
+  }) =>
     request<IRoom>({
       url: "/room",
       method: "get",
       params,
     }).then(normalizeRoom),
+  getRoomMessages: (params: MessageRequest) =>
+    request<MessagePageResponse>({
+      url: "/room/messages",
+      method: "get",
+      params,
+    }).then((data) => ({
+      ...data,
+      message: Array.isArray(data.message)
+        ? data.message.map(normalizeMessage)
+        : data.message,
+    })),
+  getRoomUsers: (params: {
+    id: string;
+    role?: "member" | "admin";
+    pageSize?: number;
+    start?: number;
+  }) =>
+    request<{ role: string; users: IUser[]; totalCount: number }>({
+      url: "/room/member",
+      method: "get",
+      params,
+    }).then((data) => ({
+      ...data,
+      users: Array.isArray(data.users)
+        ? data.users.map(normalizeUser)
+        : data.users,
+    })),
+  getRoomMessageWindow: (params: MessageWindowRequest) =>
+    request<MessageWindowResponse>({
+      url: "/room/message",
+      method: "get",
+      params,
+    }).then(normalizeMessageWindow),
   addRoom: (data: Partial<IRoom>) =>
     request<IRoom>({
       url: "/room",

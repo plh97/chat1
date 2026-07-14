@@ -5,7 +5,6 @@ import (
 	"backend-go/internal/model"
 	"context"
 	"errors"
-	"fmt"
 
 	"gorm.io/gorm"
 )
@@ -52,15 +51,9 @@ func (r *userRepository) UpdateFields(ctx context.Context, id int, fields map[st
 
 func (r *userRepository) GetByID(ctx context.Context, id int) (*model.User, error) {
 	var user model.User
-	// if private room, should preload rooms' member
-	if err := r.DB(ctx).Where("id = ?", id).Preload("Rooms").
-		// Preload("Rooms.Members", "channel_type = ?", model.RoomTypePrivate).
-		// 2. 加载房间成员，但增加一个过滤条件：只加载那些 "所属房间是私聊" 的成员
-		Preload("Rooms.Members", func(db *gorm.DB) *gorm.DB {
-			// 这里是重点：
-			return db.Joins("JOIN room_members AS rm ON rm.user_id = users.id").
-				Joins("JOIN rooms AS r ON r.id = rm.room_id").
-				Where("r.channel_type = ?", model.RoomTypePrivate)
+	if err := r.DB(ctx).Where("id = ?", id).
+		Preload("Rooms", func(db *gorm.DB) *gorm.DB {
+			return db.Select("rooms.id", "rooms.created_at", "rooms.updated_at", "rooms.deleted_at", "rooms.name", "rooms.image", "rooms.channel_type", "rooms.read_seq")
 		}).
 		First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -85,7 +78,6 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*model.U
 func (r *userRepository) List(ctx context.Context, req v1.ListUsersRequest) ([]model.User, error) {
 	var users []model.User
 	query := r.DB(ctx)
-	fmt.Println("Applying filters:", req.UserName)
 	// Filter by ID (exact match)
 	if id := req.ID; id != 0 {
 		query = query.Where("id = ?", id)
@@ -99,6 +91,22 @@ func (r *userRepository) List(ctx context.Context, req v1.ListUsersRequest) ([]m
 	// Filter by email (partial match with LIKE)
 	if email := req.Email; email != "" {
 		query = query.Where("email LIKE ?", "%"+email+"%")
+	}
+
+	if req.ChannelID != "" {
+		query = query.Joins("JOIN room_members ON room_members.user_id = users.id").
+			Where("room_members.room_id = ?", req.ChannelID)
+		if req.Role == model.Admin || req.Role == model.Member || req.Role == model.Creator {
+			query = query.Where("room_members.role = ?", req.Role)
+		}
+	}
+
+	query = query.Order("users.id ASC")
+	if req.Start > 0 {
+		query = query.Offset(req.Start)
+	}
+	if req.PageSize > 0 {
+		query = query.Limit(req.PageSize)
 	}
 
 	// Execute the query

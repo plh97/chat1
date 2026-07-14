@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 
 	v1 "backend-go/api/v1"
@@ -15,7 +16,10 @@ import (
 
 type RoomService interface {
 	CreateRoom(ctx context.Context, req v1.RoomCreateRequest) (interface{}, error)
-	GetRoomByID(ctx context.Context, id uint, limit, offset int) (interface{}, error)
+	GetRoomByID(ctx context.Context, id, viewerID uint, memberLimit, memberOffset, adminLimit, adminOffset int) (interface{}, error)
+	GetRoomMessages(ctx context.Context, roomID uint, limit, offset int) (interface{}, error)
+	GetRoomUsers(ctx context.Context, roomID, viewerID uint, role string, limit, offset int) (interface{}, error)
+	GetRoomMessageWindow(ctx context.Context, roomID, messageID uint, limit int) (interface{}, error)
 	ListRooms(ctx context.Context) (interface{}, error)
 	UpdateRoom(ctx context.Context, req v1.RoomUpdateRequest) (interface{}, error)
 	JoinRoom(ctx context.Context, userID, roomID uint) (interface{}, error)
@@ -66,18 +70,39 @@ type roomMessageResponse struct {
 }
 
 type roomDetailResponse struct {
-	ID          uint                   `json:"id"`
-	Name        string                 `json:"name"`
-	Image       string                 `json:"image"`
-	ChannelType string                 `json:"channelType"`
-	ReadSeq     interface{}            `json:"readSeq"`
-	Member      []*model.User          `json:"member"`
-	Admin       []*model.User          `json:"admin"`
-	Creator     *model.User            `json:"creator"`
+	ID               uint                   `json:"id"`
+	Name             string                 `json:"name"`
+	Image            string                 `json:"image"`
+	ChannelType      string                 `json:"channelType"`
+	IsMember         bool                   `json:"isMember"`
+	ReadSeq          interface{}            `json:"readSeq"`
+	Member           []*model.User          `json:"member"`
+	MemberTotalCount int64                  `json:"memberTotalCount"`
+	Admin            []*model.User          `json:"admin"`
+	AdminTotalCount  int64                  `json:"adminTotalCount"`
+	Creator          *model.User            `json:"creator"`
+	Message          []*roomMessageResponse `json:"message"`
+	TotalCount       int64                  `json:"totalCount"`
+	CreatedAt        interface{}            `json:"createdAt"`
+	UpdatedAt        interface{}            `json:"updatedAt"`
+}
+
+type roomMemberPageResponse struct {
+	Role       string        `json:"role"`
+	Users      []*model.User `json:"users"`
+	TotalCount int64         `json:"totalCount"`
+}
+
+type roomMessagePageResponse struct {
+	Message []*roomMessageResponse `json:"message"`
+	HasMore bool                   `json:"hasMore"`
+}
+
+type roomMessageWindowResponse struct {
 	Message     []*roomMessageResponse `json:"message"`
+	TargetID    uint                   `json:"targetId"`
+	TargetIndex int64                  `json:"targetIndex"`
 	TotalCount  int64                  `json:"totalCount"`
-	CreatedAt   interface{}            `json:"createdAt"`
-	UpdatedAt   interface{}            `json:"updatedAt"`
 }
 
 func uniqueUintIDs(ids []uint, excluded ...uint) []uint {
@@ -150,14 +175,14 @@ func (s *roomService) CreateRoom(ctx context.Context, req v1.RoomCreateRequest) 
 	// 2. 添加创建者为成员（可选，如果创建者也应该在成员列表中）
 	if err := db.Create(&model.RoomMember{
 		RoomID: room.ID,
-		UserID: req.CreatorID,
+		UserID: req.GetCreatorID(),
 		Role:   model.Creator,
 	}).Error; err != nil {
 		return nil, err
 	}
 
 	// 3. 添加管理员
-	adminIDs := uniqueUintIDs(req.GetAdminIDs(), req.CreatorID)
+	adminIDs := uniqueUintIDs(req.GetAdminIDs(), req.GetCreatorID())
 	for _, adminID := range adminIDs {
 		if err := upsertRoomMember(db, room.ID, adminID, model.Admin); err != nil {
 			return nil, err
@@ -165,46 +190,186 @@ func (s *roomService) CreateRoom(ctx context.Context, req v1.RoomCreateRequest) 
 	}
 
 	// 4. 添加普通成员
-	memberIDs := uniqueUintIDs(req.GetMemberIDs(), req.CreatorID)
+	memberIDs := uniqueUintIDs(req.GetMemberIDs(), req.GetCreatorID())
 	for _, memberID := range memberIDs {
 		if err := upsertRoomMember(db, room.ID, memberID, model.Member); err != nil {
 			return nil, err
 		}
 	}
 
-	return s.GetRoomByID(ctx, room.ID, 50, 0)
+	return s.GetRoomByID(ctx, room.ID, req.GetCreatorID(), 20, 0, 20, 0)
 }
 
-func (s *roomService) GetRoomByID(ctx context.Context, id uint, limit, offset int) (interface{}, error) {
+func (s *roomService) GetRoomByID(ctx context.Context, id, viewerID uint, memberLimit, memberOffset, adminLimit, adminOffset int) (interface{}, error) {
 	db := s.tm.(*repository.Repository).DB(ctx)
-	var room model.Room
-	if err := db.
-		Preload("Members").
-		Preload("Admins").
-		Preload("CreatorList").
-		Where("id = ?", id).
-		First(&room).Error; err != nil {
+	room, err := loadRoomForMessages(db, id)
+	if err != nil {
+		return nil, err
+	}
+	if memberLimit <= 0 {
+		memberLimit = 0
+	}
+	if memberOffset < 0 {
+		memberOffset = 0
+	}
+	if adminLimit <= 0 {
+		adminLimit = 0
+	}
+	if adminOffset < 0 {
+		adminOffset = 0
+	}
+
+	members, memberTotalCount, err := loadRoomUsersByRole(db, id, viewerID, model.Member, memberLimit, memberOffset)
+	if err != nil {
+		return nil, err
+	}
+	room.Members = members
+	admins, adminTotalCount, err := loadRoomUsersByRole(db, id, viewerID, model.Admin, adminLimit, adminOffset)
+	if err != nil {
+		return nil, err
+	}
+	room.Admins = admins
+	viewerRole, err := getViewerRole(db, id, viewerID)
+	if err != nil {
 		return nil, err
 	}
 
+	return &roomDetailResponse{
+		ID:               room.ID,
+		Name:             room.Name,
+		Image:            room.Image,
+		ChannelType:      room.ChannelType,
+		IsMember:         viewerRole != "",
+		ReadSeq:          room.ReadSeq,
+		Member:           room.Members,
+		MemberTotalCount: memberTotalCount,
+		Admin:            room.Admins,
+		AdminTotalCount:  adminTotalCount,
+		Creator:          room.Creator,
+		Message:          []*roomMessageResponse{},
+		TotalCount:       0,
+		CreatedAt:        room.CreatedAt,
+		UpdatedAt:        room.UpdatedAt,
+	}, nil
+}
+
+func (s *roomService) GetRoomMessages(ctx context.Context, roomID uint, limit, offset int) (interface{}, error) {
+	db := s.tm.(*repository.Repository).DB(ctx)
+	room, err := loadRoomForMessages(db, roomID)
+	if err != nil {
+		return nil, err
+	}
 	if limit <= 0 {
 		limit = 50
+	}
+	if limit > 100 {
+		limit = 100
 	}
 	if offset < 0 {
 		offset = 0
 	}
 
 	channelID := strconv.Itoa(int(room.ID))
+	var messages []model.Message
+	if err := db.Where("channel_id = ?", channelID).
+		Order("seq DESC").
+		Limit(limit + 1).
+		Offset(offset).
+		Find(&messages).Error; err != nil {
+		return nil, err
+	}
+
+	hasMore := len(messages) > limit
+	if hasMore {
+		messages = messages[:limit]
+	}
+
+	for left, right := 0, len(messages)-1; left < right; left, right = left+1, right-1 {
+		messages[left], messages[right] = messages[right], messages[left]
+	}
+
+	replyMessagesByID, err := loadReplyMessages(db, messages)
+	if err != nil {
+		return nil, err
+	}
+	userMap, err := buildMessageUserMap(db, room, messages, replyMessagesByID)
+	if err != nil {
+		return nil, err
+	}
+
+	responseMessages := make([]*roomMessageResponse, 0, len(messages))
+	for _, message := range messages {
+		responseMessages = append(responseMessages, buildRoomMessageResponse(message, userMap[message.UserId], userMap, replyMessagesByID))
+	}
+
+	return &roomMessagePageResponse{
+		Message: responseMessages,
+		HasMore: hasMore,
+	}, nil
+}
+
+func (s *roomService) GetRoomUsers(ctx context.Context, roomID, viewerID uint, role string, limit, offset int) (interface{}, error) {
+	db := s.tm.(*repository.Repository).DB(ctx)
+	if role != model.Admin {
+		role = model.Member
+	}
+	users, totalCount, err := loadRoomUsersByRole(db, roomID, viewerID, role, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	return &roomMemberPageResponse{
+		Role:       role,
+		Users:      users,
+		TotalCount: totalCount,
+	}, nil
+}
+
+func (s *roomService) GetRoomMessageWindow(ctx context.Context, roomID, messageID uint, limit int) (interface{}, error) {
+	db := s.tm.(*repository.Repository).DB(ctx)
+	room, err := loadRoomForMessages(db, roomID)
+	if err != nil {
+		return nil, err
+	}
+	if limit <= 0 {
+		limit = 50
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	channelID := strconv.Itoa(int(room.ID))
+	var targetMessage model.Message
+	if err := db.Where("id = ? AND channel_id = ?", messageID, channelID).First(&targetMessage).Error; err != nil {
+		return nil, err
+	}
+
 	var totalCount int64
 	if err := db.Model(&model.Message{}).Where("channel_id = ?", channelID).Count(&totalCount).Error; err != nil {
 		return nil, err
+	}
+
+	var targetIndex int64
+	if err := db.Model(&model.Message{}).Where("channel_id = ? AND seq < ?", channelID, targetMessage.Seq).Count(&targetIndex).Error; err != nil {
+		return nil, err
+	}
+
+	start := int(targetIndex) - limit/2
+	if start < 0 {
+		start = 0
+	}
+	if totalCount > int64(limit) && int64(start+limit) > totalCount {
+		start = int(totalCount) - limit
+		if start < 0 {
+			start = 0
+		}
 	}
 
 	var messages []model.Message
 	if err := db.Where("channel_id = ?", channelID).
 		Order("seq ASC").
 		Limit(limit).
-		Offset(offset).
+		Offset(start).
 		Find(&messages).Error; err != nil {
 		return nil, err
 	}
@@ -213,8 +378,87 @@ func (s *roomService) GetRoomByID(ctx context.Context, id uint, limit, offset in
 	if err != nil {
 		return nil, err
 	}
+	userMap, err := buildMessageUserMap(db, room, messages, replyMessagesByID)
+	if err != nil {
+		return nil, err
+	}
+	responseMessages := make([]*roomMessageResponse, 0, len(messages))
+	for i := range messages {
+		message := messages[i]
+		user := userMap[message.UserId]
+		responseMessages = append(responseMessages, buildRoomMessageResponse(message, user, userMap, replyMessagesByID))
+	}
 
+	return &roomMessageWindowResponse{
+		Message:     responseMessages,
+		TargetID:    targetMessage.ID,
+		TargetIndex: targetIndex,
+		TotalCount:  totalCount,
+	}, nil
+}
+
+func loadRoomForMessages(db *gorm.DB, id uint) (*model.Room, error) {
+	var room model.Room
+	if err := db.
+		Preload("CreatorList").
+		Where("id = ?", id).
+		First(&room).Error; err != nil {
+		return nil, err
+	}
+	return &room, nil
+}
+
+func loadRoomUsersByRole(db *gorm.DB, roomID, viewerID uint, role string, limit, offset int) ([]*model.User, int64, error) {
+	if offset < 0 {
+		offset = 0
+	}
+
+	memberQuery := db.Model(&model.User{}).
+		Joins("JOIN room_members ON room_members.user_id = users.id").
+		Where("room_members.room_id = ? AND room_members.role = ?", roomID, role)
+
+	var memberTotalCount int64
+	if err := memberQuery.Count(&memberTotalCount).Error; err != nil {
+		return nil, 0, err
+	}
+
+	query := memberQuery
+	if limit <= 0 {
+		return []*model.User{}, memberTotalCount, nil
+	}
+	if viewerID != 0 {
+		query = query.Order(fmt.Sprintf("CASE WHEN users.id = %d THEN 0 ELSE 1 END", viewerID))
+	}
+	query = query.Order("users.id ASC")
+
+	var members []*model.User
+	if err := query.Offset(offset).Limit(limit).Find(&members).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return members, memberTotalCount, nil
+}
+
+func getViewerRole(db *gorm.DB, roomID, viewerID uint) (string, error) {
+	if viewerID == 0 {
+		return "", nil
+	}
+	var roomMember model.RoomMember
+	err := db.Select("role").Where("room_id = ? AND user_id = ?", roomID, viewerID).First(&roomMember).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return "", nil
+	}
+	if err != nil {
+		return "", err
+	}
+	return roomMember.Role, nil
+}
+
+func buildRoomMessageUserMap(room *model.Room) map[string]*roomMessageUser {
 	userMap := map[string]*roomMessageUser{}
+	if room == nil {
+		return userMap
+	}
 	for _, member := range room.Members {
 		if member == nil {
 			continue
@@ -230,38 +474,47 @@ func (s *roomService) GetRoomByID(ctx context.Context, id uint, limit, offset in
 	if room.Creator != nil {
 		userMap[strconv.Itoa(int(room.Creator.ID))] = buildRoomMessageUser(room.Creator)
 	}
+	return userMap
+}
 
-	responseMessages := make([]*roomMessageResponse, 0, len(messages))
-	for i := range messages {
-		message := messages[i]
-		user := userMap[message.UserId]
-		if user == nil && message.UserId != "" {
-			userID, parseErr := strconv.Atoi(message.UserId)
-			if parseErr == nil {
-				var dbUser model.User
-				if err := db.Where("id = ?", userID).First(&dbUser).Error; err == nil {
-					user = buildRoomMessageUser(&dbUser)
-					userMap[message.UserId] = user
-				}
-			}
+func buildMessageUserMap(db *gorm.DB, room *model.Room, messages []model.Message, replyMessagesByID map[string]model.Message) (map[string]*roomMessageUser, error) {
+	userMap := buildRoomMessageUserMap(room)
+	userIDs := make(map[uint]struct{})
+	collectUserID := func(rawUserID string) {
+		if rawUserID == "" {
+			return
 		}
-		responseMessages = append(responseMessages, buildRoomMessageResponse(message, user, userMap, replyMessagesByID))
+		if _, exists := userMap[rawUserID]; exists {
+			return
+		}
+		parsedUserID, err := strconv.ParseUint(rawUserID, 10, 64)
+		if err != nil {
+			return
+		}
+		userIDs[uint(parsedUserID)] = struct{}{}
 	}
-
-	return &roomDetailResponse{
-		ID:          room.ID,
-		Name:        room.Name,
-		Image:       room.Image,
-		ChannelType: room.ChannelType,
-		ReadSeq:     room.ReadSeq,
-		Member:      room.Members,
-		Admin:       room.Admins,
-		Creator:     room.Creator,
-		Message:     responseMessages,
-		TotalCount:  totalCount,
-		CreatedAt:   room.CreatedAt,
-		UpdatedAt:   room.UpdatedAt,
-	}, nil
+	for _, message := range messages {
+		collectUserID(message.UserId)
+	}
+	for _, replyMessage := range replyMessagesByID {
+		collectUserID(replyMessage.UserId)
+	}
+	if len(userIDs) == 0 {
+		return userMap, nil
+	}
+	ids := make([]uint, 0, len(userIDs))
+	for id := range userIDs {
+		ids = append(ids, id)
+	}
+	var users []model.User
+	if err := db.Where("id IN ?", ids).Find(&users).Error; err != nil {
+		return nil, err
+	}
+	for i := range users {
+		user := users[i]
+		userMap[strconv.Itoa(int(user.ID))] = buildRoomMessageUser(&user)
+	}
+	return userMap, nil
 }
 
 func loadReplyMessages(db *gorm.DB, messages []model.Message) (map[string]model.Message, error) {
@@ -364,7 +617,7 @@ func (s *roomService) ListRooms(ctx context.Context) (interface{}, error) {
 func (s *roomService) UpdateRoom(ctx context.Context, req v1.RoomUpdateRequest) (interface{}, error) {
 	db := s.tm.(*repository.Repository).DB(ctx)
 	var room model.Room
-	if err := db.Where("id = ?", req.ID).First(&room).Error; err != nil {
+	if err := db.Where("id = ?", req.GetID()).First(&room).Error; err != nil {
 		return nil, err
 	}
 
@@ -381,21 +634,21 @@ func (s *roomService) UpdateRoom(ctx context.Context, req v1.RoomUpdateRequest) 
 		}
 	}
 
-	adminIDs := uniqueUintIDs(req.GetAdminIDs(), req.CreatorID)
+	adminIDs := uniqueUintIDs(req.GetAdminIDs(), req.GetCreatorID())
 	for _, adminID := range adminIDs {
 		if err := upsertRoomMember(db, room.ID, adminID, model.Admin); err != nil {
 			return nil, err
 		}
 	}
 
-	memberIDs := uniqueUintIDs(req.GetMemberIDs(), req.CreatorID)
+	memberIDs := uniqueUintIDs(req.GetMemberIDs(), req.GetCreatorID())
 	for _, memberID := range memberIDs {
 		if err := upsertRoomMember(db, room.ID, memberID, model.Member); err != nil {
 			return nil, err
 		}
 	}
 
-	return s.GetRoomByID(ctx, room.ID, 50, 0)
+	return s.GetRoomByID(ctx, room.ID, 0, 20, 0, 20, 0)
 }
 
 func (s *roomService) JoinRoom(ctx context.Context, userID, roomID uint) (interface{}, error) {
@@ -416,7 +669,7 @@ func (s *roomService) JoinRoom(ctx context.Context, userID, roomID uint) (interf
 		return nil, err
 	}
 
-	return s.GetRoomByID(ctx, room.ID, 50, 0)
+	return s.GetRoomByID(ctx, room.ID, userID, 20, 0, 20, 0)
 }
 
 func buildRoomMessageUser(user *model.User) *roomMessageUser {

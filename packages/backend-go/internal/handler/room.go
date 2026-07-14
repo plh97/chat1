@@ -98,6 +98,72 @@ func (h *RoomHandler) AddRoom(ctx *gin.Context) {
 func (h *RoomHandler) GetRoom(ctx *gin.Context) {
 	// TODO: 实现获取房间信息逻辑
 	id := ctx.Query("id")
+	userID := uint(GetUserIdFromCtx(ctx))
+	memberPageSize := 0
+	if pageSizeStr := ctx.Query("memberPageSize"); pageSizeStr != "" {
+		if parsed, parseErr := strconv.Atoi(pageSizeStr); parseErr == nil && parsed > 0 {
+			memberPageSize = parsed
+		}
+	}
+	memberOffset := 0
+	if startStr := ctx.Query("memberStart"); startStr != "" {
+		if parsed, parseErr := strconv.Atoi(startStr); parseErr == nil && parsed >= 0 {
+			memberOffset = parsed
+		}
+	}
+	adminPageSize := 0
+	if pageSizeStr := ctx.Query("adminPageSize"); pageSizeStr != "" {
+		if parsed, parseErr := strconv.Atoi(pageSizeStr); parseErr == nil && parsed > 0 {
+			adminPageSize = parsed
+		}
+	}
+	adminOffset := 0
+	if startStr := ctx.Query("adminStart"); startStr != "" {
+		if parsed, parseErr := strconv.Atoi(startStr); parseErr == nil && parsed >= 0 {
+			adminOffset = parsed
+		}
+	}
+	var room interface{}
+	var err error
+	if id != "" {
+		idUint64, parseErr := strconv.ParseUint(id, 10, 64)
+		if parseErr != nil {
+			v1.HandleError(ctx, 400, v1.ErrBadRequest, "invalid id")
+			return
+		}
+		room, err = h.roomService.GetRoomByID(ctx, uint(idUint64), userID, memberPageSize, memberOffset, adminPageSize, adminOffset)
+	} else {
+		room, err = h.roomService.ListRooms(ctx)
+	}
+	if err != nil {
+		v1.HandleError(ctx, 500, err, nil)
+		return
+	}
+	v1.HandleSuccess(ctx, room)
+}
+
+// GetRoomMessages godoc
+// @Summary 获取房间消息分页
+// @Schemes
+// @Tags 房间模块
+// @Accept json
+// @Produce json
+// @Param id query string true "房间ID"
+// @Param pageSize query string false "消息数量"
+// @Param start query string false "消息偏移"
+// @Success 200 {object} v1.Response
+// @Router /room/messages [get]
+func (h *RoomHandler) GetRoomMessages(ctx *gin.Context) {
+	id := ctx.Query("id")
+	if id == "" {
+		v1.HandleError(ctx, 400, v1.ErrBadRequest, "missing id")
+		return
+	}
+	roomID, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		v1.HandleError(ctx, 400, v1.ErrBadRequest, "invalid id")
+		return
+	}
 	pageSize := 50
 	if pageSizeStr := ctx.Query("pageSize"); pageSizeStr != "" {
 		if parsed, parseErr := strconv.Atoi(pageSizeStr); parseErr == nil && parsed > 0 {
@@ -110,23 +176,57 @@ func (h *RoomHandler) GetRoom(ctx *gin.Context) {
 			offset = parsed
 		}
 	}
-	var room interface{}
-	var err error
-	if id != "" {
-		idUint64, parseErr := strconv.ParseUint(id, 10, 64)
-		if parseErr != nil {
-			v1.HandleError(ctx, 400, v1.ErrBadRequest, "invalid id")
-			return
-		}
-		room, err = h.roomService.GetRoomByID(ctx, uint(idUint64), pageSize, offset)
-	} else {
-		room, err = h.roomService.ListRooms(ctx)
-	}
+	roomMessages, err := h.roomService.GetRoomMessages(ctx, uint(roomID), pageSize, offset)
 	if err != nil {
 		v1.HandleError(ctx, 500, err, nil)
 		return
 	}
-	v1.HandleSuccess(ctx, room)
+	v1.HandleSuccess(ctx, roomMessages)
+}
+
+// GetRoomMembers godoc
+// @Summary 获取房间用户分页
+// @Schemes
+// @Tags 房间模块
+// @Accept json
+// @Produce json
+// @Param id query string true "房间ID"
+// @Param role query string false "角色: member/admin"
+// @Param pageSize query string false "用户数量"
+// @Param start query string false "用户偏移"
+// @Success 200 {object} v1.Response
+// @Router /room/member [get]
+func (h *RoomHandler) GetRoomMembers(ctx *gin.Context) {
+	id := ctx.Query("id")
+	if id == "" {
+		v1.HandleError(ctx, 400, v1.ErrBadRequest, "missing id")
+		return
+	}
+	roomID, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		v1.HandleError(ctx, 400, v1.ErrBadRequest, "invalid id")
+		return
+	}
+	pageSize := 20
+	if pageSizeStr := ctx.Query("pageSize"); pageSizeStr != "" {
+		if parsed, parseErr := strconv.Atoi(pageSizeStr); parseErr == nil && parsed > 0 {
+			pageSize = parsed
+		}
+	}
+	offset := 0
+	if startStr := ctx.Query("start"); startStr != "" {
+		if parsed, parseErr := strconv.Atoi(startStr); parseErr == nil && parsed >= 0 {
+			offset = parsed
+		}
+	}
+	userID := uint(GetUserIdFromCtx(ctx))
+	role := ctx.DefaultQuery("role", "member")
+	members, err := h.roomService.GetRoomUsers(ctx, uint(roomID), userID, role, pageSize, offset)
+	if err != nil {
+		v1.HandleError(ctx, 500, err, nil)
+		return
+	}
+	v1.HandleSuccess(ctx, members)
 }
 
 // UpdateRoom godoc
@@ -145,7 +245,7 @@ func (h *RoomHandler) UpdateRoom(ctx *gin.Context) {
 		v1.HandleError(ctx, 400, v1.ErrBadRequest, nil)
 		return
 	}
-	if req.ID == 0 {
+	if req.GetID() == 0 {
 		v1.HandleError(ctx, 400, v1.ErrBadRequest, "missing id")
 		return
 	}
@@ -216,6 +316,55 @@ func (h *RoomHandler) JoinRoom(ctx *gin.Context) {
 		return
 	}
 	v1.HandleSuccess(ctx, room, "Joined room successfully")
+}
+
+// GetMessage godoc
+// @Summary 获取指定消息附近的消息窗口
+// @Schemes
+// @Tags 房间模块
+// @Accept json
+// @Produce json
+// @Param id query string true "消息ID"
+// @Param roomId query string true "房间ID"
+// @Param pageSize query string false "消息数量"
+// @Success 200 {object} v1.Response
+// @Router /room/message [get]
+func (h *RoomHandler) GetMessage(ctx *gin.Context) {
+	messageID := ctx.Query("id")
+	roomID := ctx.Query("roomId")
+	if messageID == "" || roomID == "" {
+		v1.HandleError(ctx, 400, v1.ErrBadRequest, "missing id or roomId")
+		return
+	}
+
+	messageUint64, err := strconv.ParseUint(messageID, 10, 64)
+	if err != nil {
+		v1.HandleError(ctx, 400, v1.ErrBadRequest, "invalid id")
+		return
+	}
+	roomUint64, err := strconv.ParseUint(roomID, 10, 64)
+	if err != nil {
+		v1.HandleError(ctx, 400, v1.ErrBadRequest, "invalid roomId")
+		return
+	}
+
+	pageSize := 50
+	if pageSizeStr := ctx.Query("pageSize"); pageSizeStr != "" {
+		if parsed, parseErr := strconv.Atoi(pageSizeStr); parseErr == nil && parsed > 0 {
+			pageSize = parsed
+		}
+	}
+
+	messageWindow, err := h.roomService.GetRoomMessageWindow(ctx, uint(roomUint64), uint(messageUint64), pageSize)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			v1.HandleError(ctx, 404, v1.ErrNotFound, nil)
+			return
+		}
+		v1.HandleError(ctx, 500, err, nil)
+		return
+	}
+	v1.HandleSuccess(ctx, messageWindow)
 }
 
 // DeleteMessage godoc

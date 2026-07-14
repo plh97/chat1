@@ -1,5 +1,9 @@
 import { isSafari } from "@/config";
-import { uploadFileWithPresignedUrl } from "./uploadFile";
+import {
+  getFileExtension,
+  getNormalizedMimeType,
+  uploadFileWithPresignedUrl,
+} from "./uploadFile";
 
 export const videoMaxWidth = 70;
 export const videoMaxHeight = 70;
@@ -48,9 +52,10 @@ export const previewImage = (
       canvas.width = thumbnailX;
       canvas.height = thumbnailY;
       ctx.drawImage(image, 0, 0, w, h, 0, 0, thumbnailX, thumbnailY);
-      const base64 = ctx.canvas.toDataURL(file.type, 0.8);
+      const mimeType = getNormalizedMimeType(file);
+      const base64 = ctx.canvas.toDataURL(mimeType, 0.8);
       const endpoint_url = await uploadFileWithPresignedUrl(file, 1);
-      const fileExt = file.type.split("/")[1] || "png";
+      const fileExt = getFileExtension(file);
 
       resolve({
         url: endpoint_url,
@@ -60,7 +65,7 @@ export const previewImage = (
         thumbnail: base64,
         width: w / 2,
         height: h / 2,
-        fileType: file.type,
+        fileType: mimeType,
         duration: null,
       });
       cleanUp();
@@ -106,12 +111,13 @@ export const previewVideo = (file: File): Promise<MediaMessage> => {
   return new Promise((resolve) => {
     video.onerror = cleanUp;
     video.oncanplaythrough = async () => {
-      const { base64, w, h } = captureVideo(video, file.type);
+      const mimeType = getNormalizedMimeType(file);
+      const { base64, w, h } = captureVideo(video, mimeType);
       const endpoint_url = await uploadFileWithPresignedUrl(file, 3);
       const duration = !isNaN(video.duration)
         ? Math.ceil(video.duration)
         : null;
-      const fileExt = file.type.split("/")[1] || "mp4";
+      const fileExt = getFileExtension(file);
 
       resolve({
         url: endpoint_url,
@@ -121,7 +127,7 @@ export const previewVideo = (file: File): Promise<MediaMessage> => {
         thumbnail: base64,
         width: w,
         height: h,
-        fileType: file.type,
+        fileType: mimeType,
         duration: duration?.toString() || null,
       });
       cleanUp();
@@ -143,8 +149,9 @@ export const previewAudio = (
   return new Promise((resolve) => {
     audio.onerror = cleanUp;
     audio.oncanplaythrough = async () => {
+      const mimeType = getNormalizedMimeType(file);
       const endpoint_url = await uploadFileWithPresignedUrl(file, 2);
-      const fileExt = file.type.split("/")[1] || "mp3";
+      const fileExt = getFileExtension(file);
       const audioDuration =
         duration || (!isNaN(audio.duration) ? Math.ceil(audio.duration) : null);
 
@@ -156,10 +163,27 @@ export const previewAudio = (
         thumbnail: null,
         width: null,
         height: null,
-        fileType: file.type,
+        fileType: mimeType,
         duration: audioDuration?.toString() || null,
       });
       cleanUp();
     };
   });
+};
+
+export const previewDocument = async (file: File): Promise<MediaMessage> => {
+  const mimeType = getNormalizedMimeType(file);
+  const endpoint_url = await uploadFileWithPresignedUrl(file, 3);
+
+  return {
+    url: endpoint_url,
+    extension: getFileExtension(file),
+    name: file.name,
+    size: file.size,
+    thumbnail: null,
+    width: null,
+    height: null,
+    fileType: mimeType,
+    duration: null,
+  };
 };

@@ -15,7 +15,8 @@ type Room struct {
 	ID          uint              `gorm:"primarykey" json:"id"`
 	Name        string            `gorm:"column:name" json:"name"`
 	Image       string            `gorm:"column:image" json:"image"`
-	ChannelType string               `gorm:"column:channel_type" json:"channelType"`
+	ChannelType string            `gorm:"column:channel_type" json:"channelType"`
+	LastSeq     int               `gorm:"column:last_seq;default:0" json:"-"`
 	ReadSeq     datatypes.JSONMap `gorm:"column:read_seq;type:json" json:"read_seq"`
 
 	// Relations

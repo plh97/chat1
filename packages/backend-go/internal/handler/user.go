@@ -224,13 +224,14 @@ func (h *UserHandler) AddFriend(ctx *gin.Context) {
 		return
 	}
 
-	if err := h.userService.AddFriend(ctx, uint(userId), req); err != nil {
+	room, err := h.userService.AddFriend(ctx, uint(userId), req)
+	if err != nil {
 		h.logger.WithContext(ctx).Error("userService.AddFriend error", zap.Error(err))
 		v1.HandleError(ctx, http.StatusBadRequest, err, nil)
 		return
 	}
 
-	v1.HandleSuccess(ctx, nil, "Friend added successfully")
+	v1.HandleSuccess(ctx, room, "Friend added successfully")
 }
 
 // DeleteFriend godoc

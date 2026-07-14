@@ -67,9 +67,8 @@ export const registerThunk = createAsyncThunk<
   void,
   { email: string; password: string }
 >(`register`, async (data, { dispatch }) => {
-  const isSuc = await Api.register(data);
-  if (!isSuc) return;
-  dispatch(fetchUserInfoThunk());
+  await Api.register(data);
+  await dispatch(loginThunk(data));
 });
 
 export const setUserInfoThunk = createAsyncThunk<void, Partial<IUser>>(

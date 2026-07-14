@@ -16,12 +16,31 @@ export interface IMessage extends Omit<Message, "mediaMessage"> {
   user: IUser;
   member?: IUser[];
   reply?: IMessage;
+  localStatus?: "sending" | "failed";
 }
 
 export interface MessageRequest {
   pageSize?: number;
   id: string;
   start?: number;
+}
+
+export interface MessageWindowRequest {
+  pageSize?: number;
+  id: string;
+  roomId: string;
+}
+
+export interface MessageWindowResponse {
+  message: IMessage[];
+  targetId: string;
+  targetIndex: number;
+  totalCount: number;
+}
+
+export interface MessagePageResponse {
+  message: IMessage[];
+  hasMore: boolean;
 }
 
 export interface IAddMessageRequest {

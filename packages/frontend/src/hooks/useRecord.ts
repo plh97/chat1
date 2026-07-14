@@ -2,6 +2,14 @@ let t = 0;
 
 const map: Record<number, any> = {};
 
+const getAudioMimeType = (recorder: MediaRecorder, chunkType?: string) => {
+  return recorder.mimeType || chunkType || "audio/webm";
+};
+
+const getAudioExtension = (mimeType: string) => {
+  return mimeType.split(";")[0].split("/")[1] || "webm";
+};
+
 export function useRecord() {
   const [time, setTime] = useState(0);
   const [audio, setAudio] = useState<MediaRecorder | null>(null);
@@ -20,8 +28,10 @@ export function useRecord() {
         mediaRecorderRef.current = mediaRecorder;
         mediaRecorder.start();
         mediaRecorder.ondataavailable = (e) => {
-          const file = new File([e.data], Date.now().toString(), {
-            type: e.data.type,
+          const mimeType = getAudioMimeType(mediaRecorder, e.data.type);
+          const extension = getAudioExtension(mimeType);
+          const file = new File([e.data], `${Date.now()}.${extension}`, {
+            type: mimeType,
           });
           map[t]?.(file);
         };

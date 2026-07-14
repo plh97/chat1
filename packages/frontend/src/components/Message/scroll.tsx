@@ -11,11 +11,10 @@ import { useLoadMore, useScroll } from "./hook";
 
 export const Top = () => {
   const { loadingMessage, data } = useAppSelector((state) => state.room);
-  const { message, totalCount } = data;
-  const hasMessage = totalCount > message.length;
+  const { hasMoreMessage } = data;
   return (
     <>
-      {!hasMessage && !loadingMessage && (
+      {!hasMoreMessage && !loadingMessage && (
         <div className="text-center m-4">---------- END ----------</div>
       )}
       {loadingMessage && (
@@ -39,20 +38,46 @@ export function Scroll({ children }: PropsWithChildren) {
   const { id = "" } = useParams();
   const { isPrepend, handleScroll } = useLoadMore();
   const { scrollEl } = useScroll();
+  const initialScrolledRoomIdRef = useRef("");
   const room = useAppSelector((state) => state.room.data);
   const userInfo = useAppSelector((state) => state.user.data);
   // init message list
   useLayoutEffect(() => {
     if (!id) return;
+    initialScrolledRoomIdRef.current = "";
     // 清空旧的信息
-    dispatch(initialMessage({ message: [], totalCount: 0, id: undefined }));
+    dispatch(
+      initialMessage({
+        message: [],
+        totalCount: 0,
+        hasMoreMessage: true,
+        id: undefined,
+      })
+    );
     dispatch(getRoomInfoThunk(id)).then(() => {
       dispatch(scrollToEnd(false));
     });
   }, [id]);
   const { loadingMessage } = useAppSelector((state) => state.room);
-  const { message, totalCount } = useAppSelector((state) => state.room.data);
-  const hasMessage = totalCount > message.length;
+  const { message, hasMoreMessage } = useAppSelector(
+    (state) => state.room.data
+  );
+
+  useLayoutEffect(() => {
+    if (!room?.id || !message.length || loadingMessage) {
+      return;
+    }
+    if (initialScrolledRoomIdRef.current === room.id) {
+      return;
+    }
+    initialScrolledRoomIdRef.current = room.id;
+    window.requestAnimationFrame(() => {
+      scrollEl.current?.scrollToIndex(message.length, {
+        align: "end",
+      });
+    });
+  }, [loadingMessage, message.length, room?.id, scrollEl]);
+
   if (!room?.id || !userInfo?.id) {
     return (
       <div className="overflow-y-auto flex-1 relative px-3.5 py-0 flex items-center justify-center flex-col">
@@ -67,7 +92,7 @@ export function Scroll({ children }: PropsWithChildren) {
       className="overflow-y-auto flex-1 relative px-3.5 py-0"
       ref={scrollEl}
       onScroll={(offset) => {
-        if (!loadingMessage && message.length && hasMessage) {
+        if (!loadingMessage && message.length && hasMoreMessage) {
           handleScroll(offset);
         }
       }}

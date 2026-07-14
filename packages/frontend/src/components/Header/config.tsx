@@ -5,8 +5,8 @@ import { ConfigSidebar } from "./ConfigSidebar";
 export function Config() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const room = useAppSelector((state) => state.room.data);
-  const isGroup = room?.channelType === "GROUP";
-  if (!isGroup) {
+  const isConfigurableRoom = room?.channelType !== "PRIVATE";
+  if (!isConfigurableRoom) {
     return;
   }
   return (

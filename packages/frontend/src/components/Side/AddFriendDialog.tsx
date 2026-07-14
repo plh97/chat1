@@ -2,6 +2,7 @@ import { FaPlus } from "react-icons/fa";
 import { IUser } from "@/interfaces";
 import { Button, IconButton } from "@chakra-ui/react";
 import Api from "@/Api";
+import { fetchUserInfoThunk } from "@/store/reducer/user";
 
 export const AddFriendDialog = ({
   isOpen,
@@ -11,6 +12,7 @@ export const AddFriendDialog = ({
   onClose: () => void;
 }) => {
   const navigation = useNavigate();
+  const dispatch = useAppDispatch();
   const [acc, setAcc] = useState<IUser[]>([]);
   const handleSearch = async (v?: string) => {
     if (!v) {
@@ -25,10 +27,11 @@ export const AddFriendDialog = ({
       return;
     }
     const res = await Api.addFriend({ id: id });
-    if (!res) return;
+    if (!res?.id) return;
+    await dispatch<any>(fetchUserInfoThunk());
     setAcc([]);
     onClose();
-    navigation(`/room/${res?.id}`);
+    navigation(`/room/${res.id}`);
   };
   return (
     <Modal isOpen={isOpen} onClose={onClose}>

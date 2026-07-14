@@ -219,6 +219,7 @@ func (m *Migrate) createSeedRooms(fakeUsers []model.User) error {
 	defaultRoom := &model.Room{
 		Name:        "Common Room",
 		ChannelType: model.RoomTypeGroup,
+		LastSeq:     seedMessageCount,
 	}
 	if err := m.db.Create(defaultRoom).Error; err != nil {
 		return err
@@ -277,6 +278,11 @@ func (m *Migrate) createSeedMessages(room *model.Room, fakeUsers []model.User) e
 		return err
 	}
 	if count >= seedMessageCount {
+		if room.LastSeq < seedMessageCount {
+			if err := m.db.Model(room).Update("last_seq", seedMessageCount).Error; err != nil {
+				return err
+			}
+		}
 		m.log.Info("Seed messages already exist", zap.Int64("count", count), zap.String("channelId", channelID))
 		return nil
 	}
@@ -307,6 +313,10 @@ func (m *Migrate) createSeedMessages(room *model.Room, fakeUsers []model.User) e
 		if startSeq == 1 || endSeq == seedMessageCount || endSeq%(seedMessageBatchSize*50) == 0 {
 			m.log.Info("Created seed message batch", zap.Int("startSeq", startSeq), zap.Int("endSeq", endSeq))
 		}
+	}
+
+	if err := m.db.Model(room).Update("last_seq", seedMessageCount).Error; err != nil {
+		return err
 	}
 
 	return nil

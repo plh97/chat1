@@ -1,5 +1,5 @@
 import CSS from "csstype";
-import { ChangeEvent, SyntheticEvent } from "react";
+import { ChangeEvent } from "react";
 
 import { registerThunk } from "@/store/reducer/user";
 
@@ -32,8 +32,12 @@ export function RegisterPage() {
   const [password, setPassword] = useState("");
   const dispatch = useAppDispatch();
   const toast = useToast();
-  const handleRegister = async (e: SyntheticEvent) => {
+  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!e.currentTarget.checkValidity()) {
+      e.currentTarget.reportValidity();
+      return;
+    }
     if (!email || !password) {
       toast({
         title: "Warning.",
@@ -66,12 +70,17 @@ export function RegisterPage() {
           <Avatar size="xl" name="?" src={""} />
         </div>
         <h1 className="text-4xl">Register</h1>
-        <form onSubmit={handleRegister} className="flex flex-col gap-2">
+        <form
+          autoComplete="on"
+          onSubmit={handleRegister}
+          className="flex flex-col gap-2"
+        >
           <FormControl id="email" isRequired>
             <FormLabel>Email</FormLabel>
             <Input
               type="email"
-              autoComplete="off"
+              name="username"
+              autoComplete="username"
               autoFocus
               value={email}
               onChange={handleInputEmail}
@@ -81,7 +90,8 @@ export function RegisterPage() {
             <FormLabel>Password</FormLabel>
             <Input
               type="password"
-              autoComplete="true"
+              name="new-password"
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
@@ -96,11 +106,7 @@ export function RegisterPage() {
               >
                 Login
               </Button>
-              <Button
-                type="submit"
-                onClick={handleRegister}
-                colorScheme="green"
-              >
+              <Button type="submit" colorScheme="green">
                 Register
               </Button>
             </Stack>
