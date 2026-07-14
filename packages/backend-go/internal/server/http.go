@@ -10,11 +10,9 @@ import (
 	"backend-go/pkg/jwt"
 	"backend-go/pkg/log"
 	"backend-go/pkg/server/http"
-	nethttp "net/http"
 
 	ws "backend-go/pkg/websocket"
 
-	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	swaggerfiles "github.com/swaggo/files"
@@ -38,12 +36,6 @@ func NewHTTPServer(
 		http.WithServerHost(conf.GetString("http.host")),
 		http.WithServerPort(conf.GetInt("http.port")),
 	)
-	s.Use(static.Serve("/", static.LocalFile("./web", true)))
-	s.Delims("{{{", "}}}")
-	s.LoadHTMLGlob("web/*")
-	s.GET("/web", func(c *gin.Context) {
-		c.HTML(nethttp.StatusOK, "index.html", nil)
-	})
 	// swagger doc
 	docs.SwaggerInfo.BasePath = "/v1"
 	s.GET("/swagger/*any", ginSwagger.WrapHandler(
