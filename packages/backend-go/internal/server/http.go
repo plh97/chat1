@@ -5,6 +5,7 @@ import (
 	"backend-go/docs"
 	"backend-go/internal/handler"
 	"backend-go/internal/middleware"
+	"backend-go/internal/repository"
 	"backend-go/internal/service"
 	"backend-go/pkg/jwt"
 	"backend-go/pkg/log"
@@ -26,6 +27,7 @@ func NewHTTPServer(
 	jwt *jwt.JWT,
 	userHandler *handler.UserHandler,
 	roomHandler *handler.RoomHandler,
+	userRepo repository.UserRepository,
 	messageService service.MessageService,
 	roomService service.RoomService,
 ) *http.Server {
@@ -95,7 +97,7 @@ func NewHTTPServer(
 		}
 	}
 	// websocketのupgraderを定期
-	hub := ws.NewHub()
+	hub := ws.NewHub(messageService, userRepo)
 	s.GET("/ws", func(c *gin.Context) {
 		ws.ServeWs(hub, c)
 	})

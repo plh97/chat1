@@ -10,9 +10,10 @@ import (
 
 type MessageService interface {
 	SendMessage(ctx context.Context, message *model.Message) (*model.Message, error)
+	GetMessageByID(ctx context.Context, messageID uint) (*model.Message, error)
 	GetMessages(ctx context.Context, channelID string, limit, offset int) ([]*model.Message, error)
 	MarkAsRead(ctx context.Context, channelID, userID string, seq int) error
-	RecallMessage(ctx context.Context, messageID uint, userID string) error
+	RecallMessage(ctx context.Context, messageID uint, userID string) (*model.Message, error)
 	GetUnreadCount(ctx context.Context, channelID, userID string) (int64, error)
 }
 
@@ -49,6 +50,14 @@ func (s *messageService) SendMessage(ctx context.Context, message *model.Message
 	return message, nil
 }
 
+func (s *messageService) GetMessageByID(ctx context.Context, messageID uint) (*model.Message, error) {
+	message, err := s.messageRepo.GetByID(ctx, messageID)
+	if err != nil {
+		return nil, fmt.Errorf("message not found")
+	}
+	return message, nil
+}
+
 // GetMessages retrieves paginated messages for a channel
 func (s *messageService) GetMessages(ctx context.Context, channelID string, limit, offset int) ([]*model.Message, error) {
 	if limit <= 0 {
@@ -76,25 +85,31 @@ func (s *messageService) MarkAsRead(ctx context.Context, channelID, userID strin
 }
 
 // RecallMessage marks a message as recalled
-func (s *messageService) RecallMessage(ctx context.Context, messageID uint, userID string) error {
+func (s *messageService) RecallMessage(ctx context.Context, messageID uint, userID string) (*model.Message, error) {
 	// Get the message to verify ownership
 	message, err := s.messageRepo.GetByID(ctx, messageID)
 	if err != nil {
-		return fmt.Errorf("message not found")
+		return nil, fmt.Errorf("message not found")
 	}
 
 	// Verify the user owns this message
 	if message.UserId != userID {
-		return fmt.Errorf("not authorized to recall this message")
+		return nil, fmt.Errorf("not authorized to recall this message")
 	}
 
 	// Mark as recalled
+	message.ContentType = "RECALL_MESSAGE"
+	message.TextMessage = ""
+	message.MediaMessage = ""
+	message.ReadMessage = ""
+	message.SystemMessage = ""
+	message.RecallMessage = fmt.Sprintf(`{"operator":"%s","recallMsgId":%d}`, userID, message.ID)
 	message.IsRecalled = true
 	if err := s.messageRepo.Update(ctx, message); err != nil {
-		return fmt.Errorf("failed to recall message: %w", err)
+		return nil, fmt.Errorf("failed to recall message: %w", err)
 	}
 
-	return nil
+	return message, nil
 }
 
 // GetUnreadCount gets the number of unread messages for a user in a channel

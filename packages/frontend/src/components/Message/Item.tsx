@@ -94,11 +94,13 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
         className="mx-2.5 max-w-[60%] rounded-lg overflow-hidden whitespace-pre-wrap bg-gray-800 shadow-md"
         data-msg
       >
-        <Reply
-          className="mt-2.5"
-          message={message.reply!}
-          onClick={handleNavigateReply}
-        />
+        {message.reply ? (
+          <Reply
+            className="mt-2.5"
+            message={message.reply}
+            onClick={handleNavigateReply}
+          />
+        ) : null}
         {Component}
       </div>
       <Indicator message={message} />

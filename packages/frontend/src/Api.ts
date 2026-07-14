@@ -39,6 +39,63 @@ export interface IResponse<T> {
   message?: string;
 }
 
+const normalizeId = (value: unknown) =>
+  value == null || value === "" ? "" : String(value);
+
+const normalizeUser = (user: any): IUser => {
+  if (!user) return user;
+  return {
+    ...user,
+    id: normalizeId(user.id ?? user.userId),
+    userId: normalizeId(user.userId ?? user.id),
+    UserId: normalizeId(user.UserId ?? user.userId ?? user.id),
+    room: Array.isArray(user.room) ? user.room.map(normalizeRoom) : user.room,
+    friend: Array.isArray(user.friend)
+      ? user.friend.map(normalizeUser)
+      : user.friend,
+  };
+};
+
+const normalizeMessage = (message: any): IMessage => {
+  if (!message) return message;
+  return {
+    ...message,
+    id: normalizeId(message.id),
+    channelId: normalizeId(message.channelId ?? message.roomId),
+    roomId: normalizeId(message.roomId ?? message.channelId),
+    userId: normalizeId(message.userId ?? message.user?.id),
+    replyId: normalizeId(message.replyId),
+    user: message.user ? normalizeUser(message.user) : message.user,
+    reply: message.reply ? normalizeMessage(message.reply) : message.reply,
+  };
+};
+
+const normalizeRoom = (room: any): IRoom => {
+  if (!room) return room;
+  return {
+    ...room,
+    id: normalizeId(room.id),
+    creatorId: normalizeId(room.creatorId ?? room.creator?.id),
+    memberId: Array.isArray(room.memberId)
+      ? room.memberId.map(normalizeId)
+      : room.memberId,
+    adminId: Array.isArray(room.adminId)
+      ? room.adminId.map(normalizeId)
+      : room.adminId,
+    member: Array.isArray(room.member)
+      ? room.member.map(normalizeUser)
+      : room.member,
+    admin: Array.isArray(room.admin)
+      ? room.admin.map(normalizeUser)
+      : room.admin,
+    creator: room.creator ? normalizeUser(room.creator) : room.creator,
+    message: Array.isArray(room.message)
+      ? room.message.map(normalizeMessage)
+      : room.message,
+    lastMsg: room.lastMsg ? normalizeMessage(room.lastMsg) : room.lastMsg,
+  };
+};
+
 axios.interceptors.response.use(
   (response) => {
     const res = response.data as IResponse<unknown>;
@@ -128,13 +185,13 @@ const Api = {
       fetchOptions: {
         alert: false,
       },
-    }),
+    }).then(normalizeUser),
   setMyUserInfo: (user: Partial<IUser>) =>
     request<IUser>({
       url: "/profile",
       method: "put",
       data: user,
-    }),
+    }).then(normalizeUser),
   updateProfile: (data: {
     userName?: string;
     email?: string;
@@ -188,19 +245,19 @@ const Api = {
       url: "/user",
       method: "get",
       params,
-    }),
+    }).then((users) => users.map(normalizeUser)),
   getRoom: (params: MessageRequest) =>
     request<IRoom>({
       url: "/room",
       method: "get",
       params,
-    }),
+    }).then(normalizeRoom),
   addRoom: (data: Partial<IRoom>) =>
     request<IRoom>({
       url: "/room",
       method: "post",
       data,
-    }),
+    }).then(normalizeRoom),
   deleteRoom: (id: string) =>
     request({
       url: "/room",
@@ -212,13 +269,13 @@ const Api = {
       url: "/room",
       method: "patch",
       data,
-    }),
+    }).then(normalizeRoom),
   joinRoom: (data: { id?: string }) =>
     request<IRoom>({
       url: "/joinRoom",
       method: "post",
       data,
-    }),
+    }).then(normalizeRoom),
 
   sendMessage: (data: IAddMessageRequest) =>
     request<IMessage>({
@@ -236,7 +293,7 @@ const Api = {
       url: "/friend",
       method: "post",
       data,
-    }),
+    }).then(normalizeRoom),
   deleteFriend: () =>
     request({
       url: "/friend",

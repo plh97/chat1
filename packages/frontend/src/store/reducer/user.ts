@@ -12,6 +12,8 @@ export interface IState {
   draftMap: Record<string, Partial<IMessage>>;
 }
 
+const toRoomKey = (value: unknown) => String(value ?? "");
+
 const initialState: IState = {
   error: null,
   auth: null,
@@ -98,8 +100,9 @@ export const userSlice = createSlice({
   initialState,
   reducers: {
     updateUserRoomMessage(state, action) {
+      const roomId = toRoomKey(action.payload.roomId);
       const room = state.data.room?.find(
-        (room) => room.id === action.payload.roomId
+        (room) => toRoomKey(room.id) === roomId
       );
       if (room?.message) {
         room.message = [action.payload.msg];
@@ -143,8 +146,11 @@ export const userSlice = createSlice({
     updateUserRoomReadSeq(state, action: PayloadAction<Partial<IMessage>>) {
       const message = action.payload;
       if (message.channelId) {
+        const channelId = toRoomKey(message.channelId);
         const readMessage = message.readMessage;
-        const room = state.data.room?.find((r) => r.id === message.channelId);
+        const room = state.data.room?.find(
+          (entry) => toRoomKey(entry.id) === channelId
+        );
         if (readMessage?.readSeq && room?.readSeq) {
           Object.assign(room.readSeq, readMessage.readSeq);
         }
@@ -154,23 +160,33 @@ export const userSlice = createSlice({
     topUserRoom(state, action: PayloadAction<IMessage>) {
       const msg = action.payload;
       const roomList = state.data.room ?? [];
+      const channelId = toRoomKey(action.payload.channelId);
       const room = state.data.room?.find(
-        (room) => room.id === action.payload.channelId
+        (entry) => toRoomKey(entry.id) === channelId
       );
+
+      if (!room) {
+        return;
+      }
+
       state.data.room = [
-        // @ts-ignore
         {
           ...room,
+          id: channelId,
           lastMsg: msg,
         },
-        ...(roomList?.filter((r) => r.id !== msg.channelId) ?? []),
+        ...(roomList?.filter((entry) => toRoomKey(entry.id) !== channelId) ??
+          []),
       ];
     },
     // update room readSeq
     updateUserLastMsg(state, action: PayloadAction<Partial<IMessage>>) {
       const message = action.payload;
       if (message.id) {
-        const room = state.data.room?.find((r) => r.id === message.channelId);
+        const channelId = toRoomKey(message.channelId);
+        const room = state.data.room?.find(
+          (entry) => toRoomKey(entry.id) === channelId
+        );
         if (room?.lastMsg?.id && room?.lastMsg?.id === message.id) {
           Object.assign(room?.lastMsg, message);
         }

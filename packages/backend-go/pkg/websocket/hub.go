@@ -1,8 +1,14 @@
 package ws
 
-import "log"
+import (
+	"backend-go/internal/repository"
+	"backend-go/internal/service"
+	"log"
+)
 
 type Hub struct {
+	messageService service.MessageService
+	userRepo       repository.UserRepository
 	// 注册了的客户端 map[客户端指针]布尔值
 	clients map[*Client]bool
 	// 广播通道
@@ -13,12 +19,14 @@ type Hub struct {
 	unregister chan *Client
 }
 
-func NewHub() *Hub {
+func NewHub(messageService service.MessageService, userRepo repository.UserRepository) *Hub {
 	return &Hub{
-		broadcast:  make(chan []byte),
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
-		clients:    make(map[*Client]bool),
+		messageService: messageService,
+		userRepo:       userRepo,
+		broadcast:      make(chan []byte),
+		register:       make(chan *Client),
+		unregister:     make(chan *Client),
+		clients:        make(map[*Client]bool),
 	}
 }
 

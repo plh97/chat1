@@ -38,23 +38,25 @@ export const List = () => {
   }
   return (
     <ul className="flex-1 overflow-y-auto px-2">
-      {myUserInfo.room?.map((room) => {
-        const draft = draftMap[room.id];
-        const readSeqMap = (room.readSeq as Record<string, number>) ?? {};
-        const myId = myUserInfo.id;
-        const readSeq = readSeqMap[myId] ?? 0;
-        const unreadCount = room.lastMsg?.seq! - readSeq;
-        return (
-          <Item
-            myId={myId}
-            unreadCount={unreadCount}
-            draft={draft}
-            active={room.id == id}
-            key={room.id}
-            room={room}
-          />
-        );
-      })}
+      {myUserInfo.room
+        ?.filter((room) => room?.id != null)
+        .map((room) => {
+          const draft = draftMap[room.id];
+          const readSeqMap = (room.readSeq as Record<string, number>) ?? {};
+          const myId = myUserInfo.id;
+          const readSeq = readSeqMap[myId] ?? 0;
+          const unreadCount = room.lastMsg?.seq! - readSeq;
+          return (
+            <Item
+              myId={myId}
+              unreadCount={unreadCount}
+              draft={draft}
+              active={room.id == id}
+              key={String(room.id)}
+              room={room}
+            />
+          );
+        })}
     </ul>
   );
 };

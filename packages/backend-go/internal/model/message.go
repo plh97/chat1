@@ -21,6 +21,34 @@ type Message struct {
 	IsRecalled    bool   `gorm:"column:is_recalled;default:false" json:"is_recalled"`
 }
 
+func (m *Message) normalizeJSONFields() {
+	if m.TextMessage == "" {
+		m.TextMessage = "null"
+	}
+	if m.MediaMessage == "" {
+		m.MediaMessage = "null"
+	}
+	if m.ReadMessage == "" {
+		m.ReadMessage = "null"
+	}
+	if m.RecallMessage == "" {
+		m.RecallMessage = "null"
+	}
+	if m.SystemMessage == "" {
+		m.SystemMessage = "null"
+	}
+}
+
+func (m *Message) BeforeCreate(tx *gorm.DB) error {
+	m.normalizeJSONFields()
+	return nil
+}
+
+func (m *Message) BeforeSave(tx *gorm.DB) error {
+	m.normalizeJSONFields()
+	return nil
+}
+
 func (Message) TableName() string {
 	return "messages"
 }

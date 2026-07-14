@@ -98,6 +98,18 @@ func (h *RoomHandler) AddRoom(ctx *gin.Context) {
 func (h *RoomHandler) GetRoom(ctx *gin.Context) {
 	// TODO: 实现获取房间信息逻辑
 	id := ctx.Query("id")
+	pageSize := 50
+	if pageSizeStr := ctx.Query("pageSize"); pageSizeStr != "" {
+		if parsed, parseErr := strconv.Atoi(pageSizeStr); parseErr == nil && parsed > 0 {
+			pageSize = parsed
+		}
+	}
+	offset := 0
+	if startStr := ctx.Query("start"); startStr != "" {
+		if parsed, parseErr := strconv.Atoi(startStr); parseErr == nil && parsed >= 0 {
+			offset = parsed
+		}
+	}
 	var room interface{}
 	var err error
 	if id != "" {
@@ -106,7 +118,7 @@ func (h *RoomHandler) GetRoom(ctx *gin.Context) {
 			v1.HandleError(ctx, 400, v1.ErrBadRequest, "invalid id")
 			return
 		}
-		room, err = h.roomService.GetRoomByID(ctx, uint(idUint64))
+		room, err = h.roomService.GetRoomByID(ctx, uint(idUint64), pageSize, offset)
 	} else {
 		room, err = h.roomService.ListRooms(ctx)
 	}

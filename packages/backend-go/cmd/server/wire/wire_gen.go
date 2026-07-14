@@ -44,7 +44,7 @@ func NewWire(viperViper *viper.Viper, logger *log.Logger) (*app.App, func(), err
 	roomHandler := handler.NewRoomHandler(handlerHandler, roomService)
 	messageRepository := repository.NewMessageRepository(repositoryRepository)
 	messageService := service.NewMessageService(serviceService, messageRepository)
-	httpServer := server.NewHTTPServer(logger, viperViper, jwtJWT, userHandler, roomHandler, messageService, roomService)
+	httpServer := server.NewHTTPServer(logger, viperViper, jwtJWT, userHandler, roomHandler, userRepository, messageService, roomService)
 	job := server.NewJob(logger)
 	appApp := newApp(httpServer, job)
 	return appApp, func() {

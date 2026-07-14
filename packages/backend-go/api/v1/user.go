@@ -32,7 +32,8 @@ type UpdateProfileRequest struct {
 	Image      *string `json:"image" example:"User's avatar URL"`
 }
 type GetProfileResponseData struct {
-	ID         uint         `json:"id"`
+	ID         string       `json:"id"`
+	UserID     string       `json:"userId"`
 	UserName   string       `json:"userName" example:"alan"`
 	Email      string       `json:"email" binding:"email" example:"1234@gmail.com"`
 	Bio        string       `json:"bio" example:"User's bio"`

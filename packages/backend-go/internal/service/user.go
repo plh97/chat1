@@ -6,6 +6,7 @@ import (
 	"backend-go/internal/repository"
 	"backend-go/pkg/aws"
 	"context"
+	"strconv"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -106,7 +107,8 @@ func (s *userService) GetProfile(ctx context.Context, id int) (*v1.GetProfileRes
 	}
 
 	return &v1.GetProfileResponseData{
-		ID:         user.ID,
+		ID:         strconv.Itoa(int(user.ID)),
+		UserID:     strconv.Itoa(int(user.ID)),
 		UserName:   user.UserName,
 		Email:      user.Email,
 		Bio:        user.Bio,
@@ -164,7 +166,8 @@ func (s *userService) UpdateProfile(ctx context.Context, id int, req *v1.UpdateP
 	}
 
 	return &v1.GetProfileResponseData{
-		ID:         user.ID,
+		ID:         strconv.Itoa(int(user.ID)),
+		UserID:     strconv.Itoa(int(user.ID)),
 		UserName:   user.UserName,
 		Email:      user.Email,
 		Bio:        user.Bio,
