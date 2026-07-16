@@ -33,25 +33,9 @@
         cmd: pnpm install --frozen-lockfile
         chdir: "{{ app_root }}"
 
-    - name: Start backend dependencies
+    - name: Prepare backend dependencies/build/logs
       command:
-        cmd: docker compose up -d
-        chdir: "{{ backend_root }}/deploy/docker-compose"
-
-    - name: Ensure backend log directory exists
-      file:
-        path: "{{ backend_root }}/storage/logs"
-        state: directory
-        mode: "0755"
-
-    - name: Build backend server
-      command:
-        cmd: make build
-        chdir: "{{ backend_root }}"
-
-    - name: Run database migration
-      command:
-        cmd: go run ./cmd/migration
+        cmd: make deploy-prepare
         chdir: "{{ backend_root }}"
 
     - name: Install backend systemd service

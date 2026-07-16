@@ -10,6 +10,13 @@ bootstrap:
 	$(MAKE) migrate-reset
 	$(MAKE) dev
 
+.PHONY: deploy-prepare
+deploy-prepare:
+	cd ./deploy/docker-compose && docker compose up -d
+	mkdir -p ./storage/logs
+	$(MAKE) build
+	$(MAKE) migrate-reset
+
 .PHONY: migrate-reset
 migrate-reset:
 	go run ./cmd/migration
@@ -17,6 +24,20 @@ migrate-reset:
 .PHONY: dev
 dev:
 	nunu run ./cmd/server
+
+.PHONY: prod
+prod:
+	go run ./cmd/server -conf ./config/prod.yml
+
+.PHONY: stop
+stop:
+	@pids=$$(lsof -ti tcp:8000 -sTCP:LISTEN 2>/dev/null); \
+	if [ -z "$$pids" ]; then \
+		echo "No server process listening on port 8000"; \
+	else \
+		echo "Stopping server process(es): $$pids"; \
+		kill $$pids; \
+	fi
 
 .PHONY: mock
 mock:
