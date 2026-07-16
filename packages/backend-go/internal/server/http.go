@@ -96,6 +96,9 @@ func NewHTTPServer(
 	s.GET("/ws", func(c *gin.Context) {
 		ws.ServeWs(hub, c)
 	})
+	s.GET("/ws/ws", func(c *gin.Context) {
+		ws.ServeWs(hub, c)
+	})
 	// Start hub's event loop in a goroutine
 	go hub.Run()
 	return s

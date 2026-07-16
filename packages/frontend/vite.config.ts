@@ -139,7 +139,7 @@ export default defineConfig({
       "/ws": {
         // target: "ws://localhost:8000/",
         // target: "ws://45.76.110.22:8000/",
-        target: "wss://c.plhh.org",
+        target: "https://c.plhh.org/ws",
         // changeOrigin: true,
         secure: true,
       },
