@@ -1,4 +1,4 @@
-# [Chatroom](http://c.plhh.org/) &middot; [![Github Action Status](https://github.com/plh97/chat1/actions/workflows/github-CICD-actions.yml/badge.svg)](https://github.com/plh97/chat1/actions) [![Github Action Status](https://github.com/plh97/chat1/actions/workflows/main.yml/badge.svg)](https://github.com/plh97/chat1/actions) [![Netlify Status](https://api.netlify.com/api/v1/badges/591b7e3b-bff0-4b20-899c-396d25bd75dd/deploy-status)](https://app.netlify.com/sites/plh-chat-private/deploys)
+# [Chatroom](http://c.plhh.org/) &middot; [![Github Action Status](https://github.com/plh97/chat1/actions/workflows/github-CICD-actions.yml/badge.svg)](https://github.com/plh97/chat1/actions) [![Github Action Status](https://github.com/plh97/chat1/actions/workflows/main.yml/badge.svg)](https://github.com/plh97/chat1/actions) [![Netlify Status](https://api.netlify.com/api/v1/badges/591b7e3b-bff0-4b20-899c-396d25bd75dd/deploy-status)](https://app.netlify.com/sites/plh-chat-private/deploys) ![Vercel](https://img.shields.io/endpoint?url=https://img.shields.io/endpoint?url=<your-badge-json-endpoint>)
 
 [English](README.md) | [简体中文](README_zh.md)
 
