@@ -11,7 +11,7 @@ jobs:
         with:
           node-version: 24
           package-manager-cache: false
-      - uses: pnpm/action-setup@v4
+      - run: corepack enable && corepack install
       - run: pnpm install --frozen-lockfile
       - run: pnpm -F frontend build
       - run: cd packages/frontend && pnpm dlx @lhci/cli@0.13.x autorun --config=./lighthouserc.json
