@@ -2,7 +2,7 @@
   "ci": {
     "collect": {
       "startServerCommand": "pnpm preview --port 4173",
-      "startServerReadyPattern": "Local:",
+      "startServerReadyPattern": "localhost:4173",
       "startServerReadyTimeout": 60000,
       "puppeteerScript": "./lhci-auth.cjs",
       "url": ["http://localhost:4173/", "http://localhost:4173/room/1"],

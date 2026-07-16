@@ -34,5 +34,5 @@ module.exports = async (browser) => {
   );
 
   console.log("Success! Access token found.");
-  await browser.close();
+  await page.close();
 };
