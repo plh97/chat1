@@ -11,6 +11,6 @@ jobs:
           urls: |
             https://c.plhh.org/
             https://c.plhh.org/login
-          budgetPath: ./budget.json # test performance budgets
+          budgetPath: ./.github/lighthouse/budget.json # test performance budgets
           uploadArtifacts: false # avoid failing artifact upload on current GH artifact API behavior
           temporaryPublicStorage: true # upload lighthouse report to the temporary
