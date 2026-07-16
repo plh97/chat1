@@ -4,20 +4,35 @@ module.exports = async (browser) => {
   const email = "admin@gmail.com";
   const password = "123456";
 
-  await page.goto(`${baseUrl}/login`, { waitUntil: "networkidle0" });
+  console.log("Navigating to login...");
+  await page.goto(`${baseUrl}/login`, { waitUntil: "domcontentloaded" });
+  
+  console.log("Waiting for username input...");
   await page.waitForSelector('input[name="username"]', { timeout: 15000 });
 
+  console.log("Typing credentials...");
   await page.click('input[name="username"]', { clickCount: 3 });
   await page.type('input[name="username"]', email);
+  
   await page.click('input[name="current-password"]', { clickCount: 3 });
   await page.type('input[name="current-password"]', password);
 
-  await page.click('button[type="submit"]');
+  console.log("Submitting...");
+  await Promise.all([
+    page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/api/v1/login") &&
+        (resp.status() === 200 || resp.status() === 304),
+      { timeout: 30000 }
+    ),
+    page.click('button[type="submit"]'),
+  ]);
 
   await page.waitForFunction(
     () => Boolean(localStorage.getItem("accessToken")),
-    { timeout: 20000 }
+    { timeout: 45000 }
   );
 
-  await page.close();
+  console.log("Success! Access token found.");
+  await browser.close();
 };
