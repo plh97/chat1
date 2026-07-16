@@ -130,7 +130,7 @@ export default defineConfig({
     proxy: {
       "/api": {
         // target: "http://localhost:8000/",
-        target: "http://45.76.110.22:8000/",
+        target: "https://45.76.110.22/",
         // target: "https://c-delta-eight.vercel.app/",
         changeOrigin: true,
         secure: false,
