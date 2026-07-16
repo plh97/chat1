@@ -26,8 +26,8 @@ const style: { [key: string]: Properties } = {
 };
 
 export function LoginPage() {
-  const [email, setEmail] = useState("admin@gmail.com");
-  const [password, setPassword] = useState("123456");
+  const [email, setEmail] = useState(isDev ? "admin@gmail.com" : "");
+  const [password, setPassword] = useState(isDev ? "123456" : "");
   const [imageUrl, setImageUrl] = useState("");
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
