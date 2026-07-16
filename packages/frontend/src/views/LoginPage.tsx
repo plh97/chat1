@@ -26,6 +26,7 @@ const style: { [key: string]: Properties } = {
 };
 
 export function LoginPage() {
+  const isDev = import.meta.env.DEV;
   const [email, setEmail] = useState(isDev ? "admin@gmail.com" : "");
   const [password, setPassword] = useState(isDev ? "123456" : "");
   const [imageUrl, setImageUrl] = useState("");
