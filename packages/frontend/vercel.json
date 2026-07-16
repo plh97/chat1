@@ -13,7 +13,7 @@
   "redirects": [
     {
       "source": "/ws/:path*",
-      "destination": "wss://api-c.plhh.org/ws/:path*"
+      "destination": "wss://api-c.plhh.org/ws"
     }
   ]
 }
