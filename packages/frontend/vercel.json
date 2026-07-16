@@ -6,14 +6,12 @@
       "destination": "https://api-c.plhh.org/api/:path*"
     },
     {
+      "source": "/ws",
+      "destination": "https://api-c.plhh.org/ws"
+    },
+    {
       "source": "/((?!ws/).*)",
       "destination": "/index.html"
-    }
-  ],
-  "redirects": [
-    {
-      "source": "/ws/:path*",
-      "destination": "wss://api-c.plhh.org/ws"
     }
   ]
 }
