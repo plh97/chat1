@@ -4,7 +4,7 @@ http:
   port: 8000
 ws:
   host: 127.0.0.1
-  port: 8001
+  port: 8000
 security:
   api_sign:
     app_key: 123456

@@ -68,7 +68,7 @@ This is a real-time chat application with a microservices architecture deployed 
 The backend is built with Go and follows clean architecture principles:
 
 - **HTTP Server**: Listens on port 8000 for REST API requests
-- **WebSocket Server**: Listens on port 8001 using Pitaya framework for real-time communication
+- **WebSocket Server**: Listens on port 8000 using Pitaya framework for real-time communication
 - **Dependency Injection**: Uses Wire for compile-time dependency injection
 - **Authentication**: JWT-based authentication with middleware
 - **Structure**:
@@ -119,7 +119,7 @@ The application uses MySQL (not MongoDB as shown in architecture) with the follo
 1. **User Request** → Nginx (Port 80/443)
 2. **Static Files** → Served directly by Nginx
 3. **API Requests** → Nginx proxies to Backend-Go HTTP Server (Port 8000)
-4. **WebSocket** → Nginx upgrades connection and proxies to WS Server (Port 8001)
+4. **WebSocket** → Nginx upgrades connection and proxies to WS Server (Port 8000)
 5. **Backend** → Processes requests, queries MySQL database via GORM
 6. **Real-time Updates** → WebSocket server broadcasts to connected clients in the same room
 7. **Response** → JSON data returned through Nginx to client

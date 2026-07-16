@@ -24,7 +24,7 @@
   "redirects": [
     {
       "source": "/ws/:path*",
-      "destination": "ws://45.76.110.22:8001/ws/:path*"
+      "destination": "ws://45.76.110.22:8000/ws/:path*"
     }
   ]
 }
