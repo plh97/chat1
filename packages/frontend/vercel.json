@@ -7,7 +7,7 @@
         {
           "type": "header",
           "key": "host",
-          "value": "c.api.plhh.org"
+          "value": "api-c.plhh.org"
         }
       ],
       "destination": "http://45.76.110.22:8000/:path*"
