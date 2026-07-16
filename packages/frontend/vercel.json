@@ -7,7 +7,7 @@
     },
     {
       "source": "/ws",
-      "destination": "https://api-c.plhh.org/ws"
+      "destination": "wss://api-c.plhh.org/ws"
     },
     {
       "source": "/((?!ws/).*)",
