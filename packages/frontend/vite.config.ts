@@ -15,6 +15,17 @@ export default defineConfig({
   },
   preview: {
     port: +PORT,
+    proxy: {
+      "/api": {
+        target: "https://c.plhh.org",
+        changeOrigin: true,
+        secure: true,
+      },
+      "/ws": {
+        target: "wss://api-c.plhh.org",
+        changeOrigin: true,
+      },
+    },
   },
   resolve: {
     alias: {
