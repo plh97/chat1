@@ -2,19 +2,8 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
-      "source": "/:path*",
-      "has": [
-        {
-          "type": "header",
-          "key": "host",
-          "value": "api-c.plhh.org"
-        }
-      ],
-      "destination": "http://45.76.110.22:8000/:path*"
-    },
-    {
       "source": "/api/:path*",
-      "destination": "http://45.76.110.22:8000/:path*"
+      "destination": "https://c-api.plhh.org/:path*"
     },
     {
       "source": "/((?!ws/).*)",
@@ -24,7 +13,7 @@
   "redirects": [
     {
       "source": "/ws/:path*",
-      "destination": "ws://45.76.110.22:8000/ws/:path*"
+      "destination": "wss://c-api.plhh.org/ws/:path*"
     }
   ]
 }

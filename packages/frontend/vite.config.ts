@@ -6,7 +6,7 @@ import faroUploader from "@grafana/faro-rollup-plugin";
 // import { VitePWA } from "vite-plugin-pwa";
 // import viteCompression from "vite-plugin-compression";
 
-const PROT = process.env.PORT ?? 9001;
+const PORT = process.env.PORT ?? 9001;
 
 export default defineConfig({
   build: {
@@ -14,7 +14,7 @@ export default defineConfig({
     target: "modules",
   },
   preview: {
-    port: +PROT,
+    port: +PORT,
   },
   resolve: {
     alias: {
@@ -130,20 +130,20 @@ export default defineConfig({
     proxy: {
       "/api": {
         // target: "http://localhost:8000/",
-        target: "https://45.76.110.22/",
-        // target: "https://c-delta-eight.vercel.app/",
+        // target: "https://45.76.110.22/",
+        target: "https://api-c.plhh.org",
         changeOrigin: true,
-        secure: false,
-        rewrite: (path) => path.replace(/^\/api/, "/"),
+        secure: true,
+        // rewrite: (path) => path.replace(/^\/api/, "/"),
       },
       "/ws": {
         // target: "ws://localhost:8000/",
-        target: "ws://45.76.110.22:8000/",
-        // target: "ws://c-delta-eight.vercel.app/",
+        // target: "ws://45.76.110.22:8000/",
+        target: "wss://api-c.plhh.org",
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
     },
-    port: +PROT,
+    port: +PORT,
   },
 });
