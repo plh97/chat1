@@ -12,6 +12,6 @@ jobs:
       - uses: pnpm/action-setup@v4
       - run: pnpm install --frozen-lockfile
       - run: pnpm -F frontend build
-      - run: cd packages/frontend && pnpm dlx @lhci/cli@0.13.x autorun
+      - run: cd packages/frontend && pnpm dlx @lhci/cli@0.13.x autorun --config=./lighthouserc.json
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
