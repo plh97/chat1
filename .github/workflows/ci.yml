@@ -4,15 +4,10 @@ jobs:
   lighthouseci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
-        with:
-          node-version: 20
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter frontend build
-      - run: pnpm dlx @lhci/cli@0.13.x autorun
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+      - run: npm install --frozen-lockfile && npm install -g @lhci/cli@0.6.x
+      - run: cd packages/frontend && npm run build
+      - run: lhci autorun
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
