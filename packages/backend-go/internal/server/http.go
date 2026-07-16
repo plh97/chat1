@@ -91,7 +91,7 @@ func NewHTTPServer(
 			strictAuthRouter.DELETE("/room/message", roomHandler.DeleteMessage)
 		}
 	}
-	// websocketのupgraderを定期
+	// websocket up grader 定期
 	hub := ws.NewHub(messageService, userRepo)
 	s.GET("/ws", func(c *gin.Context) {
 		ws.ServeWs(hub, c)
