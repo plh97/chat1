@@ -3,8 +3,8 @@ import path from "path";
 import AutoImports from "unplugin-auto-import/vite";
 import { defineConfig } from "vite";
 import faroUploader from "@grafana/faro-rollup-plugin";
-// import { VitePWA } from "vite-plugin-pwa";
-// import viteCompression from "vite-plugin-compression";
+import { VitePWA } from "vite-plugin-pwa";
+import viteCompression from "vite-plugin-compression";
 
 const PORT = process.env.PORT ?? 9001;
 
@@ -23,30 +23,30 @@ export default defineConfig({
     },
   },
   plugins: [
-    // viteCompression(),
-    // VitePWA({
-    //   includeAssets: ["icon.svg"],
-    //   manifest: {
-    //     name: "Chat room",
-    //     short_name: "Chat",
-    //     description:
-    //       "Chat web application. Send receive message from your friends immediately.",
-    //     theme_color: "#000",
-    //     icons: [
-    //       {
-    //         src: "icon.svg",
-    //         sizes: "192x192",
-    //         type: "image/svg",
-    //         purpose: "maskable any",
-    //       },
-    //       {
-    //         src: "icon.svg",
-    //         sizes: "512x512",
-    //         type: "image/svg",
-    //       },
-    //     ],
-    //   },
-    // }),
+    viteCompression(),
+    VitePWA({
+      includeAssets: ["icon.svg"],
+      manifest: {
+        name: "Chat room",
+        short_name: "Chat",
+        description:
+          "Chat web application. Send receive message from your friends immediately.",
+        theme_color: "#000",
+        icons: [
+          {
+            src: "icon.svg",
+            sizes: "192x192",
+            type: "image/svg",
+            purpose: "maskable any",
+          },
+          {
+            src: "icon.svg",
+            sizes: "512x512",
+            type: "image/svg",
+          },
+        ],
+      },
+    }),
     react(),
     AutoImports({
       dts: true, // or a custom path
