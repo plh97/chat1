@@ -8,11 +8,11 @@
       },
       {
         "resourceType": "script",
-        "budget": 150
+        "budget": 400
       },
       {
         "resourceType": "stylesheet",
-        "budget": 20
+        "budget": 110
       },
       {
         "resourceType": "total",
