@@ -1,7 +1,9 @@
 name: Lighthouse CI
+run-name: Lighthouse Budget Audit on ${{ github.ref_name }} by ${{ github.actor }}
 on: push
 jobs:
   lighthouse:
+    name: Hosted Lighthouse Audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5

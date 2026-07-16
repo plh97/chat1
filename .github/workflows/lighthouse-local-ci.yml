@@ -1,7 +1,9 @@
 name: Lighthouse Local CI
+run-name: Lighthouse Local Audit on ${{ github.ref_name }} by ${{ github.actor }}
 on: [push]
 jobs:
   lighthouseci:
+    name: Local LHCI Autorun
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
