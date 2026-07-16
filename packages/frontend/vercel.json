@@ -6,8 +6,8 @@
       "destination": "https://api-c.plhh.org/api/:path*"
     },
     {
-      "source": "/ws",
-      "destination": "wss://api-c.plhh.org/ws"
+      "source": "/ws/:path*",
+      "destination": "http://45.76.110.22:8000/ws/:path*"
     },
     {
       "source": "/((?!ws/).*)",

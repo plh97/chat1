@@ -139,8 +139,8 @@ export default defineConfig({
       "/ws": {
         // target: "ws://localhost:8000/",
         // target: "ws://45.76.110.22:8000/",
-        target: "wss://c.plhh.org/ws",
-        changeOrigin: true,
+        target: "wss://c.plhh.org",
+        // changeOrigin: true,
         secure: true,
       },
     },
