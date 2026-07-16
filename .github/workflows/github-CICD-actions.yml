@@ -4,16 +4,9 @@ on:
   push:
     branches:
       - "main"
+    paths:
+      - "packages/backend-go/**"
   workflow_dispatch:
-    inputs:
-      playbook:
-        description: "Which Ansible playbook to run"
-        required: true
-        default: cicd.yml
-        type: choice
-        options:
-          - init.yml
-          - cicd.yml
 jobs:
   Ansible-Actions:
     runs-on: ubuntu-latest
@@ -66,5 +59,4 @@ jobs:
         run: |
           export PATH="$HOME/.local/bin:$PATH"
           export ANSIBLE_CONFIG="$PWD/ansible-ci.cfg"
-          PLAYBOOK="${{ github.event.inputs.playbook || 'cicd.yml' }}"
-          ansible-playbook -i inventory.vultr "$PLAYBOOK"
+          ansible-playbook -i inventory.vultr cicd.yml
