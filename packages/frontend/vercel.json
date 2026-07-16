@@ -3,15 +3,17 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "http://45.76.110.22:8000/:path*"
-    },
-    {
-      "source": "/ws/:path*",
-      "destination": "http://45.76.110.22:8000/ws/:path*"
+      "destination": "https://api-c.plhh.org/api/:path*"
     },
     {
       "source": "/((?!ws/).*)",
       "destination": "/index.html"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/ws/:path*",
+      "destination": "wss://api-c.plhh.org/ws/:path*"
     }
   ]
 }
