@@ -22,11 +22,6 @@ func NewServer(logger *log.Logger, opts ...Option) *Server {
 	}
 	return s
 }
-func WithPitayaApp(app pitaya.Pitaya) Option {
-	return func(s *Server) {
-		s.app = app
-	}
-}
 
 func (s *Server) Start(ctx context.Context) error {
 	s.app.Start()

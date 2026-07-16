@@ -4,51 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"backend-go/pkg/log"
 	"github.com/spf13/viper"
 	"github.com/topfreegames/pitaya/v2"
 	"github.com/topfreegames/pitaya/v2/acceptor"
-	"github.com/topfreegames/pitaya/v2/component"
 	"github.com/topfreegames/pitaya/v2/config"
 	"github.com/topfreegames/pitaya/v2/constants"
 	"github.com/topfreegames/pitaya/v2/groups"
 	"go.uber.org/zap"
-	"backend-go/internal/handler"
-	"backend-go/pkg/log"
-	"backend-go/pkg/server/ws"
-	"strings"
 	"time"
 )
-
-type WebSocketServer struct {
-	logger *log.Logger
-	conf   *viper.Viper
-}
-
-func NewWebSocketServer(
-	logger *log.Logger,
-	conf *viper.Viper,
-	app pitaya.Pitaya,
-	roomHandler *handler.RoomHandler,
-) *ws.Server {
-	pLogger := log.NewPitayaLog(conf)
-	pitaya.SetLogger(pLogger)
-	s := ws.NewServer(
-		logger,
-		ws.WithPitayaApp(app),
-	)
-	// rewrite component and handler name
-	app.Register(roomHandler,
-		component.WithName("room"),
-		component.WithNameFunc(strings.ToLower),
-	)
-
-	// more handler
-	//app.Register(voiceHandler,
-	//	component.WithName("voice"),
-	//	component.WithNameFunc(strings.ToLower),
-	//)
-	return s
-}
 
 func NewPitaya(logger *log.Logger, conf *viper.Viper) pitaya.Pitaya {
 	pitayaConf := config.NewDefaultPitayaConfig()

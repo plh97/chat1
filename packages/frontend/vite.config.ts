@@ -129,16 +129,16 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://localhost:8000/",
-        // target: "http://45.76.110.22:8000/",
+        // target: "http://localhost:8000/",
+        target: "http://45.76.110.22:8000/",
         // target: "https://c-delta-eight.vercel.app/",
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, "/"),
       },
       "/ws": {
-        target: "ws://localhost:8000/",
-        // target: "wss://45.76.110.22/",
+        // target: "ws://localhost:8000/",
+        target: "ws://45.76.110.22:8000/",
         // target: "ws://c-delta-eight.vercel.app/",
         changeOrigin: true,
         secure: false,
