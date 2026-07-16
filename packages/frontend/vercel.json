@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://api-c.plhh.org/:path*"
+      "destination": "https://api-c.plhh.org/api/:path*"
     },
     {
       "source": "/((?!ws/).*)",
