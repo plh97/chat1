@@ -9,7 +9,7 @@ import {
 } from "@/store/reducer/room";
 import { FaRegTrashAlt, FaReply } from "react-icons/fa";
 
-export function Message({}: { className?: string }) {
+export function Message({ className }: { readonly className?: string }) {
   const toast = useToast();
   const dispatch = useThunkDispatch();
   const [isOpen, setIsOpen] = useState(false);
@@ -81,7 +81,7 @@ export function Message({}: { className?: string }) {
         setIsOpen(false);
       }}
     >
-      <Scroll>
+      <Scroll className={className}>
         {room.message.map((msg) => (
           <Item key={msg.id} setIsOpen={setIsOpen} data={msg} />
         ))}

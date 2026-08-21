@@ -1,4 +1,4 @@
-import { SocketClient } from "core";
+import { SocketClient } from "@/core";
 import { IRoom } from "@/interfaces";
 import { wsUrl } from "@/config";
 

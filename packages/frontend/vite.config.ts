@@ -140,17 +140,17 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        // target: "http://localhost:8000/",
+        target: "http://localhost:8000",
         // target: "https://45.76.110.22/",
-        target: "https://c.plhh.org",
+        // target: "https://c.plhh.org",
         changeOrigin: true,
         secure: true,
-        // rewrite: (path) => path.replace(/^\/api/, "/"),
+        rewrite: (path) => path.replace(/^\/api/, "/"),
       },
       "/ws": {
-        // target: "ws://localhost:8000/",
+        target: "ws://localhost:8000/",
         // target: "ws://45.76.110.22:8000/",
-        target: "wss://api-c.plhh.org",
+        // target: "wss://api-c.plhh.org",
         changeOrigin: true,
         // secure: true,
       },

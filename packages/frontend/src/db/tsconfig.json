@@ -4,5 +4,5 @@
     "module": "NodeNext",
     "outDir": "dist"
   },
-  "include": ["src"]
+  "include": ["src", "index.ts"]
 }

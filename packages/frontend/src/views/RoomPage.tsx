@@ -7,9 +7,9 @@ export function RoomPage() {
   useWebsocket();
   return (
     <Layout>
-      <Header />
-      <Message className="px-safe" />
-      <InputBox className="pb-safe" />
+      <Header className="safe-pt safe-px" />
+      <Message className="safe-px" />
+      <InputBox className="safe-px safe-pb" />
     </Layout>
   );
 }

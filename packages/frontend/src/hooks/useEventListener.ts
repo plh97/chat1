@@ -1,4 +1,5 @@
-import { CbFunction, WS_EVENT } from "core";
+import { CbFunction, WS_EVENT } from "@/core";
+import { useEffect, useRef } from "react";
 
 export const useEventListener = (eventName: WS_EVENT, handler: CbFunction) => {
   // Create a ref that stores handler

@@ -6,7 +6,7 @@ import type {
   ReadMessage,
   RecallMessage,
   Room,
-} from "db";
+} from "@/db";
 import { WebSocket, WebSocketServer } from "ws";
 import { WS_EVENT } from "./constants";
 
@@ -15,7 +15,7 @@ export type CB = (...arg: unknown[]) => void;
 export type IOnMsgReceive = (
   msg: IWsData,
   ws: WebSocketServer,
-  socket?: WebSocket,
+  socket?: WebSocket
 ) => Promise<void>;
 
 export type CHANNEL_TYPE = `room:${string}` | `userinfo:${string}`;
@@ -28,20 +28,19 @@ export interface ITextMessage {
 export interface IMediaMessage extends MediaMessage {
   file?: File;
   extension: string;
-  // url: string;
-  // thumbnail?: string;
+  url: string;
+  thumbnail?: string;
   // fileType?: string;
-  // name?: string;
-  // size?: number;
-  // duration?: string;
+  name?: string;
+  size?: number;
+  duration?: string;
 }
 export interface IReadMessage extends ReadMessage {
   // lastReadSeq: number;
   // operator: string;
 }
 
-export interface IRecallMessage extends RecallMessage {
-}
+export interface IRecallMessage extends RecallMessage {}
 
 export interface IMessageCore extends Message {
   // id: string;

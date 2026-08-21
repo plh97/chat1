@@ -4,7 +4,7 @@ export type {
   Message,
   MediaMessage,
   TextMessage,
-} from "db";
+} from "@/db";
 
 export * from "./common";
 export * from "./IMessage";

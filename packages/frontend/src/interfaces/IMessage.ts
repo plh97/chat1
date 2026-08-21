@@ -1,5 +1,5 @@
 import type { IUser } from "@/interfaces";
-import type { MediaMessage, Message } from "db";
+import type { MediaMessage, Message } from "@/db";
 
 export interface IMediaMessage extends MediaMessage {
   file: File;
@@ -8,7 +8,7 @@ export interface IMediaMessage extends MediaMessage {
   fileType: string;
   name: string;
   size: number;
-  // duration: string | null;
+  duration: string | null;
 }
 
 export interface IMessage extends Omit<Message, "mediaMessage"> {

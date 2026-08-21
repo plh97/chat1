@@ -13,6 +13,7 @@
     "usehooks",
     "virtua",
     "VITE",
+    "vmsg",
     "Xmark"
   ],
   "make-runner.env": {

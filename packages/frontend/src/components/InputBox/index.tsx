@@ -146,7 +146,7 @@ export function InputBox({ className }: { readonly className?: string }) {
   if (!isRoomMember) {
     return (
       <div className={clsx("flex flex-col gap-3 flex-0", className)}>
-        <div className="box-border flex flex-row gap-3 flex-0 basis-20 pt-0 pb-5 px-3">
+        <div className="box-border flex flex-row gap-3 flex-0 basis-20 pt-0 pb-5 px-3 safe-pb">
           you are not room member,{" "}
           <Link color="teal.500" className="font-bold" onClick={handleJoinRoom}>
             Join it
@@ -159,7 +159,7 @@ export function InputBox({ className }: { readonly className?: string }) {
   return (
     <div className={clsx("flex flex-col gap-3 flex-0", className)}>
       {replyMessage}
-      <div className="box-border flex flex-row gap-3 flex-0 basis-20 pt-0 pb-5 px-3">
+      <div className="box-border flex flex-row gap-3 flex-0 basis-20 pt-0 pb-5 px-3 safe-pb">
         {!time ? (
           <Input
             maxLength={MAX_INPUT}

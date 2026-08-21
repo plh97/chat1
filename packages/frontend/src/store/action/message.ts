@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { generateTemplateId, WS_EVENT } from "core";
+import { generateTemplateId, WS_EVENT } from "@/core";
 import { formatMessage } from "@/utils/formatMessage";
 import { normalizeMessage } from "@/Api";
 import {

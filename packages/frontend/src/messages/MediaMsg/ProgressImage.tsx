@@ -1,6 +1,6 @@
 import { useMediaMsgStyle } from "@/hooks/general";
 import { Image } from "@chakra-ui/react";
-import { IMediaMessage } from "core";
+import { IMediaMessage } from "@/core";
 
 export const ProgressImage = ({
   message,

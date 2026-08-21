@@ -1,4 +1,4 @@
-import { SocketClient, WS_EVENT } from "core";
+import { SocketClient, WS_EVENT } from "@/core";
 import { fetchUserInfoThunk } from "@/store/reducer/user";
 import { getRoomInfoThunk } from "@/store/reducer/room";
 

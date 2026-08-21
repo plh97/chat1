@@ -1,4 +1,4 @@
-import type { ContentType } from "db";
+import type { ContentType } from "@/db";
 import { TextMsg } from "./TextMsg";
 import { MediaMsg } from "./MediaMsg";
 import { IMessage } from "@/interfaces/IMessage";

@@ -21,11 +21,11 @@ export class SocketClient {
     this.init();
     window.onoffline = () => {
       this.error("offline");
-    }
+    };
 
     window.ononline = () => {
       this.init();
-    }
+    };
   }
 
   init() {

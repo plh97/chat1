@@ -1,4 +1,4 @@
-import type { User } from "db";
+import type { User } from "@/db";
 import type { IRoom } from "@/interfaces";
 
 export interface IUser

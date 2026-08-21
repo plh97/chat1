@@ -1,4 +1,4 @@
-import type { MediaMessage } from "db";
+import type { MediaMessage } from "@/db";
 import { IMediaMessage, IMessage } from "@/interfaces";
 import {
   previewAudio,

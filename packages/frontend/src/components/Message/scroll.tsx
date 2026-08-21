@@ -1,4 +1,5 @@
 import { PropsWithChildren } from "react";
+import clsx from "clsx";
 import { VList } from "virtua";
 import { Loader2 } from "lucide-react";
 import {
@@ -33,7 +34,10 @@ export const Top = () => {
   );
 };
 
-export function Scroll({ children }: PropsWithChildren) {
+export function Scroll({
+  children,
+  className,
+}: PropsWithChildren<{ readonly className?: string }>) {
   const dispatch = useThunkDispatch();
   const { id = "" } = useParams();
   const { isPrepend, handleScroll } = useLoadMore();
@@ -80,7 +84,7 @@ export function Scroll({ children }: PropsWithChildren) {
 
   if (!room?.id || !userInfo?.id) {
     return (
-      <div className="overflow-y-auto flex-1 relative px-3.5 py-0 flex items-center justify-center flex-col">
+      <div className="overflow-y-auto overscroll-contain touch-pan-y flex-1 relative px-3.5 py-0 flex items-center justify-center flex-col [WebkitOverflowScrolling:touch]">
         <Loader2 className="text-2xl w-8 h-8 text-gray-200 animate-spin dark:text-gray-600" />
       </div>
     );
@@ -89,7 +93,10 @@ export function Scroll({ children }: PropsWithChildren) {
     <VList
       reverse
       shift={isPrepend.current}
-      className="overflow-y-auto flex-1 relative px-3.5 py-0"
+      className={clsx(
+        "overflow-y-auto overscroll-contain touch-pan-y flex-1 relative px-3.5 py-0 [WebkitOverflowScrolling:touch]",
+        className
+      )}
       ref={scrollEl}
       onScroll={(offset) => {
         if (!loadingMessage && message.length && hasMoreMessage) {

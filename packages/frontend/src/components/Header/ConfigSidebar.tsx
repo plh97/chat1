@@ -173,7 +173,7 @@ export const ConfigSidebar = ({
             <FormControl>
               <FormLabel>Admin List</FormLabel>
               <div className="flex flex-row gap-2 items-center flex-wrap">
-                <AvatarGroup size="md" max={4}>
+                <AvatarGroup size="md" max={adminTotalCount}>
                   {room.admin.map((m) => (
                     <Avatar key={m.id} src={m.image} name={m.userName} />
                   ))}
@@ -193,7 +193,7 @@ export const ConfigSidebar = ({
             <FormControl>
               <FormLabel>Member List</FormLabel>
               <div className="flex flex-row gap-2 items-center flex-wrap">
-                <AvatarGroup size="md" max={4}>
+                <AvatarGroup size="md" max={memberTotalCount}>
                   {room.member.map((m) => (
                     <Avatar key={m.id} src={m.image} name={m.userName} />
                   ))}
