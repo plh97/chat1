@@ -1,6 +1,7 @@
 import { formatTime } from "@/utils";
 import { IMediaMessage } from "@/core";
 import { FaPauseCircle, FaPlayCircle } from "react-icons/fa";
+import { audioPlayer, useAudioPlayer } from "./audioPlayer";
 
 export function formatFileSize(size?: number) {
   if (!size) return "0 Byte";
@@ -13,12 +14,24 @@ export function formatFileSize(size?: number) {
   return `${size.toFixed(0)} Byte`;
 }
 
-export const AudioMsg = ({ message }: { message: IMediaMessage }) => {
-  const duration = message.duration ? Math.ceil(+message.duration) : 0;
-  const [current, setCurrent] = useState(0);
-  const [playing, setPlaying] = useState(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const precent = (current / duration) * 100;
+export const AudioMsg = ({
+  message,
+  messageId,
+}: {
+  message: IMediaMessage;
+  messageId: string;
+}) => {
+  const fallbackDuration = message.duration ? Math.ceil(+message.duration) : 0;
+  const playerState = useAudioPlayer();
+  const isCurrent =
+    playerState.messageId === messageId && playerState.src === message.url;
+  const current = isCurrent ? playerState.currentTime : 0;
+  const duration = isCurrent
+    ? Math.ceil(playerState.duration || fallbackDuration)
+    : fallbackDuration;
+  const playing = isCurrent && playerState.playing;
+  const precent = duration ? (current / duration) * 100 : 0;
+
   return (
     <button
       data-duration={message.duration}
@@ -27,27 +40,13 @@ export const AudioMsg = ({ message }: { message: IMediaMessage }) => {
         background: `linear-gradient(90deg, rgba(0,0,0,0.5), rgba(0,0,0,0.5) ${precent}%, transparent 0)`,
       }}
       onClick={() => {
-        if (playing) {
-          setPlaying(false);
-          audioRef.current?.pause();
-        } else {
-          setPlaying(true);
-          audioRef.current?.play();
-        }
+        audioPlayer
+          .toggle(messageId, message.url, fallbackDuration)
+          .catch(() => {
+            // ignore play interruption errors from quick user interactions
+          });
       }}
     >
-      <audio
-        onEnded={() => {
-          setPlaying(false);
-          setCurrent(0);
-        }}
-        onTimeUpdate={() => {
-          setCurrent(audioRef.current?.currentTime ?? 0);
-        }}
-        ref={audioRef}
-        src={message.url}
-        className="hidden"
-      />
       {playing ? (
         <FaPauseCircle className="h-6 flex-initial text-2xl" />
       ) : (

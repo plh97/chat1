@@ -29,10 +29,11 @@ export const FileIcon = ({
   type,
   ...args
 }: {
-  type: string;
+  type?: string;
   className?: string;
 }) => {
-  const [type1, type2] = type.split("/");
+  const normalizedType = type ?? "";
+  const [type1, type2] = normalizedType.split("/");
   const iconMap: Record<string, JSX.Element | null> = {
     pdf: <FaFilePdf {...args} />,
     csv: <FaFileCsv {...args} />,

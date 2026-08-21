@@ -13,6 +13,7 @@ import { useDraft } from "./useDraft";
 import { Reply } from "../Reply";
 import { Link } from "@chakra-ui/react";
 import { setLocalUserInfo } from "@/store/reducer/user";
+import { getFileExtension, getNormalizedMimeType } from "@/utils/uploadFile";
 
 const MAX_INPUT = 2000;
 const { toast } = createStandaloneToast();
@@ -34,7 +35,15 @@ export function InputBox({ className }: { readonly className?: string }) {
         channelId: room.id,
         mediaMessage: {
           file,
+          url: "",
+          name: file.name ?? "",
+          size: file.size ?? 0,
+          extension: getFileExtension(file),
+          fileType: getNormalizedMimeType(file),
           duration: duration ?? null,
+          thumbnail: null,
+          width: null,
+          height: null,
         } as IMediaMessage,
       })
     );

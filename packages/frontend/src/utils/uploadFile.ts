@@ -76,7 +76,7 @@ export const getMimeTypeFromName = (name?: string): string => {
 };
 
 export const getNormalizedMimeType = (file: Pick<File, "type" | "name">) => {
-  const cleanType = file.type.split(";")[0].trim().toLowerCase();
+  const cleanType = file.type?.split(";")?.[0]?.trim()?.toLowerCase();
   if (cleanType) {
     return cleanType;
   }
@@ -84,7 +84,7 @@ export const getNormalizedMimeType = (file: Pick<File, "type" | "name">) => {
 };
 
 export const getFileExtension = (file: Pick<File, "type" | "name">) => {
-  const nameExtension = file.name.split(".").pop()?.toLowerCase();
+  const nameExtension = file.name?.split(".").pop()?.toLowerCase();
   if (nameExtension) {
     return nameExtension;
   }

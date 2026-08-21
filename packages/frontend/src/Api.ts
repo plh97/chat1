@@ -59,6 +59,24 @@ const normalizeUser = (user: any): IUser => {
   };
 };
 
+const normalizeMediaMessage = (mediaMessage: any) => {
+  if (!mediaMessage) return mediaMessage;
+  return {
+    ...mediaMessage,
+    url: mediaMessage.url ?? "",
+    name: mediaMessage.name ?? "",
+    extension: mediaMessage.extension ?? "",
+    size: Number(mediaMessage.size ?? 0),
+    fileType:
+      mediaMessage.fileType ??
+      mediaMessage.file_type ??
+      mediaMessage.mimeType ??
+      "",
+    duration:
+      mediaMessage.duration == null ? null : String(mediaMessage.duration),
+  };
+};
+
 export const normalizeMessage = (message: any): IMessage => {
   if (!message) return message;
   return {
@@ -68,6 +86,9 @@ export const normalizeMessage = (message: any): IMessage => {
     roomId: normalizeId(message.roomId ?? message.channelId),
     userId: normalizeId(message.userId ?? message.user?.id),
     replyId: normalizeId(message.replyId),
+    mediaMessage: message.mediaMessage
+      ? normalizeMediaMessage(message.mediaMessage)
+      : message.mediaMessage,
     user: message.user ? normalizeUser(message.user) : message.user,
     reply: message.reply ? normalizeMessage(message.reply) : message.reply,
   };
