@@ -21,15 +21,15 @@ export function SideComponent({
     <div
       data-side
       className={clsx(
-        "bg-slate-800 border-r-2 border-slate-900 border-solid basis-72 flex flex-col basis-72 flex-0",
+        "bg-slate-800 border-r-2 border-slate-900 border-solid basis-72 flex min-h-0 flex-col basis-72 flex-0 overflow-hidden",
         className
       )}
     >
-      <div className="flex gap-3 items-center justify-start px-2 h-14">
+      <div className="flex h-14 flex-none items-center justify-start gap-3 px-2">
         <ActionMenu />
       </div>
       <List />
-      <div className="flex items-center justify-center h-14">
+      <div className="flex h-14 flex-none items-center justify-center">
         <Button color="gray" variant="outline" onClick={handleLogout}>
           Logout
         </Button>

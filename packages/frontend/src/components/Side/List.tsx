@@ -20,7 +20,7 @@ export const List = () => {
   }
   if (myUserInfo.room?.length === 0) {
     return (
-      <ul className="flex-1 overflow-y-auto px-2">
+      <ul className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 [WebkitOverflowScrolling:touch]">
         <p>
           No room found! Do you want to join&nbsp;
           <Link
@@ -37,7 +37,7 @@ export const List = () => {
     );
   }
   return (
-    <ul className="flex-1 overflow-y-auto px-2">
+    <ul className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 [WebkitOverflowScrolling:touch]">
       {myUserInfo.room
         ?.filter((room) => room?.id != null)
         .map((room) => {

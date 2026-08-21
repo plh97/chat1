@@ -84,7 +84,7 @@ export function Scroll({
 
   if (!room?.id || !userInfo?.id) {
     return (
-      <div className="overflow-y-auto overscroll-contain touch-pan-y flex-1 relative px-3.5 py-0 flex items-center justify-center flex-col [WebkitOverflowScrolling:touch]">
+      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto overscroll-contain px-3.5 py-0 touch-pan-y [WebkitOverflowScrolling:touch]">
         <Loader2 className="text-2xl w-8 h-8 text-gray-200 animate-spin dark:text-gray-600" />
       </div>
     );
@@ -94,7 +94,7 @@ export function Scroll({
       reverse
       shift={isPrepend.current}
       className={clsx(
-        "overflow-y-auto overscroll-contain touch-pan-y flex-1 relative px-3.5 py-0 [WebkitOverflowScrolling:touch]",
+        "relative flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-3.5 py-0 touch-pan-y [WebkitOverflowScrolling:touch]",
         className
       )}
       ref={scrollEl}
