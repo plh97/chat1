@@ -1,5 +1,5 @@
 import { IconButton } from "@chakra-ui/react";
-import { IMediaMessage } from "@/core";
+import { IMediaMessage } from "@/interfaces";
 import { HiOutlineDocumentSearch } from "react-icons/hi";
 import {
   FaFileAlt,

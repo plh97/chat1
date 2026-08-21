@@ -1,5 +1,5 @@
 import { formatTime } from "@/utils";
-import { IMediaMessage } from "@/core";
+import { IMediaMessage } from "@/interfaces";
 import { FaPauseCircle, FaPlayCircle } from "react-icons/fa";
 import { audioPlayer, useAudioPlayer } from "./audioPlayer";
 
