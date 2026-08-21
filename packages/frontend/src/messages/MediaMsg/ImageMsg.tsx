@@ -14,7 +14,23 @@ const PreviewImage = ({
   className: string;
 }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const { url, thumbnail } = mediaMessage;
+  const { url, thumbnail, file } = mediaMessage;
+  const [localPreview, setLocalPreview] = useState("");
+
+  useEffect(() => {
+    if (!file) {
+      setLocalPreview("");
+      return;
+    }
+    const objectUrl = URL.createObjectURL(file);
+    setLocalPreview(objectUrl);
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [file]);
+
+  const previewSrc = url || localPreview || thumbnail || "";
+
   return (
     <>
       <button onClick={onOpen} className={className}>
@@ -25,11 +41,16 @@ const PreviewImage = ({
         <ModalContent className="flex items-center justify-center">
           <ModalCloseButton />
           <Image
-            src={url}
-            fallbackSrc={thumbnail ?? ""}
+            src={previewSrc}
+            fallbackSrc={thumbnail ?? localPreview}
             className="max-w-[70vw] max-h-[70vh]"
           />
-          <a href={url} target="_blank" rel="noreferrer" download="3223.png">
+          <a
+            href={previewSrc}
+            target="_blank"
+            rel="noreferrer"
+            download={mediaMessage.name || "image"}
+          >
             <IconButton
               className="!absolute bottom-[-50px] right-[50%]"
               style={{ transform: "translateX(50%)" }}
@@ -46,8 +67,6 @@ const PreviewImage = ({
 };
 
 export const ImageMsg = ({ message }: { message: IMediaMessage }) => {
-  const thumbnail = message?.thumbnail;
-  if (!thumbnail) return <div>Invalid Image</div>;
   return (
     <PreviewImage
       className="overflow-hidden box-content p-2 max-w-[200px] max-h-[200px] cursor-pointer select-none"

@@ -1,30 +1,45 @@
 import { useMediaMsgStyle } from "@/hooks/general";
 import { Image } from "@chakra-ui/react";
-import { IMediaMessage } from "@/core";
+import { IMediaMessage } from "@/interfaces";
 
 export const ProgressImage = ({
   message,
 }: {
   message: Partial<IMediaMessage>;
 }) => {
-  const { thumbnail, url } = message;
+  const { thumbnail, url, file } = message;
   const [loading, setLoading] = useState<boolean>(true);
-  const style = useMediaMsgStyle(message);
+  const [localPreview, setLocalPreview] = useState("");
+
+  useEffect(() => {
+    if (!file) {
+      setLocalPreview("");
+      return;
+    }
+    const objectUrl = URL.createObjectURL(file);
+    setLocalPreview(objectUrl);
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [file]);
+
+  const src = url || localPreview || thumbnail || "";
+  const fallbackSrc = thumbnail || localPreview || "";
+  const style =
+    message.width && message.height ? useMediaMsgStyle(message) : undefined;
+  const shouldBlur = loading || !url;
+
   return (
     <Image
       style={style}
-      fallbackSrc={thumbnail!}
+      fallbackSrc={fallbackSrc}
       className={clsx(
-        "w-full",
-        "h-full",
-        "bg-cover",
-        "transition-all",
-        "duration-0",
+        "min-h-[80px] min-w-[80px] max-w-[200px] max-h-[200px] bg-cover object-cover transition-all duration-0",
         {
-          "blur-sm": loading,
+          "blur-sm": shouldBlur,
         }
       )}
-      src={url}
+      src={src}
       onLoad={() => {
         setLoading(false);
       }}
