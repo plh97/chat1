@@ -23,11 +23,26 @@ export const ProgressImage = ({
     };
   }, [file]);
 
-  const src = url || localPreview || thumbnail || "";
-  const fallbackSrc = thumbnail || localPreview || "";
+  const isVideo = message.fileType?.startsWith("video");
+  const src = isVideo ? url || thumbnail : url || localPreview || thumbnail;
+  const fallbackSrc = thumbnail || localPreview || undefined;
   const style =
     message.width && message.height ? useMediaMsgStyle(message) : undefined;
   const shouldBlur = loading || !url;
+
+  if (!src) {
+    return (
+      <div
+        style={style}
+        className={clsx(
+          "min-h-[80px] min-w-[80px] max-w-[200px] max-h-[200px] bg-slate-700/60 transition-all duration-0",
+          {
+            "blur-sm": shouldBlur,
+          }
+        )}
+      />
+    );
+  }
 
   return (
     <Image

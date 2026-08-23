@@ -29,7 +29,7 @@ const PreviewImage = ({
     };
   }, [file]);
 
-  const previewSrc = url || localPreview || thumbnail || "";
+  const previewSrc = url || localPreview || thumbnail;
 
   return (
     <>
@@ -40,26 +40,30 @@ const PreviewImage = ({
         <ModalOverlay backdropFilter="auto" backdropBlur="2px" />
         <ModalContent className="flex items-center justify-center">
           <ModalCloseButton />
-          <Image
-            src={previewSrc}
-            fallbackSrc={thumbnail ?? localPreview}
-            className="max-w-[70vw] max-h-[70vh]"
-          />
-          <a
-            href={previewSrc}
-            target="_blank"
-            rel="noreferrer"
-            download={mediaMessage.name || "image"}
-          >
-            <IconButton
-              className="!absolute bottom-[-50px] right-[50%]"
-              style={{ transform: "translateX(50%)" }}
-              variant="solid"
-              rounded="full"
-              aria-label="Download Image"
-              icon={<FaDownload className="text-xl" />}
+          {previewSrc ? (
+            <Image
+              src={previewSrc}
+              fallbackSrc={thumbnail ?? localPreview ?? undefined}
+              className="max-w-[70vw] max-h-[70vh]"
             />
-          </a>
+          ) : null}
+          {previewSrc ? (
+            <a
+              href={previewSrc}
+              target="_blank"
+              rel="noreferrer"
+              download={mediaMessage.name || "image"}
+            >
+              <IconButton
+                className="!absolute bottom-[-50px] right-[50%]"
+                style={{ transform: "translateX(50%)" }}
+                variant="solid"
+                rounded="full"
+                aria-label="Download Image"
+                icon={<FaDownload className="text-xl" />}
+              />
+            </a>
+          ) : null}
         </ModalContent>
       </Modal>
     </>

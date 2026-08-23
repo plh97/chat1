@@ -4,7 +4,11 @@ import { FaRecordVinyl } from "react-icons/fa";
 import { useAppSelector } from "@/hooks/app";
 import { scrollToEnd, updateRoomThunk } from "@/store/reducer/room";
 import { sendMessageAction } from "@/store/action/message";
-import { formatTime, getImgFromClip } from "@/utils";
+import {
+  formatTime,
+  getFileFromClipboardEvent,
+  SUPPORTED_MEDIA_TYPES,
+} from "@/utils";
 import { useRecord } from "@/hooks/useRecord";
 import { Input } from "./input";
 import { IMediaMessage } from "@/interfaces";
@@ -48,11 +52,15 @@ export function InputBox({ className }: { readonly className?: string }) {
       })
     );
   };
-  const handlePaste = async () => {
-    const file = await getImgFromClip();
-    if (!file) {
-      throw new Error("No image in clipboard");
-    }
+  const handlePaste = async (
+    event: React.ClipboardEvent<HTMLTextAreaElement>
+  ) => {
+    const file = await getFileFromClipboardEvent(event.nativeEvent, [
+      ...SUPPORTED_MEDIA_TYPES.image,
+      ...SUPPORTED_MEDIA_TYPES.video,
+    ]);
+    if (!file) return;
+    event.preventDefault();
     handleSendMedia(file);
   };
 
