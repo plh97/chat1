@@ -18,6 +18,7 @@ export const Reply = ({ message, className, onClose, onClick }: IProps) => {
       }
       if (message.contentType === "MEDIA_MESSAGE") {
         const mediaMsg = message.mediaMessage!;
+        const caption = message.textMessage?.text?.trim();
         return (
           <span className="inline-flex flex-row items-center gap-1">
             <FileIcon
@@ -25,6 +26,7 @@ export const Reply = ({ message, className, onClose, onClick }: IProps) => {
               className="flex-initial text-md"
             />
             {mediaMsg.name}
+            {caption ? ` · ${caption}` : null}
           </span>
         );
       }

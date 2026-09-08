@@ -10,23 +10,39 @@ export const Component = ({ message }: { message: IMessage }) => {
     return <div>Invalid Media Message</div>;
   }
   const type = mediaMsg.fileType?.split("/")?.[0] ?? "";
+  let media: React.ReactNode;
   switch (type) {
     case "image":
-      return <ImageMsg message={mediaMsg} />;
+      media = <ImageMsg message={mediaMsg} />;
+      break;
     case "video":
-      return <VideoMsg message={mediaMsg} />;
+      media = <VideoMsg message={mediaMsg} />;
+      break;
     case "audio":
-      return <AudioMsg message={mediaMsg} messageId={String(message.id)} />;
+      media = <AudioMsg message={mediaMsg} messageId={String(message.id)} />;
+      break;
     default:
-      return <DocsMsg message={mediaMsg} />;
+      media = <DocsMsg message={mediaMsg} />;
   }
+  const caption = message.textMessage?.text?.trim();
+
+  return (
+    <div className="flex flex-col">
+      {media}
+      {caption ? (
+        <div className="px-2.5 pb-2.5 break-words whitespace-pre-wrap">
+          {caption}
+        </div>
+      ) : null}
+    </div>
+  );
 };
 
 export const MediaMsg = (message: IMessage) => {
   return {
     Preview: () => {
       const type = message.mediaMessage?.fileType?.split("/")?.[0];
-      return <>{`[${type ?? "Unknown Media"}]`}</>;
+      return <>{message.textMessage?.text || `[${type ?? "Unknown Media"}]`}</>;
     },
     Component: () => <Component message={message} />,
   };

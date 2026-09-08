@@ -28,15 +28,27 @@ export function InputBox({ className }: { readonly className?: string }) {
   const userInfo = useAppSelector((state) => state.user.data);
   const dispatch = useThunkDispatch();
   const [text, setText] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
   const { startRecording, stopRecording, time } = useRecord();
   useDraft(text, setText);
-  const handleSendMedia = (file: File, duration?: string) => {
+
+  useEffect(() => {
+    setAttachment(null);
+  }, [room.id]);
+
+  const handleSendMedia = (file: File, duration?: string, caption?: string) => {
     if (!userInfo?.id || !room?.id) return;
-    dispatch(
+    return dispatch(
       sendMessageAction({
         contentType: "MEDIA_MESSAGE",
         userId: userInfo.id,
         channelId: room.id,
+        textMessage: caption
+          ? {
+              text: caption,
+              mention: [],
+            }
+          : null,
         mediaMessage: {
           file,
           url: "",
@@ -61,7 +73,7 @@ export function InputBox({ className }: { readonly className?: string }) {
     ]);
     if (!file) return;
     event.preventDefault();
-    handleSendMedia(file);
+    setAttachment(file);
   };
 
   const sendMsg = (text: string) => {
@@ -79,65 +91,71 @@ export function InputBox({ className }: { readonly className?: string }) {
   };
   // @ts-ignore
   window.sendMsg = sendMsg;
-  const handleSendText = async () => {
+  const handleSendMessage = async () => {
     const trimText = text.trim();
-    if (!userInfo.id || !trimText) return;
+    if (!userInfo.id || !room.id || (!trimText && !attachment)) return;
+
+    const pendingAttachment = attachment;
     setText("");
-    const result = await sendMsg(trimText);
+    setAttachment(null);
+
+    const result = pendingAttachment
+      ? await handleSendMedia(pendingAttachment, undefined, trimText)
+      : await sendMsg(trimText);
+    if (!result) return;
     if (sendMessageAction.rejected.match(result)) return;
     dispatch(scrollToEnd(false));
   };
-  const utilComponent = useMemo(() => {
-    if (text) {
-      return (
-        <IconButton
-          onClick={handleSendText}
-          size="lg"
-          variant="solid"
-          rounded="full"
-          aria-label="Download Image"
-          icon={<FiSend className="text-xl" />}
-        />
-      );
-    }
-    if (time) {
-      return (
-        <IconButton
-          onClick={async () => {
-            const file = await stopRecording();
-            handleSendMedia(file, String(time));
-          }}
-          size="lg"
-          variant="solid"
-          rounded="full"
-          aria-label="Download Image"
-          icon={<FiPause className="text-xl" />}
-        />
-      );
-    }
-    return (
+  let utilComponent: React.ReactNode;
+  if (time) {
+    utilComponent = (
+      <IconButton
+        onClick={async () => {
+          const file = await stopRecording();
+          handleSendMedia(file, String(time));
+        }}
+        size="lg"
+        variant="solid"
+        rounded="full"
+        aria-label="Stop recording and send"
+        icon={<FiPause className="text-xl" />}
+      />
+    );
+  } else {
+    utilComponent = (
       <>
-        <UploadFile onUpload={(...arg) => handleSendMedia(...arg)} />
-        <IconButton
-          onClick={async () => {
-            startRecording().catch((e) => {
-              toast({
-                description: e.message,
-                status: "error",
-                position: "top",
-                duration: 1000,
+        <UploadFile onUpload={setAttachment} />
+        {text || attachment ? (
+          <IconButton
+            onClick={handleSendMessage}
+            size="lg"
+            variant="solid"
+            rounded="full"
+            aria-label="Send message"
+            icon={<FiSend className="text-xl" />}
+          />
+        ) : (
+          <IconButton
+            onClick={async () => {
+              startRecording().catch((e) => {
+                toast({
+                  description: e.message,
+                  status: "error",
+                  position: "top",
+                  duration: 1000,
+                });
               });
-            });
-          }}
-          size="lg"
-          variant="solid"
-          rounded="full"
-          aria-label="Download Image"
-          icon={<FaRecordVinyl className="text-xl" />}
-        />
+            }}
+            size="lg"
+            variant="solid"
+            rounded="full"
+            aria-label="Start recording"
+            icon={<FaRecordVinyl className="text-xl" />}
+          />
+        )}
       </>
     );
-  }, [time, text, userInfo, room]);
+  }
 
   const replyMessage = useMemo(() => {
     if (replyMsg) {
@@ -183,7 +201,9 @@ export function InputBox({ className }: { readonly className?: string }) {
             handlePaste={handlePaste}
             text={text}
             onChange={setText}
-            handleSendText={handleSendText}
+            attachment={attachment}
+            onRemoveAttachment={() => setAttachment(null)}
+            handleSendMessage={handleSendMessage}
           />
         ) : (
           <Textarea
