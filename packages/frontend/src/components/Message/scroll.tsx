@@ -1,4 +1,4 @@
-import { PropsWithChildren } from "react";
+import { Children, PropsWithChildren, ReactElement } from "react";
 import clsx from "clsx";
 import { VList } from "virtua";
 import { Loader2 } from "lucide-react";
@@ -89,8 +89,15 @@ export function Scroll({
       </div>
     );
   }
+
+  const items = Children.toArray([
+    <Top key="message-list-top" />,
+    children,
+  ]) as ReactElement[];
+
   return (
     <VList
+      count={items.length}
       reverse
       shift={isPrepend.current}
       className={clsx(
@@ -104,8 +111,11 @@ export function Scroll({
         }
       }}
     >
-      <Top />
-      {children}
+      {(index) =>
+        items[index] ?? (
+          <div key={`message-list-placeholder-${index}`} aria-hidden />
+        )
+      }
     </VList>
   );
 }

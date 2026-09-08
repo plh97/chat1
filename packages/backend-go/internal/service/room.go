@@ -197,7 +197,7 @@ func (s *roomService) CreateRoom(ctx context.Context, req v1.RoomCreateRequest) 
 		}
 	}
 
-	return s.GetRoomByID(ctx, room.ID, req.GetCreatorID(), 20, 0, 20, 0)
+	return s.GetRoomByID(ctx, room.ID, req.GetCreatorID(), 6, 0, 6, 0)
 }
 
 func (s *roomService) GetRoomByID(ctx context.Context, id, viewerID uint, memberLimit, memberOffset, adminLimit, adminOffset int) (interface{}, error) {
@@ -207,24 +207,24 @@ func (s *roomService) GetRoomByID(ctx context.Context, id, viewerID uint, member
 		return nil, err
 	}
 	if memberLimit <= 0 {
-		memberLimit = 0
+		memberLimit = 6
 	}
 	if memberOffset < 0 {
 		memberOffset = 0
 	}
 	if adminLimit <= 0 {
-		adminLimit = 0
+		adminLimit = 6
 	}
 	if adminOffset < 0 {
 		adminOffset = 0
 	}
 
-	members, memberTotalCount, err := loadRoomUsersByRole(db, id, viewerID, model.Member, memberLimit, memberOffset)
+	members, memberTotalCount, err := loadRoomUsersWithCreator(db, id, viewerID, room.Creator, model.Member, memberLimit, memberOffset)
 	if err != nil {
 		return nil, err
 	}
 	room.Members = members
-	admins, adminTotalCount, err := loadRoomUsersByRole(db, id, viewerID, model.Admin, adminLimit, adminOffset)
+	admins, adminTotalCount, err := loadRoomUsersWithCreator(db, id, viewerID, room.Creator, model.Admin, adminLimit, adminOffset)
 	if err != nil {
 		return nil, err
 	}
@@ -439,6 +439,35 @@ func loadRoomUsersByRole(db *gorm.DB, roomID, viewerID uint, role string, limit,
 	return members, memberTotalCount, nil
 }
 
+func loadRoomUsersWithCreator(db *gorm.DB, roomID, viewerID uint, creator *model.User, role string, limit, offset int) ([]*model.User, int64, error) {
+	if creator == nil {
+		return loadRoomUsersByRole(db, roomID, viewerID, role, limit, offset)
+	}
+
+	roleLimit := limit
+	roleOffset := offset
+	if offset == 0 {
+		roleLimit--
+	} else {
+		roleOffset--
+	}
+
+	users, totalCount, err := loadRoomUsersByRole(db, roomID, viewerID, role, roleLimit, roleOffset)
+	if err != nil {
+		return nil, 0, err
+	}
+	totalCount++
+
+	if offset > 0 || limit <= 0 {
+		return users, totalCount, nil
+	}
+
+	result := make([]*model.User, 0, len(users)+1)
+	result = append(result, creator)
+	result = append(result, users...)
+	return result, totalCount, nil
+}
+
 func getViewerRole(db *gorm.DB, roomID, viewerID uint) (string, error) {
 	if viewerID == 0 {
 		return "", nil
@@ -648,7 +677,7 @@ func (s *roomService) UpdateRoom(ctx context.Context, req v1.RoomUpdateRequest) 
 		}
 	}
 
-	return s.GetRoomByID(ctx, room.ID, 0, 20, 0, 20, 0)
+	return s.GetRoomByID(ctx, room.ID, 0, 6, 0, 6, 0)
 }
 
 func (s *roomService) JoinRoom(ctx context.Context, userID, roomID uint) (interface{}, error) {
@@ -669,7 +698,7 @@ func (s *roomService) JoinRoom(ctx context.Context, userID, roomID uint) (interf
 		return nil, err
 	}
 
-	return s.GetRoomByID(ctx, room.ID, userID, 20, 0, 20, 0)
+	return s.GetRoomByID(ctx, room.ID, userID, 6, 0, 6, 0)
 }
 
 func buildRoomMessageUser(user *model.User) *roomMessageUser {

@@ -97,9 +97,17 @@ export const addRoomThunk = createAsyncThunk<IRoom, Partial<IRoom>>(
 
 export const updateRoomThunk =
   (data: Partial<Room>): AppThunk =>
-  async (dispatch) => {
+  async (dispatch, getState) => {
     const room = await Api.updateRoom(data);
-    dispatch(initialMessage(room));
+    const currentRoom = getState().room.data;
+    dispatch(
+      initialMessage({
+        ...room,
+        message: currentRoom.message,
+        totalCount: currentRoom.totalCount,
+        hasMoreMessage: currentRoom.hasMoreMessage,
+      })
+    );
   };
 
 export const joinRoomThunk = createAsyncThunk<
