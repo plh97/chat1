@@ -72,6 +72,7 @@ type stubUserRepository struct {
 	updateFn       func(ctx context.Context, user *model.User) error
 	updateFieldsFn func(ctx context.Context, id int, fields map[string]interface{}) error
 	getByIDFn      func(ctx context.Context, id int) (*model.User, error)
+	getProfileFn   func(ctx context.Context, id int) (*model.User, error)
 	listFn         func(ctx context.Context, req v1.ListUsersRequest) ([]model.User, error)
 }
 
@@ -103,6 +104,13 @@ func (s *stubUserRepository) GetByID(ctx context.Context, id int) (*model.User, 
 		return s.getByIDFn(ctx, id)
 	}
 	return nil, nil
+}
+
+func (s *stubUserRepository) GetProfileByID(ctx context.Context, id int) (*model.User, error) {
+	if s.getProfileFn != nil {
+		return s.getProfileFn(ctx, id)
+	}
+	return s.GetByID(ctx, id)
 }
 
 func (s *stubUserRepository) GetByEmail(ctx context.Context, email string) (*model.User, error) {

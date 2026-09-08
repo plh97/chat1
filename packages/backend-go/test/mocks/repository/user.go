@@ -5,10 +5,11 @@
 package mock_repository
 
 import (
+	v1 "backend-go/api/v1"
+	model "backend-go/internal/model"
 	context "context"
 	reflect "reflect"
 
-	model "backend-go/internal/model"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -65,7 +66,7 @@ func (mr *MockUserRepositoryMockRecorder) GetByEmail(ctx, email interface{}) *go
 }
 
 // GetByID mocks base method.
-func (m *MockUserRepository) GetByID(ctx context.Context, id string) (*model.User, error) {
+func (m *MockUserRepository) GetByID(ctx context.Context, id int) (*model.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByID", ctx, id)
 	ret0, _ := ret[0].(*model.User)
@@ -77,6 +78,36 @@ func (m *MockUserRepository) GetByID(ctx context.Context, id string) (*model.Use
 func (mr *MockUserRepositoryMockRecorder) GetByID(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockUserRepository)(nil).GetByID), ctx, id)
+}
+
+// GetProfileByID mocks base method.
+func (m *MockUserRepository) GetProfileByID(ctx context.Context, id int) (*model.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProfileByID", ctx, id)
+	ret0, _ := ret[0].(*model.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProfileByID indicates an expected call of GetProfileByID.
+func (mr *MockUserRepositoryMockRecorder) GetProfileByID(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProfileByID", reflect.TypeOf((*MockUserRepository)(nil).GetProfileByID), ctx, id)
+}
+
+// List mocks base method.
+func (m *MockUserRepository) List(ctx context.Context, req v1.ListUsersRequest) ([]model.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "List", ctx, req)
+	ret0, _ := ret[0].([]model.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// List indicates an expected call of List.
+func (mr *MockUserRepositoryMockRecorder) List(ctx, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "List", reflect.TypeOf((*MockUserRepository)(nil).List), ctx, req)
 }
 
 // Update mocks base method.
@@ -91,4 +122,18 @@ func (m *MockUserRepository) Update(ctx context.Context, user *model.User) error
 func (mr *MockUserRepositoryMockRecorder) Update(ctx, user interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUserRepository)(nil).Update), ctx, user)
+}
+
+// UpdateFields mocks base method.
+func (m *MockUserRepository) UpdateFields(ctx context.Context, id int, fields map[string]interface{}) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateFields", ctx, id, fields)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateFields indicates an expected call of UpdateFields.
+func (mr *MockUserRepositoryMockRecorder) UpdateFields(ctx, id, fields interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFields", reflect.TypeOf((*MockUserRepository)(nil).UpdateFields), ctx, id, fields)
 }

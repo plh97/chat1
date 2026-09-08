@@ -22,6 +22,7 @@ type Room struct {
 	// Relations
 	Members []*User `gorm:"many2many:room_members;joinForeignKey:RoomID;joinReferences:UserID;where:role='member'" json:"member"`
 	Admins  []*User `gorm:"many2many:room_members;joinForeignKey:RoomID;joinReferences:UserID;where:role='admin'" json:"admin"`
+	Peer    *User   `gorm:"-" json:"peer,omitempty"`
 
 	// 【必须】保持为切片，因为是 many2many 关联
 	CreatorList []*User `gorm:"many2many:room_members;joinForeignKey:RoomID;joinReferences:UserID;where:role='creator'" json:"-"`

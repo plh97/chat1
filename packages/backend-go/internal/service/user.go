@@ -102,7 +102,7 @@ func (s *userService) Logout(ctx context.Context) error {
 }
 
 func (s *userService) GetProfile(ctx context.Context, id int) (*v1.GetProfileResponseData, error) {
-	user, err := s.userRepo.GetByID(ctx, id)
+	user, err := s.userRepo.GetProfileByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func (s *userService) UpdateProfile(ctx context.Context, id int, req *v1.UpdateP
 	}
 
 	// Fetch and return updated user profile
-	user, err := s.userRepo.GetByID(ctx, id)
+	user, err := s.userRepo.GetProfileByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}

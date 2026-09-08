@@ -1,5 +1,6 @@
 import { MessageTemplate } from "@/messages";
 import { IRoom, IMessage } from "@/interfaces";
+import { getRoomDisplay } from "@/utils/roomDisplay";
 
 interface IProps {
   room: IRoom;
@@ -29,15 +30,7 @@ const ItemOriginal = ({ myId, room, active, draft, unreadCount }: IProps) => {
       return "unknown message";
     }
   }, [room, draft]);
-  let name = room.name;
-  let image = room.image!;
-  if (room.channelType === "PRIVATE") {
-    const user = room.member?.find((u) => u.id !== myId);
-    if (user) {
-      image = user.image;
-      name = user.userName;
-    }
-  }
+  const { name, image } = getRoomDisplay(room, myId);
   return (
     <li key={room.id}>
       <NavLink

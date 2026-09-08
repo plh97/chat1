@@ -1,26 +1,14 @@
 import { Config } from "./config";
 import { Loading } from "./Loading";
+import { getRoomDisplay } from "@/utils/roomDisplay";
 
 export function Content() {
   const room = useAppSelector((state) => state.room.data);
   const userinfo = useAppSelector((state) => state.user.data);
-  const profile = useMemo(() => {
-    if (room.channelType === "PRIVATE") {
-      return room.member?.find((u) => u.id !== userinfo.id);
-    }
-  }, [room.channelType, room.member, userinfo.id]);
   if (!room?.id) {
     return <Loading />;
   }
-  let name = room.name;
-  let image = room.image!;
-  if (room.channelType === "PRIVATE") {
-    const user = room.member?.find((u) => u.id !== userinfo.id);
-    if (user) {
-      name = user.userName;
-      image = user.image;
-    }
-  }
+  const { name, image, profile } = getRoomDisplay(room, userinfo.id);
   return (
     <div className="flex items-center">
       <WithProfile profile={profile}>

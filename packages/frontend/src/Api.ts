@@ -109,6 +109,7 @@ const normalizeRoom = (room: any): IRoom => {
     member: Array.isArray(room.member)
       ? room.member.map(normalizeUser)
       : room.member,
+    peer: room.peer ? normalizeUser(room.peer) : room.peer,
     admin: Array.isArray(room.admin)
       ? room.admin.map(normalizeUser)
       : room.admin,

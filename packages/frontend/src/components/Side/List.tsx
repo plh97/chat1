@@ -2,6 +2,7 @@ import { joinRoomThunk } from "@/store/reducer/room";
 import { Item } from "./Item";
 import { Loading } from "./Loading";
 import { Link } from "@chakra-ui/react";
+import { isRoomListLoading } from "@/utils/roomList";
 
 export const List = () => {
   const { id = "" } = useParams();
@@ -13,9 +14,12 @@ export const List = () => {
       navigation(`/room/${payload.id}`);
     }
   }
-  const draftMap = useAppSelector((state) => state.user.draftMap);
-  const myUserInfo = useAppSelector((state) => state.user.data);
-  if (!myUserInfo.UserId) {
+  const {
+    auth,
+    data: myUserInfo,
+    draftMap,
+  } = useAppSelector((state) => state.user);
+  if (isRoomListLoading(auth, myUserInfo.id)) {
     return <Loading />;
   }
   if (myUserInfo.room?.length === 0) {

@@ -15,7 +15,7 @@ import (
 
 var logger *log.Logger
 
-func setupRepository(t *testing.T) repository.UserRepository {
+func setupRepositoryWithDB(t *testing.T) (repository.UserRepository, *gorm.DB) {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	if err != nil {
 		t.Fatalf("failed to open gorm connection: %v", err)
@@ -25,7 +25,12 @@ func setupRepository(t *testing.T) repository.UserRepository {
 	}
 
 	repo := repository.NewRepository(logger, db)
-	return repository.NewUserRepository(repo)
+	return repository.NewUserRepository(repo), db
+}
+
+func setupRepository(t *testing.T) repository.UserRepository {
+	userRepo, _ := setupRepositoryWithDB(t)
+	return userRepo
 }
 
 func TestUserRepository_Create(t *testing.T) {
@@ -79,6 +84,40 @@ func TestUserRepository_GetById(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, fetched)
 	assert.Equal(t, user.Email, fetched.Email)
+}
+
+func TestUserRepository_GetByID_LoadsPrivateRoomPeer(t *testing.T) {
+	userRepo, db := setupRepositoryWithDB(t)
+	ctx := context.Background()
+	me := &model.User{UserName: "me", Password: "password", Email: "me@example.com"}
+	peer := &model.User{UserName: "peer", Password: "password", Email: "peer@example.com", Image: "https://example.com/peer.png"}
+	assert.NoError(t, userRepo.Create(ctx, me))
+	assert.NoError(t, userRepo.Create(ctx, peer))
+
+	privateRoom := &model.Room{Name: "Private Chat", ChannelType: model.RoomTypePrivate}
+	publicRoom := &model.Room{Name: "Common Room", ChannelType: model.RoomTypeGroup}
+	assert.NoError(t, db.Create(privateRoom).Error)
+	assert.NoError(t, db.Create(publicRoom).Error)
+	assert.NoError(t, db.Create([]model.RoomMember{
+		{RoomID: privateRoom.ID, UserID: me.ID, Role: model.Member},
+		{RoomID: privateRoom.ID, UserID: peer.ID, Role: model.Member},
+		{RoomID: publicRoom.ID, UserID: me.ID, Role: model.Member},
+		{RoomID: publicRoom.ID, UserID: peer.ID, Role: model.Member},
+	}).Error)
+
+	fetched, err := userRepo.GetProfileByID(ctx, int(me.ID))
+	assert.NoError(t, err)
+	assert.Len(t, fetched.Rooms, 2)
+
+	roomsByID := make(map[uint]model.Room, len(fetched.Rooms))
+	for _, room := range fetched.Rooms {
+		roomsByID[room.ID] = room
+	}
+	assert.NotNil(t, roomsByID[privateRoom.ID].Peer)
+	assert.Equal(t, peer.ID, roomsByID[privateRoom.ID].Peer.ID)
+	assert.Equal(t, peer.UserName, roomsByID[privateRoom.ID].Peer.UserName)
+	assert.Equal(t, peer.Image, roomsByID[privateRoom.ID].Peer.Image)
+	assert.Nil(t, roomsByID[publicRoom.ID].Peer)
 }
 
 func TestUserRepository_GetByUsername(t *testing.T) {

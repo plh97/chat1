@@ -7,6 +7,7 @@ export interface IRoom extends Omit<Room, "member" | "message"> {
   isMember?: boolean;
   member: IUser[];
   admin: IUser[];
+  peer?: IUser;
   memberTotalCount?: number;
   adminTotalCount?: number;
   hasMoreMessage?: boolean;
