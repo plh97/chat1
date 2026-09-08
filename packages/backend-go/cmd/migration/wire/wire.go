@@ -6,34 +6,18 @@ package wire
 import (
 	"backend-go/internal/repository"
 	"backend-go/internal/server"
-	"backend-go/pkg/app"
 	"backend-go/pkg/log"
 	"github.com/google/wire"
 	"github.com/spf13/viper"
 )
 
-var repositorySet = wire.NewSet(
+var migrationSet = wire.NewSet(
 	repository.NewDB,
-	//repository.NewRedis,
-	repository.NewRepository,
-	repository.NewUserRepository,
-)
-var serverSet = wire.NewSet(
 	server.NewMigrate,
 )
 
-// build App
-func newApp(migrate *server.Migrate) *app.App {
-	return app.NewApp(
-		app.WithServer(migrate),
-		app.WithName("demo-migrate"),
-	)
-}
-
-func NewWire(*viper.Viper, *log.Logger) (*app.App, func(), error) {
+func NewWire(*viper.Viper, *log.Logger) (*server.Migrate, func(), error) {
 	panic(wire.Build(
-		repositorySet,
-		serverSet,
-		newApp,
+		migrationSet,
 	))
 }

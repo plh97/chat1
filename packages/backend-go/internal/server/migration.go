@@ -6,9 +6,9 @@ import (
 	"backend-go/pkg/sid"
 	"context"
 	"fmt"
-	"os"
 	"strconv"
 
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -23,31 +23,52 @@ const (
 )
 
 type Migrate struct {
-	db  *gorm.DB
-	log *log.Logger
-	sid *sid.Sid
+	db    *gorm.DB
+	log   *log.Logger
+	sid   *sid.Sid
+	reset bool
 }
 
-func NewMigrate(db *gorm.DB, log *log.Logger) *Migrate {
+func NewMigrate(db *gorm.DB, log *log.Logger, conf *viper.Viper) *Migrate {
 	return &Migrate{
-		db:  db,
-		log: log,
-		sid: sid.NewSid(),
+		db:    db,
+		log:   log,
+		sid:   sid.NewSid(),
+		reset: conf.GetBool("migration.reset"),
 	}
 }
 
-func (m *Migrate) Start(ctx context.Context) error {
+func (m *Migrate) Run(ctx context.Context) error {
+	db := m.db.WithContext(ctx)
+	for _, relation := range []struct {
+		model interface{}
+		field string
+	}{
+		{model: &model.User{}, field: "Rooms"},
+		{model: &model.Room{}, field: "Members"},
+		{model: &model.Room{}, field: "Admins"},
+		{model: &model.Room{}, field: "CreatorList"},
+	} {
+		if err := db.SetupJoinTable(relation.model, relation.field, &model.RoomMember{}); err != nil {
+			m.log.Error("setup room member join table error", zap.String("field", relation.field), zap.Error(err))
+			return err
+		}
+	}
 
-	m.db.Migrator().DropTable(
-		&model.User{},
-		&model.Room{},
-		&model.Message{},
-		&model.RoomMember{},
-		"user_friends",
-	)
+	if m.reset {
+		if err := db.Migrator().DropTable(
+			&model.User{},
+			&model.Room{},
+			&model.Message{},
+			&model.RoomMember{},
+			"user_friends",
+		); err != nil {
+			m.log.Error("drop tables error", zap.Error(err))
+			return err
+		}
+	}
 
-	// 2. 自动迁移数据库表结构
-	if err := m.db.AutoMigrate(
+	if err := db.AutoMigrate(
 		&model.User{},
 		&model.Room{},
 		&model.RoomMember{},
@@ -58,7 +79,10 @@ func (m *Migrate) Start(ctx context.Context) error {
 	}
 	m.log.Info("AutoMigrate success")
 
-	// 4. 创建基础用户
+	if !m.reset {
+		return nil
+	}
+
 	if err := m.createSeedUsers(); err != nil {
 		m.log.Error("create seed users error", zap.Error(err))
 		return err
@@ -75,7 +99,6 @@ func (m *Migrate) Start(ctx context.Context) error {
 		return err
 	}
 
-	os.Exit(0)
 	return nil
 }
 
@@ -125,11 +148,6 @@ func (m *Migrate) createFakeUsers(total int) ([]model.User, error) {
 		return nil, err
 	}
 	return fakeUsers, nil
-}
-
-func (m *Migrate) Stop(ctx context.Context) error {
-	m.log.Info("AutoMigrate stop")
-	return nil
 }
 
 // createSeedUsers 创建基础用户数据

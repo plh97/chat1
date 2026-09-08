@@ -6,6 +6,11 @@ on:
       - "main"
     paths:
       - "packages/backend-go/**"
+      - "ansible/**"
+      - ".github/workflows/github-CICD-actions.yml"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
   workflow_dispatch:
 jobs:
   Ansible-Actions:

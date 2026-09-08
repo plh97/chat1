@@ -15,11 +15,15 @@ deploy-prepare:
 	cd ./deploy/docker-compose && docker compose up -d
 	mkdir -p ./storage/logs
 	$(MAKE) build
-	$(MAKE) migrate-reset
+	$(MAKE) migrate
+
+.PHONY: migrate
+migrate:
+	go run ./cmd/migration -conf ./config/prod.yml
 
 .PHONY: migrate-reset
 migrate-reset:
-	go run ./cmd/migration
+	go run ./cmd/migration -reset
 
 .PHONY: dev
 dev:

@@ -151,14 +151,14 @@ pnpm run dev
 - Ansible 创建虚拟机环境
 - Ansible 克隆项目
 - 安装依赖
-- 构建项目
-- 在 Docker 中部署项目
+- 后端构建为 Go 二进制并由 systemd 托管；MySQL 和 Redis 运行在 Docker 中
+- 前端由 Vercel 自动构建，Framework Preset 使用 `Vite`，Root Directory 使用 `packages/frontend`
 
 ## CI/CD
 
 ```bash
-cd ansilbe
-ansible-playbook cicd.yml
+cd ansible
+ansible-playbook -i hosts.vultr cicd.yml
 ```
 
 ## 后端接口列表（packages/backend-go）

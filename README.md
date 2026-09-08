@@ -151,14 +151,14 @@ pnpm run dev
 - ansible create vm environment
 - ansible clone project
 - install dependences
-- build project
-- deploy project inside docker
+- build the Go backend and run it with systemd; MySQL and Redis run in Docker
+- let Vercel build the frontend automatically with Framework Preset `Vite` and Root Directory `packages/frontend`
 
 ## CICD
 
 ```bash
-cd ansilbe
-ansible-playbook cicd.yml
+cd ansible
+ansible-playbook -i hosts.vultr cicd.yml
 ```
 
 ## 后端接口列表（packages/backend-go）
