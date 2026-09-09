@@ -7,6 +7,7 @@ import { scrollToMessageIndex, useMsgWatch } from "./hook";
 import { mergeMessages, updateSelectedMessage } from "@/store/reducer/room";
 import { WithProfile } from "../WithProfile";
 import { useContextMenu } from "@/hooks";
+import { isOwnMessage } from "@/utils";
 
 interface IProps {
   readonly data: IMessage;
@@ -19,7 +20,7 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
   const watchRef = useMsgWatch(message);
   const myUserInfo = useAppSelector((state) => state.user.data);
   const room = useAppSelector((state) => state.room.data);
-  const isMe = myUserInfo?.userId === message?.user?.userId;
+  const isMe = isOwnMessage(message, myUserInfo);
   const Component = useMemo(() => {
     const temp = MessageTemplate[message.contentType];
     if (!temp) return null;
@@ -162,7 +163,7 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
         ) : null}
         {Component}
       </div>
-      <Indicator message={message} />
+      <Indicator message={message} isMine={isMe} />
     </div>
   );
 }

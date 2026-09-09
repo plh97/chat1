@@ -79,8 +79,9 @@ var upgrader = websocket.Upgrader{
 }
 
 type Client struct {
-	hub  *Hub
-	conn *websocket.Conn
+	hub    *Hub
+	conn   *websocket.Conn
+	userID uint
 	// 用于缓冲待发送消息的通道
 	send chan []byte
 }

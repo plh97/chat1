@@ -10,7 +10,8 @@ import {
   updateReplyMessage,
 } from "../reducer/room";
 import { IMessage } from "@/interfaces";
-import { topUserRoom, updateUserRoomReadSeq } from "../reducer/user";
+import { topUserRoom } from "../reducer/user";
+import { AppThunk } from "@/hooks/app";
 
 const { toast } = createStandaloneToast();
 
@@ -75,18 +76,6 @@ const sendOptimisticMessage = async (
     const msg = normalizeMessage(wsRes.data);
     dispatch(replaceMessage({ id: localMessageId, message: msg }));
     dispatch(topUserRoom(msg));
-    dispatch(
-      updateUserRoomReadSeq({
-        channelId: msg.channelId,
-        readMessage: {
-          lastReadSeq: NaN,
-          operator: msg.userId,
-          readSeq: {
-            [msg.userId]: msg.seq,
-          },
-        },
-      })
-    );
   } catch (error: any) {
     dispatch(
       updateMessageStatus({
@@ -143,6 +132,54 @@ export const markReadMessageThunk = createAsyncThunk<void, Partial<IMessage>>(
     ws.sendMsg(readMessage, WS_EVENT.SEND_MSG);
   }
 );
+
+const READ_RECEIPT_BATCH_MS = 100;
+const pendingReadReceipts = new Map<
+  string,
+  {
+    timer: number;
+    message: Partial<IMessage>;
+  }
+>();
+
+export const queueMarkReadMessage =
+  (message: Partial<IMessage>): AppThunk =>
+  (dispatch) => {
+    const roomId = String(message.channelId ?? "");
+    const operator = String(message.readMessage?.operator ?? "");
+    const incomingSeq = Number(
+      message.readMessage?.lastReadSeq ?? message.seq ?? 0
+    );
+    if (!roomId || !operator || incomingSeq <= 0) return;
+
+    const key = `${roomId}:${operator}`;
+    const pending = pendingReadReceipts.get(key);
+    const pendingSeq = Number(pending?.message.readMessage?.lastReadSeq ?? 0);
+    const lastReadSeq = Math.max(incomingSeq, pendingSeq);
+    if (pending) window.clearTimeout(pending.timer);
+
+    const batchedMessage: Partial<IMessage> = {
+      ...pending?.message,
+      ...message,
+      channelId: roomId,
+      readMessage: {
+        ...pending?.message.readMessage,
+        ...message.readMessage,
+        operator,
+        lastReadSeq,
+        readSeq: {
+          ...pending?.message.readMessage?.readSeq,
+          ...message.readMessage?.readSeq,
+          [operator]: lastReadSeq,
+        },
+      },
+    };
+    const timer = window.setTimeout(() => {
+      pendingReadReceipts.delete(key);
+      dispatch(markReadMessageThunk(batchedMessage));
+    }, READ_RECEIPT_BATCH_MS);
+    pendingReadReceipts.set(key, { timer, message: batchedMessage });
+  };
 
 export const recallMessageThunk = createAsyncThunk<void, Partial<IMessage>>(
   `recallMessage`,

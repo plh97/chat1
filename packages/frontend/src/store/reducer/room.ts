@@ -6,6 +6,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { IMessage, MessageRequest, IRoom } from "@/interfaces";
 import { fetchUserInfoThunk, shiftRoom } from "./user";
 import { IReadMessage } from "@/core";
+import { mergeReadSeqForward } from "./readSeq";
 
 export interface IState {
   id: string;
@@ -219,7 +220,8 @@ export const roomSlice = createSlice({
     ) {
       const room = action.payload;
       if (room.id === state.id) {
-        Object.assign(state.data.readSeq ?? {}, room.readSeq);
+        state.data.readSeq ??= {};
+        mergeReadSeqForward(state.data.readSeq, room.readSeq ?? {});
       }
     },
     updateSelectedMessage(state, action: PayloadAction<IMessage | undefined>) {

@@ -197,7 +197,7 @@ export function InputBox({ className }: { readonly className?: string }) {
   return (
     <div className={clsx("flex flex-col gap-3 flex-0", className)}>
       {replyMessage}
-      <div className="box-border flex flex-row gap-3 flex-0 basis-20 pt-0 pb-5 px-3 safe-pb">
+      <div className="box-border flex flex-row items-end gap-3 flex-0 basis-20 pt-0 pb-5 px-3 safe-pb">
         {!time ? (
           <Input
             maxLength={MAX_INPUT}
@@ -211,6 +211,9 @@ export function InputBox({ className }: { readonly className?: string }) {
         ) : (
           <Textarea
             rows={1}
+            minH="11"
+            h="11"
+            resize="none"
             disabled
             value={formatTime(time)}
             className="flex-1 text-right"

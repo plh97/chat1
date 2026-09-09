@@ -5,11 +5,12 @@ import {
   Dialog,
   Field,
   Image as ChakraImage,
+  IconButton as ChakraIconButton,
   Popover as ChakraPopover,
   Portal,
   Textarea as ChakraTextarea,
-  defaultSystem,
 } from "@chakra-ui/react";
+import theme from "@/theme";
 
 export * from "@chakra-ui/react";
 export { createStandaloneToast, useToast } from "@/utils/createStandAlone";
@@ -53,7 +54,47 @@ export const Button = React.forwardRef<HTMLButtonElement, LegacyButtonProps>(
 );
 Button.displayName = "Button";
 
-export const IconButton = Button;
+type LegacyIconButtonProps = React.ComponentProps<typeof ChakraIconButton> & {
+  colorScheme?: string;
+  icon?: React.ReactNode;
+  isDisabled?: boolean;
+  isLoading?: boolean;
+  isRound?: boolean;
+};
+
+export const IconButton = React.forwardRef<
+  HTMLButtonElement,
+  LegacyIconButtonProps
+>(
+  (
+    {
+      children,
+      colorPalette,
+      colorScheme,
+      icon,
+      isDisabled,
+      isLoading,
+      isRound,
+      ...props
+    },
+    ref
+  ) => (
+    <ChakraIconButton
+      ref={ref}
+      colorPalette={colorScheme ?? colorPalette ?? "gray"}
+      disabled={isDisabled}
+      loading={isLoading}
+      rounded={isRound ? "full" : undefined}
+      size={props.size ?? "md"}
+      variant={props.variant ?? "solid"}
+      {...props}
+    >
+      {icon}
+      {children}
+    </ChakraIconButton>
+  )
+);
+IconButton.displayName = "IconButton";
 
 type LegacyTextareaProps = React.ComponentProps<typeof ChakraTextarea> & {
   focusBorderColor?: string;
@@ -213,5 +254,5 @@ export const PopoverBody = ChakraPopover.Body;
 export const PopoverFooter = ChakraPopover.Footer;
 
 export function LegacyChakraProvider({ children }: React.PropsWithChildren) {
-  return <ChakraProvider value={defaultSystem}>{children}</ChakraProvider>;
+  return <ChakraProvider value={theme}>{children}</ChakraProvider>;
 }

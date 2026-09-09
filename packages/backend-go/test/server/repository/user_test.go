@@ -6,7 +6,10 @@ import (
 	"backend-go/internal/repository"
 	"backend-go/pkg/log"
 	"context"
+	"encoding/json"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/glebarez/sqlite"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +23,7 @@ func setupRepositoryWithDB(t *testing.T) (repository.UserRepository, *gorm.DB) {
 	if err != nil {
 		t.Fatalf("failed to open gorm connection: %v", err)
 	}
-	if err := db.AutoMigrate(&model.User{}, &model.Room{}, &model.RoomMember{}); err != nil {
+	if err := db.AutoMigrate(&model.User{}, &model.Room{}, &model.RoomMember{}, &model.Message{}); err != nil {
 		t.Fatalf("failed to migrate schema: %v", err)
 	}
 
@@ -118,6 +121,91 @@ func TestUserRepository_GetByID_LoadsPrivateRoomPeer(t *testing.T) {
 	assert.Equal(t, peer.UserName, roomsByID[privateRoom.ID].Peer.UserName)
 	assert.Equal(t, peer.Image, roomsByID[privateRoom.ID].Peer.Image)
 	assert.Nil(t, roomsByID[publicRoom.ID].Peer)
+}
+
+func TestUserRepository_GetProfileByID_CountsOnlyOtherUsersUnreadMessages(t *testing.T) {
+	userRepo, db := setupRepositoryWithDB(t)
+	ctx := context.Background()
+	me := &model.User{UserName: "me", Password: "password", Email: "me@example.com"}
+	peer := &model.User{UserName: "peer", Password: "password", Email: "peer@example.com"}
+	assert.NoError(t, userRepo.Create(ctx, me))
+	assert.NoError(t, userRepo.Create(ctx, peer))
+
+	room := &model.Room{
+		Name:    "Room",
+		ReadSeq: map[string]interface{}{strconv.Itoa(int(me.ID)): 1},
+	}
+	assert.NoError(t, db.Create(room).Error)
+	assert.NoError(t, db.Create(&model.RoomMember{RoomID: room.ID, UserID: me.ID, Role: model.Member}).Error)
+	assert.NoError(t, db.Create([]model.Message{
+		{Seq: 1, ChannelId: strconv.Itoa(int(room.ID)), UserId: strconv.Itoa(int(me.ID))},
+		{Seq: 2, ChannelId: strconv.Itoa(int(room.ID)), UserId: strconv.Itoa(int(peer.ID))},
+		{Seq: 3, ChannelId: strconv.Itoa(int(room.ID)), UserId: strconv.Itoa(int(me.ID))},
+		{Seq: 4, ChannelId: strconv.Itoa(int(room.ID)), UserId: strconv.Itoa(int(peer.ID))},
+	}).Error)
+
+	fetched, err := userRepo.GetProfileByID(ctx, int(me.ID))
+
+	assert.NoError(t, err)
+	assert.Len(t, fetched.Rooms, 1)
+	assert.Equal(t, int64(2), fetched.Rooms[0].UnreadCount)
+}
+
+func TestUserRepository_GetProfileByID_LoadsLastMessageAndSortsRooms(t *testing.T) {
+	userRepo, db := setupRepositoryWithDB(t)
+	ctx := context.Background()
+	me := &model.User{UserName: "me-sort", Password: "password", Email: "me-sort@example.com"}
+	assert.NoError(t, userRepo.Create(ctx, me))
+
+	olderRoom := &model.Room{Name: "Older Room"}
+	newerRoom := &model.Room{Name: "Newer Room"}
+	emptyRoom := &model.Room{Name: "Empty Room"}
+	assert.NoError(t, db.Create(olderRoom).Error)
+	assert.NoError(t, db.Create(newerRoom).Error)
+	assert.NoError(t, db.Create(emptyRoom).Error)
+	for _, room := range []*model.Room{olderRoom, newerRoom, emptyRoom} {
+		assert.NoError(t, db.Create(&model.RoomMember{RoomID: room.ID, UserID: me.ID, Role: model.Member}).Error)
+	}
+
+	olderTime := time.Date(2026, 1, 1, 10, 0, 0, 0, time.UTC)
+	newerTime := olderTime.Add(time.Hour)
+	assert.NoError(t, db.Create(&model.Message{
+		Model:       gorm.Model{CreatedAt: olderTime, UpdatedAt: olderTime},
+		Seq:         1,
+		ChannelId:   strconv.Itoa(int(olderRoom.ID)),
+		RoomId:      strconv.Itoa(int(olderRoom.ID)),
+		UserId:      strconv.Itoa(int(me.ID)),
+		ContentType: "TEXT_MESSAGE",
+		TextMessage: `{"text":"older preview","mention":[]}`,
+	}).Error)
+	assert.NoError(t, db.Create(&model.Message{
+		Model:       gorm.Model{CreatedAt: newerTime, UpdatedAt: newerTime},
+		Seq:         1,
+		ChannelId:   strconv.Itoa(int(newerRoom.ID)),
+		RoomId:      strconv.Itoa(int(newerRoom.ID)),
+		UserId:      strconv.Itoa(int(me.ID)),
+		ContentType: "TEXT_MESSAGE",
+		TextMessage: `{"text":"newer preview","mention":[]}`,
+	}).Error)
+
+	fetched, err := userRepo.GetProfileByID(ctx, int(me.ID))
+
+	assert.NoError(t, err)
+	assert.Len(t, fetched.Rooms, 3)
+	assert.Equal(t, newerRoom.ID, fetched.Rooms[0].ID)
+	assert.Equal(t, olderRoom.ID, fetched.Rooms[1].ID)
+	assert.Equal(t, emptyRoom.ID, fetched.Rooms[2].ID)
+	assert.NotNil(t, fetched.Rooms[0].LastMsg)
+	assert.Equal(t, "TEXT_MESSAGE", fetched.Rooms[0].LastMsg.ContentType)
+	assert.JSONEq(t, `{"text":"newer preview","mention":[]}`, string(fetched.Rooms[0].LastMsg.TextMessage))
+
+	encodedRoom, err := json.Marshal(fetched.Rooms[0])
+	assert.NoError(t, err)
+	var roomPayload map[string]interface{}
+	assert.NoError(t, json.Unmarshal(encodedRoom, &roomPayload))
+	lastMessagePayload := roomPayload["lastMsg"].(map[string]interface{})
+	assert.Equal(t, "TEXT_MESSAGE", lastMessagePayload["contentType"])
+	assert.Equal(t, "newer preview", lastMessagePayload["textMessage"].(map[string]interface{})["text"])
 }
 
 func TestUserRepository_GetByUsername(t *testing.T) {

@@ -6,8 +6,9 @@ import {
   setHasMoreMessage,
 } from "@/store/reducer/room";
 import { IMessage } from "@/interfaces";
-import { markReadMessageThunk } from "@/store/action/message";
+import { queueMarkReadMessage } from "@/store/action/message";
 import { updateUserRoomReadSeq } from "@/store/reducer/user";
+import { isOwnMessage } from "@/utils";
 
 const sharedScrollEl: { current: VListHandle | null } = {
   current: null,
@@ -115,14 +116,14 @@ export const useMsgWatch = (message: IMessage) => {
 
   useEffect(() => {
     const roomId = room?.id;
-    const myUserId = myUserInfo?.userId;
+    const myUserId = String(myUserInfo?.id || myUserInfo?.userId || "");
     if (!roomId || !myUserId || !isIntersecting) {
       return;
     }
 
     const readSeqMap = (room.readSeq ?? {}) as Record<string, number>;
     const currentReadSeq = Number(readSeqMap[myUserId] ?? 0);
-    const isMyMsg = myUserId === message.userId;
+    const isMyMsg = isOwnMessage(message, myUserInfo);
     if (isMyMsg || currentReadSeq >= message.seq) {
       return;
     }
@@ -152,7 +153,7 @@ export const useMsgWatch = (message: IMessage) => {
       })
     );
     dispatch(
-      markReadMessageThunk({
+      queueMarkReadMessage({
         channelId: roomId,
         readMessage: {
           operator: myUserId,

@@ -49,21 +49,6 @@ export const useReceiveMsg = (roomRef: MutableRefObject<IRoom>) => {
         dispatch(scrollToEnd(true));
       }
       dispatch(topUserRoom(msg));
-      if (msg.userId === userInfo.id) {
-        // if receive my own message, update last message, should mark read
-        dispatch(
-          updateUserRoomReadSeq({
-            channelId: msg.channelId,
-            readMessage: {
-              lastReadSeq: NaN,
-              operator: msg.userId,
-              readSeq: {
-                [msg.userId]: msg.seq,
-              },
-            },
-          })
-        );
-      }
     } else if (msg.contentType === "READ_MESSAGE") {
       if (room?.id === msg.channelId) {
         dispatch(
@@ -79,5 +64,9 @@ export const useReceiveMsg = (roomRef: MutableRefObject<IRoom>) => {
       dispatch(updateUserLastMsg(msg));
     }
   };
+  const onRoomListChanged = async () => {
+    await dispatch(fetchUserInfoThunk());
+  };
   useEventListener(WS_EVENT.SEND_MSG, onReceiveMsg);
+  useEventListener(WS_EVENT.ROOM_LIST_CHANGED, onRoomListChanged);
 };

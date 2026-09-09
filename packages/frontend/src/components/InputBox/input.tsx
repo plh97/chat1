@@ -81,12 +81,16 @@ export function Input({
     }
   }, [replyMsg]);
   return (
-    <div className="relative flex flex-1 flex-col rounded-md border border-gray-600 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400">
+    <div className="relative flex min-h-11 flex-1 flex-col rounded-md border border-gray-600 focus-within:border-blue-400 focus-within:ring-1 focus-within:ring-blue-400">
       {attachment ? (
         <AttachmentPreview file={attachment} onRemove={onRemoveAttachment} />
       ) : null}
       <Textarea
         ref={inputRef}
+        rows={1}
+        minH="42px"
+        h="42px"
+        resize="none"
         onPaste={handlePaste}
         autoFocus
         value={text}

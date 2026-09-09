@@ -12,6 +12,11 @@ import (
 type UserHandler struct {
 	*Handler
 	userService service.UserService
+	roomEvents  RoomEventPublisher
+}
+
+func (h *UserHandler) SetRoomEventPublisher(publisher RoomEventPublisher) {
+	h.roomEvents = publisher
 }
 
 func NewUserHandler(handler *Handler, userService service.UserService) *UserHandler {
@@ -229,6 +234,9 @@ func (h *UserHandler) AddFriend(ctx *gin.Context) {
 		h.logger.WithContext(ctx).Error("userService.AddFriend error", zap.Error(err))
 		v1.HandleError(ctx, http.StatusBadRequest, err, nil)
 		return
+	}
+	if h.roomEvents != nil {
+		h.roomEvents.NotifyRoomListChanged([]uint{uint(userId), req.GetFriendID()})
 	}
 
 	v1.HandleSuccess(ctx, room, "Friend added successfully")

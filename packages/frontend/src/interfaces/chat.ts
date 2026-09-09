@@ -75,6 +75,7 @@ export interface Room {
   createdAt: Date;
   updatedAt: Date;
   readSeq: Record<string, number>;
+  unreadCount?: number;
   memberId: string[];
   adminId: string[];
   creatorId: string;

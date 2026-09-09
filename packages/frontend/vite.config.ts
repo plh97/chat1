@@ -18,13 +18,14 @@ export default defineConfig({
     port: +PORT,
     proxy: {
       "/api": {
-        target: "https://c.plhh.org",
+        target: "https://api-c.plhh.org",
         changeOrigin: true,
         secure: true,
       },
       "/ws": {
         target: "wss://api-c.plhh.org",
         changeOrigin: true,
+        ws: true,
       },
     },
   },
@@ -151,13 +152,14 @@ export default defineConfig({
         // target: "https://c.plhh.org",
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/api/, "/"),
+        rewrite: (path) => path.replace(/^\/api/, ""),
       },
       "/ws": {
         target: "ws://localhost:8000/",
         // target: "ws://45.76.110.22:8000/",
         // target: "wss://api-c.plhh.org",
         changeOrigin: true,
+        ws: true,
         // secure: true,
       },
     },

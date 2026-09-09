@@ -84,6 +84,7 @@ func NewHTTPServer(
 			strictAuthRouter.GET("/room", roomHandler.GetRoom)
 			strictAuthRouter.GET("/room/messages", roomHandler.GetRoomMessages)
 			strictAuthRouter.GET("/room/member", roomHandler.GetRoomMembers)
+			strictAuthRouter.GET("/room/message/readers", roomHandler.GetMessageReaders)
 			strictAuthRouter.PATCH("/room", roomHandler.UpdateRoom)
 			strictAuthRouter.DELETE("/room", roomHandler.DeleteRoom)
 			strictAuthRouter.POST("/joinRoom", roomHandler.JoinRoom)
@@ -93,8 +94,10 @@ func NewHTTPServer(
 	}
 	// websocketのupgraderを定期
 	hub := ws.NewHub(messageService, userRepo)
+	userHandler.SetRoomEventPublisher(hub)
+	roomHandler.SetRoomEventPublisher(hub)
 	s.GET("/ws", func(c *gin.Context) {
-		ws.ServeWs(hub, c)
+		ws.ServeWs(hub, jwt, c)
 	})
 	// Start hub's event loop in a goroutine
 	go hub.Run()

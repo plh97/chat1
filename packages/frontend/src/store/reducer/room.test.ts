@@ -8,7 +8,13 @@ jest.mock("@/Api", () => ({
   },
 }));
 
-import { initialMessage, updateRoomThunk } from "./room";
+import {
+  changeRoomId,
+  initialMessage,
+  markReadMessage,
+  roomReducer,
+  updateRoomThunk,
+} from "./room";
 
 describe("updateRoomThunk", () => {
   it("preserves the active message window when room metadata is updated", async () => {
@@ -45,5 +51,22 @@ describe("updateRoomThunk", () => {
         hasMoreMessage: true,
       })
     );
+  });
+});
+
+describe("room read sequence", () => {
+  it("does not regress when read events arrive out of order", () => {
+    let state = roomReducer(undefined, changeRoomId("room-1"));
+    state = roomReducer(
+      state,
+      initialMessage({ id: "room-1", readSeq: { "2": 17 } })
+    );
+
+    state = roomReducer(
+      state,
+      markReadMessage({ id: "room-1", readSeq: { "2": 11 } })
+    );
+
+    expect(state.data.readSeq["2"]).toBe(17);
   });
 });

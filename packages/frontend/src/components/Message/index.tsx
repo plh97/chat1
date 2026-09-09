@@ -8,6 +8,7 @@ import {
   updateSelectedMessage,
 } from "@/store/reducer/room";
 import { FaRegTrashAlt, FaReply } from "react-icons/fa";
+import { isOwnMessage } from "@/utils";
 
 export function Message({ className }: { readonly className?: string }) {
   const toast = useToast();
@@ -16,14 +17,14 @@ export function Message({ className }: { readonly className?: string }) {
   const room = useAppSelector((state) => state.room.data);
   const selectedMessage = useAppSelector((state) => state.room.selectedMessage);
   const myUserInfo = useAppSelector((state) => state.user.data);
-  const isMe = myUserInfo?.userId === selectedMessage?.user.id;
+  const isMe = isOwnMessage(selectedMessage, myUserInfo);
   const handleRecall = () => {
     if (!selectedMessage) return;
     dispatch(
       recallMessageThunk({
         channelId: selectedMessage.channelId,
         recallMessage: {
-          operator: myUserInfo.userId,
+          operator: myUserInfo.id,
           recallMsgId: selectedMessage.id,
         },
       })

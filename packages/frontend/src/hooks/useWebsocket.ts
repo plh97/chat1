@@ -1,11 +1,17 @@
-import { SocketClient } from "@/core";
+import { getToken, SocketClient } from "@/core";
 import { IRoom } from "@/interfaces";
 import { wsUrl } from "@/config";
 
 export let ws: SocketClient;
 
 export default function useWebsocket() {
+  const authToken = getToken();
+  const tokenChanged = Boolean(ws && ws.authToken !== authToken);
+  if (tokenChanged) {
+    ws?.destroy();
+  }
   if (
+    tokenChanged ||
     !ws?.socket ||
     ws?.socket?.readyState === WebSocket.CLOSED ||
     ws?.socket?.readyState === WebSocket.CLOSING

@@ -4,6 +4,7 @@ import { STATUS } from "@/enum/common";
 import { IRoom, IUser } from "@/interfaces";
 import { IMessage } from "@/interfaces/IMessage";
 import { setToken } from "@/utils";
+import { mergeReadSeqForward } from "./readSeq";
 
 export interface IState {
   error: string | null;
@@ -100,16 +101,13 @@ export const userSlice = createSlice({
   reducers: {
     updateUserRoomMessage(state, action) {
       const roomId = toRoomKey(action.payload.roomId);
-      const room = state.data.room?.find(
+      const roomIndex = state.data.room?.findIndex(
         (room) => toRoomKey(room.id) === roomId
       );
-      if (room?.message) {
-        room.message = [action.payload.msg];
-        state.data.room?.sort((a) => {
-          if (a === room) return -1;
-          return 0;
-        });
-      }
+      if (roomIndex == null || roomIndex < 0 || !state.data.room) return;
+      const [room] = state.data.room.splice(roomIndex, 1);
+      room.lastMsg = action.payload.msg;
+      state.data.room.unshift(room);
     },
     setLocalUserInfo(state, action: PayloadAction<Partial<IUser>>) {
       Object.assign(state, {
@@ -121,8 +119,14 @@ export const userSlice = createSlice({
       });
     },
     shiftRoom(state, action: PayloadAction<IRoom>) {
+      const roomId = toRoomKey(action.payload.id);
       Object.assign(state.data, {
-        room: [action.payload, ...(state.data.room ?? [])],
+        room: [
+          action.payload,
+          ...(state.data.room ?? []).filter(
+            (room) => toRoomKey(room.id) !== roomId
+          ),
+        ],
       });
     },
     logout(state) {
@@ -150,8 +154,12 @@ export const userSlice = createSlice({
         const room = state.data.room?.find(
           (entry) => toRoomKey(entry.id) === channelId
         );
-        if (readMessage?.readSeq && room?.readSeq) {
-          Object.assign(room.readSeq, readMessage.readSeq);
+        if (readMessage?.readSeq && room) {
+          room.readSeq ??= {};
+          mergeReadSeqForward(room.readSeq, readMessage.readSeq);
+          if (toRoomKey(readMessage.operator) === toRoomKey(state.data.id)) {
+            room.unreadCount = 0;
+          }
         }
       }
     },
@@ -173,6 +181,10 @@ export const userSlice = createSlice({
           ...room,
           id: channelId,
           lastMsg: msg,
+          unreadCount:
+            toRoomKey(msg.userId) === toRoomKey(state.data.id)
+              ? (room.unreadCount ?? 0)
+              : (room.unreadCount ?? 0) + 1,
         },
         ...(roomList?.filter((entry) => toRoomKey(entry.id) !== channelId) ??
           []),

@@ -4,7 +4,11 @@ import (
 	v1 "backend-go/api/v1"
 	"backend-go/internal/model"
 	"context"
+	"encoding/json"
 	"errors"
+	"sort"
+	"strconv"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -79,6 +83,132 @@ func (r *userRepository) loadPrivateRoomPeers(ctx context.Context, user *model.U
 	return nil
 }
 
+func readSequenceForUser(readSeq map[string]interface{}, userID string) int {
+	value, exists := readSeq[userID]
+	if !exists {
+		return 0
+	}
+
+	switch typed := value.(type) {
+	case int:
+		return typed
+	case int32:
+		return int(typed)
+	case int64:
+		return int(typed)
+	case uint:
+		return int(typed)
+	case uint32:
+		return int(typed)
+	case uint64:
+		return int(typed)
+	case float64:
+		return int(typed)
+	case json.Number:
+		parsed, _ := typed.Int64()
+		return int(parsed)
+	case string:
+		parsed, _ := strconv.Atoi(typed)
+		return parsed
+	default:
+		return 0
+	}
+}
+
+func (r *userRepository) loadUnreadCounts(ctx context.Context, user *model.User) error {
+	if len(user.Rooms) == 0 {
+		return nil
+	}
+
+	userID := strconv.Itoa(int(user.ID))
+	conditions := make([]string, 0, len(user.Rooms))
+	args := make([]interface{}, 0, len(user.Rooms)*2)
+	for index := range user.Rooms {
+		room := &user.Rooms[index]
+		lastReadSeq := readSequenceForUser(room.ReadSeq, userID)
+		conditions = append(conditions, "(channel_id = ? AND seq > ?)")
+		args = append(args, strconv.Itoa(int(room.ID)), lastReadSeq)
+	}
+
+	type unreadCountRow struct {
+		ChannelID   string `gorm:"column:channel_id"`
+		UnreadCount int64  `gorm:"column:unread_count"`
+	}
+	var rows []unreadCountRow
+	if err := r.DB(ctx).
+		Model(&model.Message{}).
+		Select("channel_id, COUNT(*) AS unread_count").
+		Where("user_id != ?", userID).
+		Where("("+strings.Join(conditions, " OR ")+")", args...).
+		Group("channel_id").
+		Scan(&rows).Error; err != nil {
+		return err
+	}
+
+	countsByRoom := make(map[string]int64, len(rows))
+	for _, row := range rows {
+		countsByRoom[row.ChannelID] = row.UnreadCount
+	}
+	for index := range user.Rooms {
+		room := &user.Rooms[index]
+		room.UnreadCount = countsByRoom[strconv.Itoa(int(room.ID))]
+	}
+	return nil
+}
+
+func (r *userRepository) loadLatestRoomMessages(ctx context.Context, user *model.User) error {
+	if len(user.Rooms) == 0 {
+		return nil
+	}
+
+	roomIDs := make([]string, 0, len(user.Rooms))
+	for index := range user.Rooms {
+		roomIDs = append(roomIDs, strconv.Itoa(int(user.Rooms[index].ID)))
+	}
+
+	latestMessages := r.DB(ctx).
+		Model(&model.Message{}).
+		Select("channel_id, MAX(seq) AS max_seq").
+		Where("channel_id IN ?", roomIDs).
+		Group("channel_id")
+
+	var messages []model.Message
+	if err := r.DB(ctx).
+		Model(&model.Message{}).
+		Joins("JOIN (?) AS latest ON latest.channel_id = messages.channel_id AND latest.max_seq = messages.seq", latestMessages).
+		Find(&messages).Error; err != nil {
+		return err
+	}
+
+	latestByRoom := make(map[string]*model.Message, len(messages))
+	for index := range messages {
+		message := &messages[index]
+		latestByRoom[message.ChannelId] = message
+	}
+	for index := range user.Rooms {
+		room := &user.Rooms[index]
+		room.LastMsg = model.NewMessageSummary(
+			latestByRoom[strconv.Itoa(int(room.ID))],
+		)
+	}
+
+	sort.SliceStable(user.Rooms, func(left, right int) bool {
+		leftMessage := user.Rooms[left].LastMsg
+		rightMessage := user.Rooms[right].LastMsg
+		if leftMessage == nil || rightMessage == nil {
+			if leftMessage != nil {
+				return true
+			}
+			if rightMessage != nil {
+				return false
+			}
+			return user.Rooms[left].UpdatedAt.After(user.Rooms[right].UpdatedAt)
+		}
+		return leftMessage.CreatedAt.After(rightMessage.CreatedAt)
+	})
+	return nil
+}
+
 func (r *userRepository) Create(ctx context.Context, user *model.User) error {
 	if err := r.DB(ctx).Create(user).Error; err != nil {
 		return err
@@ -124,6 +254,12 @@ func (r *userRepository) GetProfileByID(ctx context.Context, id int) (*model.Use
 		return nil, err
 	}
 	if err := r.loadPrivateRoomPeers(ctx, &user); err != nil {
+		return nil, err
+	}
+	if err := r.loadUnreadCounts(ctx, &user); err != nil {
+		return nil, err
+	}
+	if err := r.loadLatestRoomMessages(ctx, &user); err != nil {
 		return nil, err
 	}
 	return &user, nil

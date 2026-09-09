@@ -13,6 +13,7 @@ import { getToken } from "./utils";
 import { ws } from "@/hooks/useWebsocket";
 import { store } from "./store";
 import { logout } from "@/store/reducer/user";
+import { sortRoomsByActivity } from "@/utils/roomList";
 
 declare module "axios" {
   interface AxiosRequestConfig {
@@ -57,12 +58,15 @@ const normalizeId = (value: unknown) =>
 
 const normalizeUser = (user: any): IUser => {
   if (!user) return user;
+  const rooms = Array.isArray(user.room)
+    ? sortRoomsByActivity(user.room.map(normalizeRoom))
+    : user.room;
   return {
     ...user,
     id: normalizeId(user.id ?? user.userId),
     userId: normalizeId(user.userId ?? user.id),
     UserId: Array.isArray(user.UserId) ? user.UserId.map(normalizeId) : [],
-    room: Array.isArray(user.room) ? user.room.map(normalizeRoom) : user.room,
+    room: rooms,
     friend: Array.isArray(user.friend)
       ? user.friend.map(normalizeUser)
       : user.friend,
@@ -106,9 +110,24 @@ export const normalizeMessage = (message: any): IMessage => {
 
 const normalizeRoom = (room: any): IRoom => {
   if (!room) return room;
+  const readSeq = room.readSeq ?? room.read_seq ?? {};
   return {
     ...room,
     id: normalizeId(room.id),
+    readSeq: Object.fromEntries(
+      Object.entries(readSeq).map(([userId, seq]) => [
+        normalizeId(userId),
+        Number(seq),
+      ])
+    ),
+    unreadCount:
+      room.unreadCount == null
+        ? undefined
+        : Math.max(0, Number(room.unreadCount)),
+    participantTotalCount:
+      room.participantTotalCount == null
+        ? undefined
+        : Math.max(0, Number(room.participantTotalCount)),
     creatorId: normalizeId(room.creatorId ?? room.creator?.id),
     memberId: Array.isArray(room.memberId)
       ? room.memberId.map(normalizeId)
@@ -206,6 +225,28 @@ interface ILoginRequestParameters {
   password: string;
 }
 
+let profileRequest: Promise<IUser> | undefined;
+
+const getMyUserInfo = () => {
+  if (profileRequest) return profileRequest;
+  profileRequest = request<IUser>({
+    url: "/profile",
+    method: "get",
+    notificationOptions: {
+      alert: false,
+    },
+  }).then(normalizeUser);
+  profileRequest.then(
+    () => {
+      profileRequest = undefined;
+    },
+    () => {
+      profileRequest = undefined;
+    }
+  );
+  return profileRequest;
+};
+
 const Api = {
   login: (data: ILoginRequestParameters) =>
     request<{ accessToken: string }>({
@@ -224,14 +265,7 @@ const Api = {
       url: "/logout",
       method: "post",
     }),
-  getMyUserInfo: () =>
-    request<IUser>({
-      url: "/profile",
-      method: "get",
-      notificationOptions: {
-        alert: false,
-      },
-    }).then(normalizeUser),
+  getMyUserInfo,
   setMyUserInfo: (user: Partial<IUser>) =>
     request<IUser>({
       url: "/profile",
@@ -334,6 +368,22 @@ const Api = {
   }) =>
     request<{ role: string; users: IUser[]; totalCount: number }>({
       url: "/room/member",
+      method: "get",
+      params,
+    }).then((data) => ({
+      ...data,
+      users: Array.isArray(data.users)
+        ? data.users.map(normalizeUser)
+        : data.users,
+    })),
+  getMessageReaders: (params: {
+    roomId: string;
+    id: string;
+    pageSize?: number;
+    start?: number;
+  }) =>
+    request<{ users: IUser[]; totalCount: number }>({
+      url: "/room/message/readers",
       method: "get",
       params,
     }).then((data) => ({

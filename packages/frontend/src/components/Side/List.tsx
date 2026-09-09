@@ -49,7 +49,14 @@ export const List = () => {
           const readSeqMap = (room.readSeq as Record<string, number>) ?? {};
           const myId = myUserInfo.id;
           const readSeq = readSeqMap[myId] ?? 0;
-          const unreadCount = room.lastMsg?.seq! - readSeq;
+          const fallbackUnreadCount =
+            room.lastMsg && room.lastMsg.userId !== myId
+              ? room.lastMsg.seq - readSeq
+              : 0;
+          const unreadCount = Math.max(
+            0,
+            Number(room.unreadCount ?? fallbackUnreadCount)
+          );
           return (
             <Item
               myId={myId}

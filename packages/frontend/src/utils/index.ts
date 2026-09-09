@@ -2,6 +2,7 @@ import { UIEvent } from "react";
 import { SUPPORTED_MEDIA_TYPES } from "./uploadFile";
 
 export * from "./formatTime";
+export * from "./messageRead";
 export * from "./utils";
 export * from "./uploadFile";
 

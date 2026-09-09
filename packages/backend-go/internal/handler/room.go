@@ -20,6 +20,11 @@ type RoomHandler struct {
 	*Handler
 	timer       *timer.Timer
 	roomService service.RoomService
+	roomEvents  RoomEventPublisher
+}
+
+func (h *RoomHandler) SetRoomEventPublisher(publisher RoomEventPublisher) {
+	h.roomEvents = publisher
 }
 
 func NewRoomHandler(
@@ -82,6 +87,14 @@ func (h *RoomHandler) AddRoom(ctx *gin.Context) {
 	if err != nil {
 		v1.HandleError(ctx, 500, err, nil)
 		return
+	}
+	if h.roomEvents != nil {
+		currentUserID := uint(GetUserIdFromCtx(ctx))
+		h.roomEvents.NotifyRoomListChanged(uniqueRoomEventUserIDs(
+			[]uint{currentUserID, body.GetCreatorID()},
+			body.GetAdminIDs(),
+			body.GetMemberIDs(),
+		))
 	}
 	v1.HandleSuccess(ctx, room, "Room created successfully")
 }
@@ -229,6 +242,51 @@ func (h *RoomHandler) GetRoomMembers(ctx *gin.Context) {
 	v1.HandleSuccess(ctx, members)
 }
 
+// GetMessageReaders godoc
+// @Summary 获取消息已读用户
+// @Schemes
+// @Tags 房间模块
+// @Accept json
+// @Produce json
+// @Param roomId query string true "房间ID"
+// @Param id query string true "消息ID"
+// @Param pageSize query string false "用户数量"
+// @Param start query string false "用户偏移"
+// @Success 200 {object} v1.Response
+// @Router /room/message/readers [get]
+func (h *RoomHandler) GetMessageReaders(ctx *gin.Context) {
+	roomID, roomErr := strconv.ParseUint(ctx.Query("roomId"), 10, 64)
+	messageID, messageErr := strconv.ParseUint(ctx.Query("id"), 10, 64)
+	if roomErr != nil || messageErr != nil || roomID == 0 || messageID == 0 {
+		v1.HandleError(ctx, 400, v1.ErrBadRequest, "invalid roomId or id")
+		return
+	}
+
+	pageSize := 50
+	if pageSizeStr := ctx.Query("pageSize"); pageSizeStr != "" {
+		if parsed, parseErr := strconv.Atoi(pageSizeStr); parseErr == nil && parsed > 0 {
+			pageSize = parsed
+		}
+	}
+	offset := 0
+	if startStr := ctx.Query("start"); startStr != "" {
+		if parsed, parseErr := strconv.Atoi(startStr); parseErr == nil && parsed >= 0 {
+			offset = parsed
+		}
+	}
+
+	readers, err := h.roomService.GetMessageReaders(ctx, uint(roomID), uint(messageID), pageSize, offset)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			v1.HandleError(ctx, 404, v1.ErrNotFound, nil)
+			return
+		}
+		v1.HandleError(ctx, 500, err, nil)
+		return
+	}
+	v1.HandleSuccess(ctx, readers)
+}
+
 // UpdateRoom godoc
 // @Summary 更新房间信息
 // @Schemes
@@ -253,6 +311,13 @@ func (h *RoomHandler) UpdateRoom(ctx *gin.Context) {
 	if err != nil {
 		v1.HandleError(ctx, 500, err, nil)
 		return
+	}
+	if h.roomEvents != nil {
+		h.roomEvents.NotifyRoomListChanged(uniqueRoomEventUserIDs(
+			[]uint{uint(GetUserIdFromCtx(ctx)), req.GetCreatorID()},
+			req.GetAdminIDs(),
+			req.GetMemberIDs(),
+		))
 	}
 	v1.HandleSuccess(ctx, room, "Room updated successfully")
 }
@@ -314,6 +379,9 @@ func (h *RoomHandler) JoinRoom(ctx *gin.Context) {
 		}
 		v1.HandleError(ctx, 500, err, nil)
 		return
+	}
+	if h.roomEvents != nil {
+		h.roomEvents.NotifyRoomListChanged([]uint{uint(userID)})
 	}
 	v1.HandleSuccess(ctx, room, "Joined room successfully")
 }

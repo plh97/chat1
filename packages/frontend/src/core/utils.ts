@@ -4,18 +4,8 @@ import("nanoid").then((module) => {
   nanoid = module.nanoid;
 });
 
-export function parseCookie() {
-  const cookie = document.cookie;
-  return cookie.split(";").reduce<Record<string, string>>((acc, item) => {
-    const [key, value] = item.split("=");
-    acc[key.trim()] = value;
-    return acc;
-  }, {});
-}
-
-export function getToken(): string | undefined {
-  const json = parseCookie();
-  return json.token;
+export function getToken(): string {
+  return localStorage.getItem("accessToken") ?? "";
 }
 
 export function generateTemplateId() {

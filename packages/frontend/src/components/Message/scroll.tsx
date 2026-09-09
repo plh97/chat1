@@ -1,6 +1,6 @@
 import { Children, PropsWithChildren, ReactElement } from "react";
 import clsx from "clsx";
-import { VList } from "virtua";
+import { VList, VListHandle } from "virtua";
 import { Loader2 } from "lucide-react";
 import {
   scrollToEnd,
@@ -9,6 +9,8 @@ import {
 } from "@/store/reducer/room";
 
 import { useLoadMore, useScroll } from "./hook";
+
+const MESSAGE_SCROLL_VIEWPORT_ID = "message-scroll-viewport";
 
 export const Top = () => {
   const { loadingMessage, data } = useAppSelector((state) => state.room);
@@ -42,12 +44,31 @@ export function Scroll({
   const { id = "" } = useParams();
   const { isPrepend, handleScroll } = useLoadMore();
   const { scrollEl } = useScroll();
+  const requestedRoomIdRef = useRef("");
   const initialScrolledRoomIdRef = useRef("");
   const room = useAppSelector((state) => state.room.data);
   const userInfo = useAppSelector((state) => state.user.data);
+  const setScrollEl = useCallback(
+    (list: VListHandle | null) => {
+      scrollEl.current = list;
+      if (
+        !list ||
+        !room?.id ||
+        !room.message.length ||
+        initialScrolledRoomIdRef.current === room.id
+      ) {
+        return;
+      }
+      list.scrollToIndex(room.message.length, { align: "end" });
+      const viewport = document.getElementById(MESSAGE_SCROLL_VIEWPORT_ID);
+      if (viewport) viewport.scrollTop = viewport.scrollHeight;
+    },
+    [room?.id, room.message.length, scrollEl]
+  );
   // init message list
   useLayoutEffect(() => {
-    if (!id) return;
+    if (!id || requestedRoomIdRef.current === id) return;
+    requestedRoomIdRef.current = id;
     initialScrolledRoomIdRef.current = "";
     // 清空旧的信息
     dispatch(
@@ -68,18 +89,39 @@ export function Scroll({
   );
 
   useLayoutEffect(() => {
-    if (!room?.id || !message.length || loadingMessage) {
+    if (!room?.id || !message.length) {
       return;
     }
     if (initialScrolledRoomIdRef.current === room.id) {
       return;
     }
-    initialScrolledRoomIdRef.current = room.id;
-    window.requestAnimationFrame(() => {
-      scrollEl.current?.scrollToIndex(message.length, {
-        align: "end",
-      });
-    });
+    const scrollToInitialEnd = () => {
+      const list = scrollEl.current;
+      if (list) {
+        list.scrollToIndex(message.length, {
+          align: "end",
+        });
+        // The virtual list can update its total size after measuring the
+        // newly rendered rows. Re-align for a few frames while it settles.
+        list.scrollTo(list.scrollSize);
+      }
+      const viewport = document.getElementById(MESSAGE_SCROLL_VIEWPORT_ID);
+      if (viewport) viewport.scrollTop = viewport.scrollHeight;
+    };
+
+    const frame = window.requestAnimationFrame(scrollToInitialEnd);
+    const settleTimers = [100, 300, 600].map((delay) =>
+      window.setTimeout(scrollToInitialEnd, delay)
+    );
+    const completionTimer = window.setTimeout(() => {
+      scrollToInitialEnd();
+      initialScrolledRoomIdRef.current = room.id;
+    }, 650);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      settleTimers.forEach(window.clearTimeout);
+      window.clearTimeout(completionTimer);
+    };
   }, [loadingMessage, message.length, room?.id, scrollEl]);
 
   if (!room?.id || !userInfo?.id) {
@@ -97,15 +139,21 @@ export function Scroll({
 
   return (
     <VList
+      id={MESSAGE_SCROLL_VIEWPORT_ID}
       data={items}
       shift={isPrepend.current}
       className={clsx(
         "relative flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-3.5 py-0 touch-pan-y [WebkitOverflowScrolling:touch]",
         className
       )}
-      ref={scrollEl}
+      ref={setScrollEl}
       onScroll={(offset) => {
-        if (!loadingMessage && message.length && hasMoreMessage) {
+        if (
+          initialScrolledRoomIdRef.current === room.id &&
+          !loadingMessage &&
+          message.length &&
+          hasMoreMessage
+        ) {
           handleScroll(offset);
         }
       }}

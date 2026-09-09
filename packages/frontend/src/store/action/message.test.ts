@@ -51,6 +51,7 @@ const mockWsSendMsg = jest.fn();
 import {
   sendMessageAction,
   markReadMessageThunk,
+  queueMarkReadMessage,
   recallMessageThunk,
 } from "./message";
 
@@ -379,6 +380,47 @@ describe("Message Actions", () => {
 
       // Assert
       expect(mockWsSendMsg).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("queueMarkReadMessage", () => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it("batches visible messages and sends only the highest sequence", async () => {
+      jest.useFakeTimers();
+
+      for (const lastReadSeq of [11, 17, 12]) {
+        store.dispatch(
+          queueMarkReadMessage({
+            channelId: "channel-123",
+            readMessage: {
+              operator: "user-123",
+              lastReadSeq,
+              readSeq: { "user-123": lastReadSeq },
+            },
+          }) as any
+        );
+      }
+
+      expect(mockWsSendMsg).not.toHaveBeenCalled();
+      jest.advanceTimersByTime(100);
+      await Promise.resolve();
+
+      expect(mockWsSendMsg).toHaveBeenCalledTimes(1);
+      expect(mockWsSendMsg).toHaveBeenCalledWith(
+        expect.objectContaining({
+          channelId: "channel-123",
+          readMessage: expect.objectContaining({
+            operator: "user-123",
+            lastReadSeq: 17,
+            readSeq: { "user-123": 17 },
+          }),
+          contentType: "READ_MESSAGE",
+        }),
+        WS_EVENT.SEND_MSG
+      );
     });
   });
 

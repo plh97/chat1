@@ -7,9 +7,11 @@ export interface IRoom extends Omit<Room, "member" | "message"> {
   isMember?: boolean;
   member: IUser[];
   admin: IUser[];
+  creator?: IUser;
   peer?: IUser;
   memberTotalCount?: number;
   adminTotalCount?: number;
+  participantTotalCount?: number;
   hasMoreMessage?: boolean;
   // createdAt: Date;
   // updatedAt: Date;

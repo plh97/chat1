@@ -19,6 +19,7 @@ type RoomService interface {
 	GetRoomByID(ctx context.Context, id, viewerID uint, memberLimit, memberOffset, adminLimit, adminOffset int) (interface{}, error)
 	GetRoomMessages(ctx context.Context, roomID uint, limit, offset int) (interface{}, error)
 	GetRoomUsers(ctx context.Context, roomID, viewerID uint, role string, limit, offset int) (interface{}, error)
+	GetMessageReaders(ctx context.Context, roomID, messageID uint, limit, offset int) (interface{}, error)
 	GetRoomMessageWindow(ctx context.Context, roomID, messageID uint, limit int) (interface{}, error)
 	ListRooms(ctx context.Context) (interface{}, error)
 	UpdateRoom(ctx context.Context, req v1.RoomUpdateRequest) (interface{}, error)
@@ -70,27 +71,33 @@ type roomMessageResponse struct {
 }
 
 type roomDetailResponse struct {
-	ID               uint                   `json:"id"`
-	Name             string                 `json:"name"`
-	Image            string                 `json:"image"`
-	ChannelType      string                 `json:"channelType"`
-	IsMember         bool                   `json:"isMember"`
-	ReadSeq          interface{}            `json:"readSeq"`
-	Member           []*model.User          `json:"member"`
-	MemberTotalCount int64                  `json:"memberTotalCount"`
-	Admin            []*model.User          `json:"admin"`
-	AdminTotalCount  int64                  `json:"adminTotalCount"`
-	Creator          *model.User            `json:"creator"`
-	Message          []*roomMessageResponse `json:"message"`
-	TotalCount       int64                  `json:"totalCount"`
-	CreatedAt        interface{}            `json:"createdAt"`
-	UpdatedAt        interface{}            `json:"updatedAt"`
+	ID                    uint                   `json:"id"`
+	Name                  string                 `json:"name"`
+	Image                 string                 `json:"image"`
+	ChannelType           string                 `json:"channelType"`
+	IsMember              bool                   `json:"isMember"`
+	ReadSeq               interface{}            `json:"readSeq"`
+	Member                []*model.User          `json:"member"`
+	MemberTotalCount      int64                  `json:"memberTotalCount"`
+	Admin                 []*model.User          `json:"admin"`
+	AdminTotalCount       int64                  `json:"adminTotalCount"`
+	ParticipantTotalCount int64                  `json:"participantTotalCount"`
+	Creator               *model.User            `json:"creator"`
+	Message               []*roomMessageResponse `json:"message"`
+	TotalCount            int64                  `json:"totalCount"`
+	CreatedAt             interface{}            `json:"createdAt"`
+	UpdatedAt             interface{}            `json:"updatedAt"`
 }
 
 type roomMemberPageResponse struct {
 	Role       string        `json:"role"`
 	Users      []*model.User `json:"users"`
 	TotalCount int64         `json:"totalCount"`
+}
+
+type messageReadersResponse struct {
+	Users      []*roomMessageUser `json:"users"`
+	TotalCount int64              `json:"totalCount"`
 }
 
 type roomMessagePageResponse struct {
@@ -229,28 +236,119 @@ func (s *roomService) GetRoomByID(ctx context.Context, id, viewerID uint, member
 		return nil, err
 	}
 	room.Admins = admins
+	participantTotalCount, err := countRoomParticipants(db, id)
+	if err != nil {
+		return nil, err
+	}
 	viewerRole, err := getViewerRole(db, id, viewerID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &roomDetailResponse{
-		ID:               room.ID,
-		Name:             room.Name,
-		Image:            room.Image,
-		ChannelType:      room.ChannelType,
-		IsMember:         viewerRole != "",
-		ReadSeq:          room.ReadSeq,
-		Member:           room.Members,
-		MemberTotalCount: memberTotalCount,
-		Admin:            room.Admins,
-		AdminTotalCount:  adminTotalCount,
-		Creator:          room.Creator,
-		Message:          []*roomMessageResponse{},
-		TotalCount:       0,
-		CreatedAt:        room.CreatedAt,
-		UpdatedAt:        room.UpdatedAt,
+		ID:                    room.ID,
+		Name:                  room.Name,
+		Image:                 room.Image,
+		ChannelType:           room.ChannelType,
+		IsMember:              viewerRole != "",
+		ReadSeq:               room.ReadSeq,
+		Member:                room.Members,
+		MemberTotalCount:      memberTotalCount,
+		Admin:                 room.Admins,
+		AdminTotalCount:       adminTotalCount,
+		ParticipantTotalCount: participantTotalCount,
+		Creator:               room.Creator,
+		Message:               []*roomMessageResponse{},
+		TotalCount:            0,
+		CreatedAt:             room.CreatedAt,
+		UpdatedAt:             room.UpdatedAt,
 	}, nil
+}
+
+func readSequenceValue(value interface{}) int {
+	switch typed := value.(type) {
+	case int:
+		return typed
+	case int32:
+		return int(typed)
+	case int64:
+		return int(typed)
+	case float32:
+		return int(typed)
+	case float64:
+		return int(typed)
+	case json.Number:
+		sequence, _ := typed.Int64()
+		return int(sequence)
+	case string:
+		sequence, _ := strconv.Atoi(typed)
+		return sequence
+	default:
+		return 0
+	}
+}
+
+func (s *roomService) GetMessageReaders(ctx context.Context, roomID, messageID uint, limit, offset int) (interface{}, error) {
+	db := s.tm.(*repository.Repository).DB(ctx)
+	if limit <= 0 {
+		limit = 50
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	var room model.Room
+	if err := db.Select("id", "read_seq").Where("id = ?", roomID).First(&room).Error; err != nil {
+		return nil, err
+	}
+
+	var message model.Message
+	roomIDString := strconv.Itoa(int(roomID))
+	if err := db.Select("id", "seq", "user_id").
+		Where("id = ? AND (channel_id = ? OR room_id = ?)", messageID, roomIDString, roomIDString).
+		First(&message).Error; err != nil {
+		return nil, err
+	}
+
+	readerIDs := make([]uint, 0, len(room.ReadSeq))
+	for userID, sequence := range room.ReadSeq {
+		if userID == message.UserId || readSequenceValue(sequence) < message.Seq {
+			continue
+		}
+		parsedID, err := strconv.ParseUint(userID, 10, 64)
+		if err == nil && parsedID > 0 {
+			readerIDs = append(readerIDs, uint(parsedID))
+		}
+	}
+
+	if len(readerIDs) == 0 {
+		return &messageReadersResponse{Users: []*roomMessageUser{}, TotalCount: 0}, nil
+	}
+
+	baseQuery := func() *gorm.DB {
+		return db.Model(&model.User{}).
+			Joins("JOIN room_members ON room_members.user_id = users.id").
+			Where("room_members.room_id = ? AND users.id IN ?", roomID, readerIDs)
+	}
+
+	var totalCount int64
+	if err := baseQuery().Distinct("users.id").Count(&totalCount).Error; err != nil {
+		return nil, err
+	}
+
+	var users []*model.User
+	if err := baseQuery().Order("users.id ASC").Offset(offset).Limit(limit).Find(&users).Error; err != nil {
+		return nil, err
+	}
+	readerUsers := make([]*roomMessageUser, 0, len(users))
+	for _, user := range users {
+		readerUsers = append(readerUsers, buildRoomMessageUser(user))
+	}
+
+	return &messageReadersResponse{Users: readerUsers, TotalCount: totalCount}, nil
 }
 
 func (s *roomService) GetRoomMessages(ctx context.Context, roomID uint, limit, offset int) (interface{}, error) {
@@ -437,6 +535,15 @@ func loadRoomUsersByRole(db *gorm.DB, roomID, viewerID uint, role string, limit,
 	}
 
 	return members, memberTotalCount, nil
+}
+
+func countRoomParticipants(db *gorm.DB, roomID uint) (int64, error) {
+	var totalCount int64
+	err := db.Model(&model.RoomMember{}).
+		Where("room_id = ?", roomID).
+		Distinct("user_id").
+		Count(&totalCount).Error
+	return totalCount, err
 }
 
 func loadRoomUsersWithCreator(db *gorm.DB, roomID, viewerID uint, creator *model.User, role string, limit, offset int) ([]*model.User, int64, error) {

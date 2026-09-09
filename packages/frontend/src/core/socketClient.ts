@@ -14,9 +14,11 @@ export class SocketClient {
   eventEmitter: EventEmitter;
   promiseMap: Record<string, Promisify> = {};
   url: string;
+  authToken?: string;
   isError = false;
   constructor({ url }: { url: string }) {
     this.url = url;
+    this.authToken = getToken();
     this.eventEmitter = new EventEmitter();
     this.init();
     window.onoffline = () => {
@@ -29,7 +31,8 @@ export class SocketClient {
   }
 
   init() {
-    this.socket = new ReconnectingWebSocket(this.url, getToken());
+    this.authToken = getToken();
+    this.socket = new ReconnectingWebSocket(this.url, this.authToken);
     this.createWS(this.open, this.close, this.error);
     // @ts-ignore
     window.socket = this.socket;
