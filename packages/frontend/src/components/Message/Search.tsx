@@ -9,6 +9,28 @@ const SEARCH_PAGE_SIZE = 20;
 const messageText = (message: IMessage) =>
   message.textMessage?.text?.trim() || "(empty text message)";
 
+const highlightMatches = (text: string, query: string) => {
+  const normalizedQuery = query.trim();
+  if (!normalizedQuery) return text;
+
+  const escapedQuery = normalizedQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const matcher = new RegExp(`(${escapedQuery})`, "gi");
+
+  return text.split(matcher).map((part, index) =>
+    part.toLocaleLowerCase() === normalizedQuery.toLocaleLowerCase() ? (
+      <mark
+        // A message can contain the same match more than once.
+        key={`${index}-${part}`}
+        className="rounded-sm bg-yellow-300 px-0.5 text-slate-950"
+      >
+        {part}
+      </mark>
+    ) : (
+      part
+    )
+  );
+};
+
 export function MessageSearch() {
   const dispatch = useThunkDispatch();
   const roomId = useAppSelector((state) => state.room.data.id);
@@ -131,7 +153,7 @@ export function MessageSearch() {
                 className="block w-full border-b border-slate-700 px-4 py-3 text-left hover:bg-slate-700"
               >
                 <div className="line-clamp-2 text-sm text-slate-100">
-                  {messageText(message)}
+                  {highlightMatches(messageText(message), submittedQuery)}
                 </div>
                 <div className="mt-1 text-xs text-slate-400">
                   {message.user?.userName ?? message.userId} · #{message.seq}
