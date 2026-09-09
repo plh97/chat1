@@ -18,7 +18,7 @@ type UserService interface {
 	Logout(ctx context.Context) error
 	GetProfile(ctx context.Context, id int) (*v1.GetProfileResponseData, error)
 	UpdateProfile(ctx context.Context, id int, req *v1.UpdateProfileRequest) (*v1.GetProfileResponseData, error)
-	ListUsers(ctx context.Context, req v1.ListUsersRequest) ([]model.User, error)
+	ListUsers(ctx context.Context, req v1.ListUsersRequest) (*v1.ListUsersResponseData, error)
 	AddFriend(ctx context.Context, userId uint, req *v1.AddFriendRequest) (*model.Room, error)
 	DeleteFriend(ctx context.Context, userId uint, req *v1.DeleteFriendRequest) error
 	UploadPresignedUrl(fileExt string, scene int) (string, string, error)
@@ -181,12 +181,15 @@ func (s *userService) UpdateProfile(ctx context.Context, id int, req *v1.UpdateP
 	}, nil
 }
 
-func (s *userService) ListUsers(ctx context.Context, req v1.ListUsersRequest) ([]model.User, error) {
-	users, err := s.userRepo.List(ctx, req)
+func (s *userService) ListUsers(ctx context.Context, req v1.ListUsersRequest) (*v1.ListUsersResponseData, error) {
+	users, totalCount, err := s.userRepo.List(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	return users, nil
+	return &v1.ListUsersResponseData{
+		Users:      users,
+		TotalCount: totalCount,
+	}, nil
 }
 
 func (s *userService) AddFriend(ctx context.Context, userId uint, req *v1.AddFriendRequest) (*model.Room, error) {

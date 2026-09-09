@@ -1,8 +1,10 @@
-import type { User } from "@/db";
+import type { User } from "./chat";
 import type { IRoom } from "@/interfaces";
 
-export interface IUser
-  extends Omit<User, "friend" | "password" | "createdAt" | "username"> {
+export interface IUser extends Omit<
+  User,
+  "friend" | "password" | "createdAt" | "username"
+> {
   userId: string;
   image: string;
   userName: string;

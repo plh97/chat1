@@ -1,5 +1,5 @@
 import React from "react";
-import { Portal } from "@chakra-ui/react";
+import { Portal } from "@/components/ui/chakra-compat";
 
 export const WithProfile = ({
   profile,

@@ -8,17 +8,17 @@ import { ProfileDialog } from "../ProfileDialog";
 
 const DropdownMenuDemo = () => {
   const {
-    isOpen: isAddFriendOpen,
+    open: isAddFriendOpen,
     onOpen: onAddFriendOpen,
     onClose: onAddFriendClose,
   } = useDisclosure();
   const {
-    isOpen: isAddRoomOpen,
+    open: isAddRoomOpen,
     onOpen: onAddRoomOpen,
     onClose: onAddRoomClose,
   } = useDisclosure();
   const {
-    isOpen: isProfileOpen,
+    open: isProfileOpen,
     onOpen: onProfileOpen,
     onClose: onProfileClose,
   } = useDisclosure();

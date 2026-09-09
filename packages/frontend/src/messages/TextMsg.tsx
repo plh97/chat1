@@ -1,5 +1,5 @@
 import { IMessage } from "@/interfaces/IMessage";
-import { Link } from "@chakra-ui/react";
+import { Link } from "@/components/ui/chakra-compat";
 
 const formatLink = (paragraph?: string) => {
   const urlRegex = /(https?:\/\/[^\s]+)/g;

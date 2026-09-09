@@ -1,4 +1,4 @@
-import React, { MouseEventHandler } from "react";
+import React from "react";
 import Api from "@/Api";
 import { MessageTemplate } from "@/messages";
 import { IMessage } from "@/interfaces/IMessage";
@@ -32,7 +32,9 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
     const { Component } = temp(message, room);
     return <Component />;
   }, [message, room.member]);
-  const cb = useCallback<MouseEventHandler<HTMLDivElement>>(
+  const cb = useCallback<
+    (position: { clientX: number; clientY: number }) => void
+  >(
     (e) => {
       const menu = document.querySelector("[role=menu]")!;
       const popper = menu.parentElement!;

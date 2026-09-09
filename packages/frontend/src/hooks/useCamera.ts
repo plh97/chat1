@@ -37,8 +37,9 @@ const useCamera = () => {
   const stopCamera = () => {
     if (videoRef.current && videoRef.current.srcObject) {
       const stream = videoRef.current.srcObject;
-      const tracks = stream.getTracks();
-      tracks.forEach((track) => track.stop()); // Stop all tracks
+      if (stream instanceof MediaStream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
       videoRef.current.srcObject = null;
       setIsStreaming(false);
     }

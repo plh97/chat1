@@ -1,4 +1,4 @@
-import { IconButton } from "@chakra-ui/react";
+import { IconButton } from "@/components/ui/chakra-compat";
 import { IMediaMessage } from "@/interfaces";
 import { HiOutlineDocumentSearch } from "react-icons/hi";
 import {
@@ -75,8 +75,9 @@ export const DocsMsg = ({ message }: { message: IMediaMessage }) => {
       <IconButton
         onClick={() => open(message.url)}
         aria-label="download button"
-        icon={<HiOutlineDocumentSearch className="text-2xl" />}
-      />
+      >
+        <HiOutlineDocumentSearch className="text-2xl" />
+      </IconButton>
     </div>
   );
 };

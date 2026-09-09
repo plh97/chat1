@@ -16,7 +16,7 @@ type UserRepository interface {
 	GetByID(ctx context.Context, id int) (*model.User, error)
 	GetProfileByID(ctx context.Context, id int) (*model.User, error)
 	GetByEmail(ctx context.Context, email string) (*model.User, error)
-	List(ctx context.Context, req v1.ListUsersRequest) ([]model.User, error)
+	List(ctx context.Context, req v1.ListUsersRequest) ([]model.User, int64, error)
 }
 
 func NewUserRepository(r *Repository) UserRepository {
@@ -140,9 +140,10 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*model.U
 	return &user, nil
 }
 
-func (r *userRepository) List(ctx context.Context, req v1.ListUsersRequest) ([]model.User, error) {
+func (r *userRepository) List(ctx context.Context, req v1.ListUsersRequest) ([]model.User, int64, error) {
 	var users []model.User
-	query := r.DB(ctx)
+	var totalCount int64
+	query := r.DB(ctx).Model(&model.User{})
 	// Filter by ID (exact match)
 	if id := req.ID; id != 0 {
 		query = query.Where("id = ?", id)
@@ -166,6 +167,10 @@ func (r *userRepository) List(ctx context.Context, req v1.ListUsersRequest) ([]m
 		}
 	}
 
+	if err := query.Count(&totalCount).Error; err != nil {
+		return nil, 0, err
+	}
+
 	query = query.Order("users.id ASC")
 	if req.Start > 0 {
 		query = query.Offset(req.Start)
@@ -176,8 +181,8 @@ func (r *userRepository) List(ctx context.Context, req v1.ListUsersRequest) ([]m
 
 	// Execute the query
 	if err := query.Find(&users).Error; err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return users, nil
+	return users, totalCount, nil
 }

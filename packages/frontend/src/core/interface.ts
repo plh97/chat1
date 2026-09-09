@@ -6,7 +6,7 @@ import type {
   ReadMessage,
   RecallMessage,
   Room,
-} from "@/db";
+} from "@/interfaces/chat";
 import { WebSocket, WebSocketServer } from "ws";
 import { WS_EVENT } from "./constants";
 
@@ -25,7 +25,10 @@ export interface ITextMessage {
   mention: string[];
 }
 
-export interface IMediaMessage extends MediaMessage {
+export interface IMediaMessage extends Omit<
+  MediaMessage,
+  "thumbnail" | "name" | "size" | "duration"
+> {
   file?: File;
   extension: string;
   url: string;
@@ -42,7 +45,10 @@ export interface IReadMessage extends ReadMessage {
 
 export interface IRecallMessage extends RecallMessage {}
 
-export interface IMessageCore extends Message {
+export interface IMessageCore extends Omit<
+  Message,
+  "textMessage" | "mediaMessage" | "readMessage"
+> {
   // id: string;
   // user: unknown;
   createdAt: Date;

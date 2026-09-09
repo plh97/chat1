@@ -5,15 +5,15 @@ module.exports = {
   testMatch: ['**/__tests__/**/*.ts?(x)', '**/?(*.)+(spec|test).ts?(x)'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^nanoid$': '<rootDir>/src/test/nanoid.ts',
   },
   transform: {
     '^.+\\.tsx?$': ['ts-jest', {
-      isolatedModules: true,
       tsconfig: {
         jsx: 'react',
+        isolatedModules: true,
         esModuleInterop: true,
         allowSyntheticDefaultImports: true,
-        moduleResolution: 'node',
         resolveJsonModule: true,
         skipLibCheck: true,
         noEmit: true,

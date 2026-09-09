@@ -7,11 +7,12 @@ import { VitePWA } from "vite-plugin-pwa";
 import viteCompression from "vite-plugin-compression";
 
 const PORT = process.env.PORT ?? 9001;
+const FARO_API_KEY = process.env.FARO_API_KEY;
 
 export default defineConfig({
   build: {
     sourcemap: true,
-    target: "modules",
+    target: "esnext",
   },
   preview: {
     port: +PORT,
@@ -28,9 +29,10 @@ export default defineConfig({
     },
   },
   resolve: {
+    dedupe: ["react", "react-dom"],
     alias: {
-      "~": path.resolve(__dirname, "./"),
-      "@": path.resolve(__dirname, "src"),
+      "~": path.resolve(import.meta.dirname, "./"),
+      "@": path.resolve(import.meta.dirname, "src"),
     },
   },
   plugins: [
@@ -79,7 +81,7 @@ export default defineConfig({
             "usePrevious",
             "useWindowSize",
           ],
-          "@chakra-ui/react": [
+          "@/components/ui/chakra-compat": [
             "createStandaloneToast",
             "extendTheme",
             "ChakraProvider",
@@ -126,16 +128,20 @@ export default defineConfig({
         enabled: true,
       },
     }),
-    faroUploader({
-      appName: "undefined",
-      endpoint: "https://faro-api-prod-ap-northeast-0.grafana.net/faro/api/v1",
-      appId: "undefined",
-      stackId: "1227052",
-      // instructions on how to obtain your API key are in the documentation
-      // https://grafana.com/docs/grafana-cloud/monitor-applications/frontend-observability/sourcemap-upload-plugins/#obtain-an-api-key
-      apiKey: "$your-api-key",
-      gzipContents: true,
-    }),
+    ...(FARO_API_KEY
+      ? [
+          faroUploader({
+            appName: process.env.FARO_APP_NAME ?? "c.plhh.org",
+            endpoint:
+              process.env.FARO_ENDPOINT ??
+              "https://faro-api-prod-ap-northeast-0.grafana.net/faro/api/v1",
+            appId: process.env.FARO_APP_ID ?? "c.plhh.org",
+            stackId: process.env.FARO_STACK_ID ?? "1227052",
+            apiKey: FARO_API_KEY,
+            gzipContents: true,
+          }),
+        ]
+      : []),
   ],
   server: {
     proxy: {

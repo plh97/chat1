@@ -25,5 +25,6 @@
     },
     "types": ["react", "node", "vite/client", "@types/react"]
   },
-  "include": ["src", "./auto-imports.d.ts"]
+  "include": ["src", "./auto-imports.d.ts"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }

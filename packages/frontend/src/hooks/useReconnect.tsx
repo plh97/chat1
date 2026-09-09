@@ -2,7 +2,7 @@ import { SocketClient, WS_EVENT } from "@/core";
 import { fetchUserInfoThunk } from "@/store/reducer/user";
 import { getRoomInfoThunk } from "@/store/reducer/room";
 
-export const useReconnect = (ws: SocketClient) => {
+export const useReconnect = (_ws: SocketClient) => {
   const toast = useToast();
   const { id = "" } = useParams();
   const dispatch = useAppDispatch();

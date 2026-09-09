@@ -114,7 +114,7 @@ export class SocketClient {
     }
   };
 
-  sendMsg = <T>(msg: unknown, event = WS_EVENT.SEND_MSG) => {
+  sendMsg = (msg: unknown, event = WS_EVENT.SEND_MSG) => {
     const reqId = generateTemplateId();
     this.send({ event, data: msg, requestId: reqId });
   };

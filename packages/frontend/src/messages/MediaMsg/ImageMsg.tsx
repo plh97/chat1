@@ -1,4 +1,4 @@
-import { IconButton, Image } from "@chakra-ui/react";
+import { IconButton, Image } from "@/components/ui/chakra-compat";
 import { FaDownload } from "react-icons/fa";
 import { ProgressImage } from "./ProgressImage";
 import { IMediaMessage } from "@/interfaces";
@@ -13,7 +13,7 @@ const PreviewImage = ({
   children: JSX.Element;
   className: string;
 }) => {
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { open, onOpen, onClose } = useDisclosure();
   const { url, thumbnail, file } = mediaMessage;
   const [localPreview, setLocalPreview] = useState("");
 
@@ -36,7 +36,7 @@ const PreviewImage = ({
       <button onClick={onOpen} className={className}>
         {children}
       </button>
-      <Modal isCentered onClose={onClose} size={"xl"} isOpen={isOpen}>
+      <Modal isCentered onClose={onClose} size={"xl"} isOpen={open}>
         <ModalOverlay backdropFilter="auto" backdropBlur="2px" />
         <ModalContent className="flex items-center justify-center">
           <ModalCloseButton />
@@ -60,8 +60,9 @@ const PreviewImage = ({
                 variant="solid"
                 rounded="full"
                 aria-label="Download Image"
-                icon={<FaDownload className="text-xl" />}
-              />
+              >
+                <FaDownload className="text-xl" />
+              </IconButton>
             </a>
           ) : null}
         </ModalContent>

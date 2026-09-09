@@ -3,50 +3,40 @@ import { useEffect, useState } from "react";
 import { Form } from "react-router-dom";
 import {
   Button,
-  ButtonGroup,
   Checkbox,
   CheckboxGroup,
-  FormControl,
-  FormLabel,
-  HStack,
   IconButton,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
-  Select,
   SimpleGrid,
   Spinner,
   Text,
   useDisclosure,
   useToast,
-} from "@chakra-ui/react";
+  Field,
+  Dialog,
+  Portal,
+} from "@/components/ui/chakra-compat";
 import Api from "@/Api";
 import { useAppSelector, useThunkDispatch } from "@/hooks/app";
 import type { IUser } from "@/interfaces";
 import { updateRoomThunk } from "@/store/reducer/room";
+import { AppPagination } from "@/components/ui/Pagination";
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 6;
 
 export function AddAdmin() {
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { open, onOpen, onClose } = useDisclosure();
   const roomInfo = useAppSelector((state) => state.room.data);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [pageUsers, setPageUsers] = useState<IUser[]>([]);
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const dispatch = useThunkDispatch();
   const toast = useToast();
 
-  const pageCount = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-
   useEffect(() => {
-    if (!isOpen || !roomInfo.id) return;
+    if (!open || !roomInfo.id) return;
 
     let cancelled = false;
     setIsLoading(true);
@@ -54,7 +44,7 @@ export function AddAdmin() {
       id: roomInfo.id,
       role: "member",
       pageSize: PAGE_SIZE,
-      start: page * PAGE_SIZE,
+      start: (page - 1) * PAGE_SIZE,
     })
       .then((response) => {
         if (cancelled) return;
@@ -77,17 +67,17 @@ export function AddAdmin() {
     return () => {
       cancelled = true;
     };
-  }, [isOpen, page, roomInfo.id, toast]);
+  }, [open, page, roomInfo.id, toast]);
 
   const handleOpen = () => {
     setSelectedUserIds([]);
-    setPage(0);
+    setPage(1);
     onOpen();
   };
 
   const handleClose = () => {
     setSelectedUserIds([]);
-    setPage(0);
+    setPage(1);
     onClose();
   };
 
@@ -132,95 +122,85 @@ export function AddAdmin() {
 
   return (
     <>
-      <IconButton
-        size="lg"
-        onClick={handleOpen}
-        aria-label="add admin"
-        icon={<FaPlus className="text-2xl" />}
-      />
-      <Modal isOpen={isOpen} onClose={handleClose} size="xl">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Set Admin</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <Form onSubmit={handleAddRoomAdmin}>
-              <FormControl id="name">
-                <FormLabel>Name: </FormLabel>
-                {isLoading ? (
-                  <Spinner />
-                ) : pageUsers.length ? (
-                  <CheckboxGroup
-                    colorScheme="green"
-                    value={selectedUserIds}
-                    onChange={(ids) =>
-                      setSelectedUserIds(ids.map((id) => String(id)))
-                    }
-                  >
-                    <SimpleGrid columns={{ base: 1, sm: 2 }} spacing={4}>
-                      {pageUsers.map((user) => (
-                        <Checkbox key={user.id} value={user.id}>
-                          {user.userName}
-                        </Checkbox>
-                      ))}
-                    </SimpleGrid>
-                  </CheckboxGroup>
-                ) : (
-                  <Text color="gray.500">No members available</Text>
-                )}
-              </FormControl>
-            </Form>
-            <ButtonGroup mt={6} width="100%" justifyContent="space-between">
-              <Button
-                onClick={() => setPage((current) => current - 1)}
-                isDisabled={page === 0 || isLoading}
-              >
-                Previous
-              </Button>
-              <HStack>
-                <Text>Page</Text>
-                <Select
-                  aria-label="Page"
-                  size="sm"
-                  width="auto"
-                  value={page}
-                  onChange={(event) => setPage(Number(event.target.value))}
-                  isDisabled={isLoading}
+      <IconButton size="lg" onClick={handleOpen} aria-label="add admin">
+        <FaPlus className="text-2xl" />
+      </IconButton>
+      <Dialog.Root
+        open={open}
+        size="xl"
+        onOpenChange={(e) => {
+          if (!e.open) {
+            handleClose();
+          }
+        }}
+      >
+        <Portal>
+          <Dialog.Backdrop />
+          <Dialog.Positioner>
+            <Dialog.Content>
+              <Dialog.Header>Set Admin</Dialog.Header>
+              <Dialog.CloseTrigger />
+              <Dialog.Body>
+                <Form onSubmit={handleAddRoomAdmin}>
+                  <Field.Root id="name">
+                    <Field.Label>Name: </Field.Label>
+                    {isLoading ? (
+                      <Spinner />
+                    ) : pageUsers.length ? (
+                      <CheckboxGroup
+                        colorPalette="green"
+                        value={selectedUserIds}
+                        onValueChange={(ids) =>
+                          setSelectedUserIds(ids.map((id) => String(id)))
+                        }
+                      >
+                        <SimpleGrid columns={{ base: 1, sm: 2 }} gap={4}>
+                          {pageUsers.map((user) => (
+                            <Checkbox.Root key={user.id} value={user.id}>
+                              <Checkbox.HiddenInput />
+                              <Checkbox.Control>
+                                <Checkbox.Indicator />
+                              </Checkbox.Control>
+                              <Checkbox.Label>{user.userName}</Checkbox.Label>
+                            </Checkbox.Root>
+                          ))}
+                        </SimpleGrid>
+                      </CheckboxGroup>
+                    ) : (
+                      <Text color="gray.500">No members available</Text>
+                    )}
+                  </Field.Root>
+                </Form>
+                <div className="mt-6 flex justify-center">
+                  <AppPagination
+                    count={totalCount}
+                    page={page}
+                    pageSize={PAGE_SIZE}
+                    disabled={isLoading}
+                    onPageChange={setPage}
+                  />
+                </div>
+              </Dialog.Body>
+              <Dialog.Footer>
+                <Text mr="auto" color="gray.500">
+                  {selectedUserIds.length} selected
+                </Text>
+                <Button mr={3} onClick={handleClose}>
+                  Close
+                </Button>
+                <Button
+                  type="button"
+                  colorPalette="blue"
+                  onClick={handleAddRoomAdmin}
+                  loading={isSubmitting}
                 >
-                  {Array.from({ length: pageCount }, (_, index) => (
-                    <option key={index} value={index}>
-                      {index + 1}
-                    </option>
-                  ))}
-                </Select>
-                <Text>of {pageCount}</Text>
-              </HStack>
-              <Button
-                onClick={() => setPage((current) => current + 1)}
-                isDisabled={page + 1 >= pageCount || isLoading}
-              >
-                Next
-              </Button>
-            </ButtonGroup>
-          </ModalBody>
-          <ModalFooter>
-            <Text mr="auto" color="gray.500">
-              {selectedUserIds.length} selected
-            </Text>
-            <Button mr={3} onClick={handleClose}>
-              Close
-            </Button>
-            <Button
-              type="button"
-              colorScheme="blue"
-              onClick={handleAddRoomAdmin}
-              isLoading={isSubmitting}
-            >
-              Submit
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+                  Submit
+                </Button>
+              </Dialog.Footer>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
     </>
   );
 }

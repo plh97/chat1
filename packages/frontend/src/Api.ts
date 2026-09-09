@@ -14,6 +14,16 @@ import { ws } from "@/hooks/useWebsocket";
 import { store } from "./store";
 import { logout } from "@/store/reducer/user";
 
+declare module "axios" {
+  interface AxiosRequestConfig {
+    notificationOptions?: { alert?: boolean };
+  }
+
+  interface InternalAxiosRequestConfig {
+    notificationOptions?: { alert?: boolean };
+  }
+}
+
 const { toast } = createStandaloneToast();
 
 export const axios = Axios.create({
@@ -51,7 +61,7 @@ const normalizeUser = (user: any): IUser => {
     ...user,
     id: normalizeId(user.id ?? user.userId),
     userId: normalizeId(user.userId ?? user.id),
-    UserId: normalizeId(user.UserId ?? user.userId ?? user.id),
+    UserId: Array.isArray(user.UserId) ? user.UserId.map(normalizeId) : [],
     room: Array.isArray(user.room) ? user.room.map(normalizeRoom) : user.room,
     friend: Array.isArray(user.friend)
       ? user.friend.map(normalizeUser)
@@ -138,7 +148,7 @@ axios.interceptors.response.use(
 
     // Handle business errors (code !== 0)
     if (res.code !== 0) {
-      if (response.config?.fetchOptions?.alert !== false) {
+      if (response.config?.notificationOptions?.alert !== false) {
         toast({
           description: res.message ?? "Backend throw unexpected error.",
           status: "error",
@@ -151,7 +161,7 @@ axios.interceptors.response.use(
     }
 
     // Handle success (code === 0)
-    if (res.message && response.config?.fetchOptions?.alert !== false) {
+    if (res.message && response.config?.notificationOptions?.alert !== false) {
       toast({
         description: res.message,
         status: "success",
@@ -168,7 +178,7 @@ axios.interceptors.response.use(
       store.dispatch(logout());
       ws?.destroy();
     }
-    if (error.config?.fetchOptions?.alert !== false) {
+    if (error.config?.notificationOptions?.alert !== false) {
       const errorMessage =
         error.response?.data?.message ??
         error.message ??
@@ -218,7 +228,7 @@ const Api = {
     request<IUser>({
       url: "/profile",
       method: "get",
-      fetchOptions: {
+      notificationOptions: {
         alert: false,
       },
     }).then(normalizeUser),
@@ -272,7 +282,7 @@ const Api = {
       params: {
         username,
       },
-      fetchOptions: {
+      notificationOptions: {
         alert: false,
       },
     }),
@@ -283,11 +293,16 @@ const Api = {
     pageSize?: number;
     start?: number;
   }) =>
-    request<IUser[]>({
+    request<{ users: IUser[]; totalCount: number }>({
       url: "/user",
       method: "get",
       params,
-    }).then((users) => users.map(normalizeUser)),
+    }).then((data) => ({
+      ...data,
+      users: Array.isArray(data.users)
+        ? data.users.map(normalizeUser)
+        : data.users,
+    })),
   getRoom: (params: {
     id: string;
     memberPageSize?: number;

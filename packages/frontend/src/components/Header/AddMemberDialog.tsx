@@ -5,11 +5,11 @@ import {
   CheckboxGroup,
   IconButton,
   useDisclosure,
-} from "@chakra-ui/react";
+} from "@/components/ui/chakra-compat";
 import { updateRoomThunk } from "@/store/reducer/room";
 
 export function AddMember() {
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { open, onOpen, onClose } = useDisclosure();
   const roomInfo = useAppSelector((state) => state.room.data);
   const userInfo = useAppSelector((state) => state.user.data);
   const [user, setUser] = useState<string[]>([]);
@@ -44,13 +44,10 @@ export function AddMember() {
     .filter((m) => m !== userInfo.id);
   return (
     <>
-      <IconButton
-        aria-label="add member"
-        size="lg"
-        icon={<FaPlus className="text-2xl" />}
-        onClick={onOpen}
-      />
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <IconButton aria-label="add member" size="lg" onClick={onOpen}>
+        <FaPlus className="text-2xl" />
+      </IconButton>
+      <Modal isOpen={open} onClose={onClose}>
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Invite friend</ModalHeader>
@@ -60,26 +57,30 @@ export function AddMember() {
               <FormControl id="name">
                 <FormLabel>Name: </FormLabel>
                 <CheckboxGroup
-                  colorScheme="green"
+                  colorPalette="green"
                   defaultValue={memberList}
-                  onChange={(id: string[]) => {
+                  onValueChange={(id: string[]) => {
                     setUser(id);
                   }}
                 >
-                  <Stack spacing={[1, 5]} direction={["column", "row"]}>
+                  <Stack gap={[1, 5]} direction={["column", "row"]}>
                     {userInfo.friend?.map((user) => {
                       const isMember = !!roomInfo.member?.find(
                         (m) => user.id === m.id
                       );
                       return (
-                        <Checkbox
+                        <Checkbox.Root
                           disabled={isMember}
                           // checked={isMember}
                           key={user.id}
                           value={user.id}
                         >
-                          {user.userName}
-                        </Checkbox>
+                          <Checkbox.HiddenInput />
+                          <Checkbox.Control>
+                            <Checkbox.Indicator />
+                          </Checkbox.Control>
+                          <Checkbox.Label>{user.userName}</Checkbox.Label>
+                        </Checkbox.Root>
                       );
                     })}
                   </Stack>

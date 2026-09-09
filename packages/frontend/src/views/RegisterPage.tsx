@@ -98,7 +98,7 @@ export function RegisterPage() {
           </FormControl>
           <FormControl id="button">
             <FormLabel></FormLabel>
-            <Stack spacing={2} direction="row" align="center">
+            <Stack gap={2} direction="row" align="center">
               <Button
                 onClick={handleLogin}
                 colorScheme="green"

@@ -1,11 +1,4 @@
-import {
-  IconButton,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalOverlay,
-} from "@chakra-ui/react";
+import { IconButton, Dialog, Portal } from "@/components/ui/chakra-compat";
 import { FaPlay } from "react-icons/fa";
 import { useFixedSize } from "@/hooks/general";
 import { IMediaMessage } from "@/interfaces";
@@ -54,7 +47,7 @@ const createVideoThumbnail = (src: string) => {
 };
 
 export const VideoMsg = ({ message }: { message: IMediaMessage }) => {
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { open, onOpen, onClose } = useDisclosure();
   const [localPreview, setLocalPreview] = useState("");
   const [localThumbnail, setLocalThumbnail] = useState("");
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -83,11 +76,11 @@ export const VideoMsg = ({ message }: { message: IMediaMessage }) => {
   }, [message.file]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!open) return;
     videoRef.current?.play().catch(() => {
       // ignore autoplay interruption errors
     });
-  }, [isOpen, videoSrc]);
+  }, [open, videoSrc]);
 
   return (
     <>
@@ -103,8 +96,9 @@ export const VideoMsg = ({ message }: { message: IMediaMessage }) => {
           className="!absolute z-10"
           as={"span"}
           aria-label="play button"
-          icon={<FaPlay />}
-        />
+        >
+          <FaPlay />
+        </IconButton>
         <ProgressImage
           message={{
             ...message,
@@ -114,28 +108,41 @@ export const VideoMsg = ({ message }: { message: IMediaMessage }) => {
           }}
         />
       </button>
-      <Modal isCentered onClose={onClose} size="6xl" isOpen={isOpen}>
-        <ModalOverlay backdropFilter="auto" backdropBlur="4px" />
-        <ModalContent className="bg-black">
-          <ModalCloseButton zIndex={2} />
-          <ModalBody className="flex items-center justify-center p-0">
-            {videoSrc ? (
-              <video
-                ref={videoRef}
-                className="max-h-[85vh] w-full bg-black"
-                src={videoSrc}
-                poster={thumbnail || undefined}
-                playsInline
-                preload="metadata"
-                autoPlay
-                controls
-              >
-                <track kind="captions" />
-              </video>
-            ) : null}
-          </ModalBody>
-        </ModalContent>
-      </Modal>
+      <Dialog.Root
+        placement="center"
+        size="xl"
+        open={open}
+        onOpenChange={(e) => {
+          if (!e.open) {
+            onClose();
+          }
+        }}
+      >
+        <Portal>
+          <Dialog.Backdrop backdropFilter="auto" backdropBlur="4px" />
+          <Dialog.Positioner>
+            <Dialog.Content className="bg-black">
+              <Dialog.CloseTrigger zIndex={2} />
+              <Dialog.Body className="flex items-center justify-center p-0">
+                {videoSrc ? (
+                  <video
+                    ref={videoRef}
+                    className="max-h-[85vh] w-full bg-black"
+                    src={videoSrc}
+                    poster={thumbnail || undefined}
+                    playsInline
+                    preload="metadata"
+                    autoPlay
+                    controls
+                  >
+                    <track kind="captions" />
+                  </video>
+                ) : null}
+              </Dialog.Body>
+            </Dialog.Content>
+          </Dialog.Positioner>
+        </Portal>
+      </Dialog.Root>
     </>
   );
 };

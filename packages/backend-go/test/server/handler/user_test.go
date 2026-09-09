@@ -60,7 +60,7 @@ type stubUserService struct {
 	logoutFn             func(ctx context.Context) error
 	getProfileFn         func(ctx context.Context, id int) (*v1.GetProfileResponseData, error)
 	updateProfileFn      func(ctx context.Context, id int, req *v1.UpdateProfileRequest) (*v1.GetProfileResponseData, error)
-	listUsersFn          func(ctx context.Context, req v1.ListUsersRequest) ([]model.User, error)
+	listUsersFn          func(ctx context.Context, req v1.ListUsersRequest) (*v1.ListUsersResponseData, error)
 	addFriendFn          func(ctx context.Context, userId uint, req *v1.AddFriendRequest) (*model.Room, error)
 	deleteFriendFn       func(ctx context.Context, userId uint, req *v1.DeleteFriendRequest) error
 	uploadPresignedUrlFn func(fileExt string, scene int) (string, string, error)
@@ -103,7 +103,7 @@ func (s *stubUserService) UpdateProfile(ctx context.Context, id int, req *v1.Upd
 	return nil, nil
 }
 
-func (s *stubUserService) ListUsers(ctx context.Context, req v1.ListUsersRequest) ([]model.User, error) {
+func (s *stubUserService) ListUsers(ctx context.Context, req v1.ListUsersRequest) (*v1.ListUsersResponseData, error) {
 	if s.listUsersFn != nil {
 		return s.listUsersFn(ctx, req)
 	}

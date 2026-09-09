@@ -1,5 +1,5 @@
 import type { IUser } from "@/interfaces";
-import type { MediaMessage, Message } from "@/db";
+import type { MediaMessage, Message } from "./chat";
 
 export interface IMediaMessage extends MediaMessage {
   file: File;

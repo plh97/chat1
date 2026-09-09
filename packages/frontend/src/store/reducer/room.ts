@@ -1,4 +1,4 @@
-import type { Room } from "@/db";
+import type { Room } from "@/interfaces/chat";
 import Api from "@/Api";
 import { AppThunk } from "@/hooks/app";
 import type { PayloadAction } from "@reduxjs/toolkit";
@@ -110,14 +110,14 @@ export const updateRoomThunk =
     );
   };
 
-export const joinRoomThunk = createAsyncThunk<
-  IRoom,
-  { member?: string[]; name?: string }
->("joinRoom", async (data, { dispatch }) => {
-  const res = await Api.joinRoom(data);
-  dispatch(fetchUserInfoThunk());
-  return res;
-});
+export const joinRoomThunk = createAsyncThunk<IRoom, { id?: string }>(
+  "joinRoom",
+  async (data, { dispatch }) => {
+    const res = await Api.joinRoom(data);
+    dispatch(fetchUserInfoThunk());
+    return res;
+  }
+);
 
 export const roomSlice = createSlice({
   name: "message",

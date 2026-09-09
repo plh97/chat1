@@ -97,8 +97,7 @@ export function Scroll({
 
   return (
     <VList
-      count={items.length}
-      reverse
+      data={items}
       shift={isPrepend.current}
       className={clsx(
         "relative flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-3.5 py-0 touch-pan-y [WebkitOverflowScrolling:touch]",
@@ -111,10 +110,8 @@ export function Scroll({
         }
       }}
     >
-      {(index) =>
-        items[index] ?? (
-          <div key={`message-list-placeholder-${index}`} aria-hidden />
-        )
+      {(item, index) =>
+        item ?? <div key={`message-list-placeholder-${index}`} aria-hidden />
       }
     </VList>
   );

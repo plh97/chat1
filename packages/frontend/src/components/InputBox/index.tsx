@@ -1,5 +1,5 @@
 import { FiSend, FiPause } from "react-icons/fi";
-import { IconButton } from "@chakra-ui/react";
+import { IconButton } from "@/components/ui/chakra-compat";
 import { FaRecordVinyl } from "react-icons/fa";
 import { useAppSelector } from "@/hooks/app";
 import { scrollToEnd, updateRoomThunk } from "@/store/reducer/room";
@@ -15,7 +15,7 @@ import { IMediaMessage } from "@/interfaces";
 import { UploadFile } from "./UploadFile";
 import { useDraft } from "./useDraft";
 import { Reply } from "../Reply";
-import { Link } from "@chakra-ui/react";
+import { Link } from "@/components/ui/chakra-compat";
 import { setLocalUserInfo } from "@/store/reducer/user";
 import { getFileExtension, getNormalizedMimeType } from "@/utils/uploadFile";
 
@@ -118,8 +118,9 @@ export function InputBox({ className }: { readonly className?: string }) {
         variant="solid"
         rounded="full"
         aria-label="Stop recording and send"
-        icon={<FiPause className="text-xl" />}
-      />
+      >
+        <FiPause className="text-xl" />
+      </IconButton>
     );
   } else {
     utilComponent = (
@@ -132,8 +133,9 @@ export function InputBox({ className }: { readonly className?: string }) {
             variant="solid"
             rounded="full"
             aria-label="Send message"
-            icon={<FiSend className="text-xl" />}
-          />
+          >
+            <FiSend className="text-xl" />
+          </IconButton>
         ) : (
           <IconButton
             onClick={async () => {
@@ -150,8 +152,9 @@ export function InputBox({ className }: { readonly className?: string }) {
             variant="solid"
             rounded="full"
             aria-label="Start recording"
-            icon={<FaRecordVinyl className="text-xl" />}
-          />
+          >
+            <FaRecordVinyl className="text-xl" />
+          </IconButton>
         )}
       </>
     );

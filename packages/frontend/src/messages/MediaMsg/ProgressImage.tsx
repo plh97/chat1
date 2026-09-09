@@ -1,5 +1,5 @@
 import { useMediaMsgStyle } from "@/hooks/general";
-import { Image } from "@chakra-ui/react";
+import { Image } from "@/components/ui/chakra-compat";
 import { IMediaMessage } from "@/interfaces";
 
 export const ProgressImage = ({
@@ -47,7 +47,6 @@ export const ProgressImage = ({
   return (
     <Image
       style={style}
-      fallbackSrc={fallbackSrc}
       className={clsx(
         "min-h-[80px] min-w-[80px] max-w-[200px] max-h-[200px] bg-cover object-cover transition-all duration-0",
         {
@@ -55,6 +54,7 @@ export const ProgressImage = ({
         }
       )}
       src={src}
+      fallbackSrc={fallbackSrc}
       onLoad={() => {
         setLoading(false);
       }}

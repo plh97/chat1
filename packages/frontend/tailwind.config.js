@@ -1,9 +1,11 @@
 import { fontFamily } from "tailwindcss/defaultTheme";
-import safeArea from "tailwindcss-safe-area";
 
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
+  corePlugins: {
+    preflight: false,
+  },
   theme: {
     extend: {
       colors: {
@@ -65,9 +67,6 @@ export default {
       },
     },
   },
-  plugins: [
-    require("tailwindcss-safe-area"),
-  ],
   container: {
     center: true,
     padding: "2rem",

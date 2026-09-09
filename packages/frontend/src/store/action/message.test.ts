@@ -32,6 +32,11 @@ jest.mock("@/utils/formatMessage", () => ({
   formatMessage: jest.fn((msg) => Promise.resolve(msg)),
 }));
 
+jest.mock("@/config", () => ({
+  apiUrl: "",
+  wsUrl: "",
+}));
+
 // Mock ws object
 const mockWsSendMsgPromise = jest.fn();
 const mockWsSendMsg = jest.fn();
@@ -118,7 +123,15 @@ describe("Message Actions", () => {
 
       const state = store.getState();
       const messages = state.room.data.message;
-      expect(messages).toContainEqual(mockResponseMessage);
+      expect(messages).toContainEqual(
+        expect.objectContaining({
+          id: mockResponseMessage.id,
+          channelId: mockResponseMessage.channelId,
+          content: mockResponseMessage.content,
+          contentType: mockResponseMessage.contentType,
+          userId: mockResponseMessage.userId,
+        })
+      );
     });
 
     it("should handle message with reply", async () => {

@@ -1,4 +1,4 @@
-import { IconButton } from "@chakra-ui/react";
+import { IconButton } from "@/components/ui/chakra-compat";
 import { FiUpload } from "react-icons/fi";
 import { getUploadAccept } from "@/utils/uploadFile";
 
@@ -29,8 +29,9 @@ export const UploadFile = ({ onUpload }: IProps) => {
         variant="solid"
         rounded="full"
         aria-label="upload"
-        icon={<FiUpload className="text-xl" />}
-      />
+      >
+        <FiUpload className="text-xl" />
+      </IconButton>
     </>
   );
 };

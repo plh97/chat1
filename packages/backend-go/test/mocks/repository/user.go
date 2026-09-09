@@ -96,12 +96,13 @@ func (mr *MockUserRepositoryMockRecorder) GetProfileByID(ctx, id interface{}) *g
 }
 
 // List mocks base method.
-func (m *MockUserRepository) List(ctx context.Context, req v1.ListUsersRequest) ([]model.User, error) {
+func (m *MockUserRepository) List(ctx context.Context, req v1.ListUsersRequest) ([]model.User, int64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "List", ctx, req)
 	ret0, _ := ret[0].([]model.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(int64)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // List indicates an expected call of List.

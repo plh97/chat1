@@ -1,4 +1,4 @@
-import { Menu, MenuItem, MenuList, Portal } from "@chakra-ui/react";
+import { Menu, Portal } from "@/components/ui/chakra-compat";
 import { Item } from "./Item";
 import { Scroll } from "./scroll";
 import { IoCopy } from "react-icons/io5";
@@ -75,10 +75,10 @@ export function Message({ className }: { readonly className?: string }) {
     return config;
   }, [selectedMessage]);
   return (
-    <Menu
-      isOpen={isOpen}
-      onClose={() => {
-        setIsOpen(false);
+    <Menu.Root
+      open={isOpen}
+      onOpenChange={({ open }) => {
+        setIsOpen(open);
       }}
     >
       <Scroll className={className}>
@@ -87,18 +87,21 @@ export function Message({ className }: { readonly className?: string }) {
         ))}
       </Scroll>
       <Portal>
-        <MenuList>
-          {menuList.map((item) => (
-            <MenuItem
-              key={item.label}
-              onClick={item.onClick}
-              className="flex flex-row justify-between box-border"
-            >
-              {item.label} {item.icon}
-            </MenuItem>
-          ))}
-        </MenuList>
+        <Menu.Positioner>
+          <Menu.Content>
+            {menuList.map((item) => (
+              <Menu.Item
+                key={item.label}
+                onSelect={item.onClick}
+                className="flex flex-row justify-between box-border"
+                value={item.label}
+              >
+                {item.label} {item.icon}
+              </Menu.Item>
+            ))}
+          </Menu.Content>
+        </Menu.Positioner>
       </Portal>
-    </Menu>
+    </Menu.Root>
   );
 }

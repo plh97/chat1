@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonCircle } from "@chakra-ui/react";
+import { Skeleton, SkeletonCircle } from "@/components/ui/chakra-compat";
 
 export const Item = () => {
   return (

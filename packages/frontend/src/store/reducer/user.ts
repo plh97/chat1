@@ -31,7 +31,7 @@ const initialState: IState = {
     github: "",
     permission: "",
     friendId: [],
-    UserId: "",
+    UserId: [],
     id: "",
   },
 };

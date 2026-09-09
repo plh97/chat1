@@ -140,7 +140,7 @@ export const markReadMessageThunk = createAsyncThunk<void, Partial<IMessage>>(
       ...message,
       contentType: "READ_MESSAGE",
     };
-    ws.sendMsg<IMessage>(readMessage, WS_EVENT.SEND_MSG);
+    ws.sendMsg(readMessage, WS_EVENT.SEND_MSG);
   }
 );
 
@@ -152,6 +152,6 @@ export const recallMessageThunk = createAsyncThunk<void, Partial<IMessage>>(
       ...message,
       contentType: "RECALL_MESSAGE",
     };
-    ws.sendMsg<IMessage>(recallMessage, WS_EVENT.SEND_MSG);
+    ws.sendMsg(recallMessage, WS_EVENT.SEND_MSG);
   }
 );

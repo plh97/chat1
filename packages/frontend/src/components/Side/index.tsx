@@ -1,5 +1,5 @@
 import { PropsWithChildren } from "react";
-import { IconButton } from "@chakra-ui/react";
+import { IconButton } from "@/components/ui/chakra-compat";
 import { FaBars } from "react-icons/fa";
 import { FaXmark } from "react-icons/fa6";
 import DropdownMenu from "@/components/Side/DropdownMenu";
@@ -58,8 +58,9 @@ export function Side() {
             setOpen(!open);
           }}
           isRound
-          icon={open ? <FaXmark /> : <FaBars />}
-        />
+        >
+          {open ? <FaXmark /> : <FaBars />}
+        </IconButton>
       </span>
       <div
         className={clsx("hidden w-48 h-[100vh] fixed top-0 z-20", {

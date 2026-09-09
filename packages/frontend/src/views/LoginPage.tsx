@@ -97,7 +97,7 @@ export function LoginPage() {
           </FormControl>
           <FormControl id="button">
             <FormLabel></FormLabel>
-            <Stack spacing={2} direction="row" align="center">
+            <Stack gap={2} direction="row" align="center">
               <Button type="submit" colorScheme="green">
                 Login
               </Button>

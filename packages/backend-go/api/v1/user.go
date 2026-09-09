@@ -111,6 +111,11 @@ type ListUsersRequest struct {
 	Start     int    `form:"start" json:"start"`
 }
 
+type ListUsersResponseData struct {
+	Users      []model.User `json:"users"`
+	TotalCount int64        `json:"totalCount"`
+}
+
 type DeleteFriendRequest struct {
 	FriendID FriendUserID `json:"id" binding:"required" example:"2"`
 }

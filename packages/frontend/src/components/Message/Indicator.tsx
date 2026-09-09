@@ -1,5 +1,5 @@
 import { IMessage } from "@/interfaces";
-import { CircularProgress } from "@chakra-ui/react";
+import { ProgressCircle } from "@/components/ui/chakra-compat";
 import { retryMessageAction } from "@/store/action/message";
 import { AlertCircle, Loader2 } from "lucide-react";
 
@@ -20,7 +20,14 @@ const ReadIndicator = ({ message }: { message: IMessage }) => {
   }, [readSeq]);
   if (!(room?.member.length > 1)) return <></>;
   if (myUserInfo.userId !== message?.userId) return <></>;
-  return <CircularProgress size={4} value={readPrecent} />;
+  return (
+    <ProgressCircle.Root value={readPrecent} size="xs">
+      <ProgressCircle.Circle>
+        <ProgressCircle.Track />
+        <ProgressCircle.Range />
+      </ProgressCircle.Circle>
+    </ProgressCircle.Root>
+  );
 };
 
 const DeliveryIndicator = ({ message }: { message: IMessage }) => {

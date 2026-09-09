@@ -1,10 +1,10 @@
 import { Provider } from "react-redux";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { store } from "./store";
-// import { Theme } from "@radix-ui/themes";
-import "@radix-ui/themes/styles.css";
 import theme from "./theme";
 import { lazy, StrictMode, Suspense } from "react";
+import { ChakraProvider } from "@chakra-ui/react";
+import { AppToaster } from "@/utils/createStandAlone";
 
 const HomePage = lazy(() =>
   import("./views/HomePage").then((m) => ({ default: m.HomePage }))
@@ -42,8 +42,7 @@ export const App = (): React.ReactNode => {
   return (
     <StrictMode>
       <Provider store={store}>
-        {/* <Theme className="h-full" accentColor="indigo"> */}
-        <ChakraProvider theme={theme}>
+        <ChakraProvider value={theme}>
           <Suspense
             fallback={
               <div className="flex h-full w-full items-center justify-center">
@@ -53,8 +52,8 @@ export const App = (): React.ReactNode => {
           >
             <RouterProvider router={router} />
           </Suspense>
+          <AppToaster />
         </ChakraProvider>
-        {/* </Theme> */}
       </Provider>
     </StrictMode>
   );

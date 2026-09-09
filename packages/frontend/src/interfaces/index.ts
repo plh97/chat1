@@ -1,11 +1,4 @@
-export type {
-  ChannelType,
-  ContentType,
-  Message,
-  MediaMessage,
-  TextMessage,
-} from "@/db";
-
+export * from "./chat";
 export * from "./common";
 export * from "./IMessage";
 export * from "./IRoom";

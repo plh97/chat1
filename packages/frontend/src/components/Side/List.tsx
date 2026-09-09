@@ -1,7 +1,7 @@
 import { joinRoomThunk } from "@/store/reducer/room";
 import { Item } from "./Item";
 import { Loading } from "./Loading";
-import { Link } from "@chakra-ui/react";
+import { Link } from "@/components/ui/chakra-compat";
 import { isRoomListLoading } from "@/utils/roomList";
 
 export const List = () => {

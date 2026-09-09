@@ -1,4 +1,4 @@
-import { SkeletonCircle, SkeletonText } from "@chakra-ui/react";
+import { SkeletonCircle, SkeletonText } from "@/components/ui/chakra-compat";
 
 export const Loading = () => {
   return (
@@ -7,9 +7,9 @@ export const Loading = () => {
       <SkeletonText
         className="flex-1 ml-2"
         mr="2"
-        noOfLines={2}
-        spacing="4"
-        skeletonHeight="3"
+        lineClamp={2}
+        gap="4"
+        height="3"
       />
     </>
   );

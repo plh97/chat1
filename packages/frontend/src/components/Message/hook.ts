@@ -35,11 +35,13 @@ export const useScroll = () => {
   const handleScrollToBottom = (stick = false) => {
     if (scrollToEnd === undefined) return;
     if (stick) {
-      if (
-        scrollEl.current?.findEndIndex() !== undefined &&
-        scrollEl.current.findEndIndex() >= message.length - 1
-      ) {
-        scrollEl.current?.scrollToIndex(message.length, {
+      const list = scrollEl.current;
+      if (!list) return;
+      const visibleEndIndex = list.findItemIndex(
+        list.scrollOffset + list.viewportSize
+      );
+      if (visibleEndIndex >= message.length - 1) {
+        list.scrollToIndex(message.length, {
           align: "end",
           smooth: true,
         });

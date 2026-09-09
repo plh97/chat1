@@ -73,7 +73,7 @@ type stubUserRepository struct {
 	updateFieldsFn func(ctx context.Context, id int, fields map[string]interface{}) error
 	getByIDFn      func(ctx context.Context, id int) (*model.User, error)
 	getProfileFn   func(ctx context.Context, id int) (*model.User, error)
-	listFn         func(ctx context.Context, req v1.ListUsersRequest) ([]model.User, error)
+	listFn         func(ctx context.Context, req v1.ListUsersRequest) ([]model.User, int64, error)
 }
 
 var _ repository.UserRepository = (*stubUserRepository)(nil)
@@ -120,11 +120,11 @@ func (s *stubUserRepository) GetByEmail(ctx context.Context, email string) (*mod
 	return nil, nil
 }
 
-func (s *stubUserRepository) List(ctx context.Context, req v1.ListUsersRequest) ([]model.User, error) {
+func (s *stubUserRepository) List(ctx context.Context, req v1.ListUsersRequest) ([]model.User, int64, error) {
 	if s.listFn != nil {
 		return s.listFn(ctx, req)
 	}
-	return nil, nil
+	return nil, 0, nil
 }
 
 func newUserServiceForTest(tm repository.Transaction, userRepo repository.UserRepository) service.UserService {
@@ -203,6 +203,25 @@ func TestUserService_Login(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.NotEmpty(t, token)
+}
+
+func TestUserService_ListUsersReturnsPageMetadata(t *testing.T) {
+	ctx := context.Background()
+	req := v1.ListUsersRequest{UserName: "ali", PageSize: 6, Start: 6}
+	userRepo := &stubUserRepository{
+		listFn: func(ctx context.Context, actual v1.ListUsersRequest) ([]model.User, int64, error) {
+			assert.Equal(t, req, actual)
+			return []model.User{{UserName: "alice"}}, 13, nil
+		},
+	}
+	userService := newUserServiceForTest(&stubTransaction{}, userRepo)
+
+	result, err := userService.ListUsers(ctx, req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, int64(13), result.TotalCount)
+	assert.Len(t, result.Users, 1)
+	assert.Equal(t, "alice", result.Users[0].UserName)
 }
 
 func TestUserService_Login_UserNotFound(t *testing.T) {

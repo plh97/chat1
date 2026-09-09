@@ -1,4 +1,4 @@
-import type { Room } from "@/db";
+import type { Room } from "./chat";
 import type { IMessage, IUser } from "@/interfaces";
 
 export interface IRoom extends Omit<Room, "member" | "message"> {
@@ -13,7 +13,7 @@ export interface IRoom extends Omit<Room, "member" | "message"> {
   hasMoreMessage?: boolean;
   // createdAt: Date;
   // updatedAt: Date;
-  totalCount: 0;
+  totalCount: number;
   message: IMessage[];
   lastMsg?: IMessage;
 }

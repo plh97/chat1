@@ -1,4 +1,4 @@
-import type { ContentType } from "@/db";
+import type { ContentType } from "@/interfaces/chat";
 import { TextMsg } from "./TextMsg";
 import { MediaMsg } from "./MediaMsg";
 import { IMessage } from "@/interfaces/IMessage";
@@ -6,7 +6,7 @@ import { SysMsg } from "./SysMsg";
 import { IRoom } from "@/interfaces";
 import { RecallMsg } from "./RecallMsg";
 
-const DefaultMsg = (message: IMessage, room?: IRoom) => ({
+const DefaultMsg = (_message: IMessage, _room?: IRoom) => ({
   Preview: () => <></>,
   Component: () => <></>,
 });

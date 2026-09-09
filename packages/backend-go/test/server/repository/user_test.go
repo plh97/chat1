@@ -168,8 +168,15 @@ func TestUserRepository_List(t *testing.T) {
 	assert.NoError(t, userRepo.Create(ctx, &model.User{UserName: "alice", Password: "password", Email: "alice@example.com"}))
 	assert.NoError(t, userRepo.Create(ctx, &model.User{UserName: "bob", Password: "password", Email: "bob@example.com"}))
 
-	users, err := userRepo.List(ctx, v1.ListUsersRequest{UserName: "ali"})
+	users, totalCount, err := userRepo.List(ctx, v1.ListUsersRequest{UserName: "ali"})
 	assert.NoError(t, err)
+	assert.Equal(t, int64(1), totalCount)
 	assert.Len(t, users, 1)
 	assert.Equal(t, "alice", users[0].UserName)
+
+	page, totalCount, err := userRepo.List(ctx, v1.ListUsersRequest{PageSize: 1})
+	assert.NoError(t, err)
+	assert.Equal(t, int64(2), totalCount)
+	assert.Len(t, page, 1)
+	assert.Equal(t, "alice", page[0].UserName)
 }
