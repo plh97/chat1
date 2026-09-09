@@ -23,6 +23,10 @@ type UserRepository interface {
 	List(ctx context.Context, req v1.ListUsersRequest) ([]model.User, int64, error)
 }
 
+type RoomMembershipRepository interface {
+	AreUsersInRoom(ctx context.Context, roomID uint, userIDs []uint) (bool, error)
+}
+
 func NewUserRepository(r *Repository) UserRepository {
 	return &userRepository{
 		Repository: r,
@@ -38,6 +42,30 @@ type privateRoomPeerRow struct {
 	UserID   uint   `gorm:"column:user_id"`
 	UserName string `gorm:"column:user_name"`
 	Image    string `gorm:"column:image"`
+}
+
+func (r *userRepository) AreUsersInRoom(ctx context.Context, roomID uint, userIDs []uint) (bool, error) {
+	uniqueUserIDs := make(map[uint]struct{}, len(userIDs))
+	for _, userID := range userIDs {
+		if userID != 0 {
+			uniqueUserIDs[userID] = struct{}{}
+		}
+	}
+	if roomID == 0 || len(uniqueUserIDs) == 0 {
+		return false, nil
+	}
+
+	ids := make([]uint, 0, len(uniqueUserIDs))
+	for userID := range uniqueUserIDs {
+		ids = append(ids, userID)
+	}
+	var count int64
+	err := r.DB(ctx).
+		Table("room_members").
+		Where("room_id = ? AND user_id IN ? AND deleted_at IS NULL", roomID, ids).
+		Distinct("user_id").
+		Count(&count).Error
+	return count == int64(len(ids)), err
 }
 
 func (r *userRepository) loadPrivateRoomPeers(ctx context.Context, user *model.User) error {

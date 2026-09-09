@@ -11,6 +11,7 @@
     backend_binary: /opt/chat2/packages/backend-go/bin/server
     backend_service_name: chat2-backend
     nginx_site_name: chat2
+    pnpm_version: 10.34.5
   tasks:
     - name: Deploy application
       block:
@@ -28,10 +29,18 @@
             version: "{{ deploy_branch }}"
             accept_hostkey: true
 
+        - name: Activate project pnpm version
+          command:
+            cmd: "corepack prepare pnpm@{{ pnpm_version }} --activate"
+          changed_when: false
+
         - name: Install workspace dependencies
           command:
-            cmd: pnpm install --frozen-lockfile
+            cmd: pnpm install --frozen-lockfile --prefer-offline
             chdir: "{{ app_root }}"
+          environment:
+            CI: "true"
+            COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
 
         - name: Prepare backend dependencies/build/logs
           command:

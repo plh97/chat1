@@ -1,9 +1,13 @@
+import { CallProvider } from "@/components/Call";
+
 export function HomePage() {
   useAuth();
   useWebsocket();
   return (
-    <Layout>
-      <div className="flex flex-col flex-1"></div>
-    </Layout>
+    <CallProvider>
+      <Layout>
+        <div className="flex flex-1 flex-col"></div>
+      </Layout>
+    </CallProvider>
   );
 }

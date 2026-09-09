@@ -11,11 +11,13 @@ import (
 	"time"
 
 	"backend-go/internal/model"
+	"backend-go/internal/repository"
 
 	"github.com/gorilla/websocket"
 )
 
 const wsSendMessageEvent = "WS_SEND_MESSAGE"
+const wsCallSignalEvent = "WS_CALL_SIGNAL"
 
 type wsEnvelope struct {
 	Event     string          `json:"event"`
@@ -37,6 +39,17 @@ type incomingMessage struct {
 	SystemMessage json.RawMessage `json:"systemMessage,omitempty"`
 	UserID        json.RawMessage `json:"userId"`
 	ReplyID       json.RawMessage `json:"replyId,omitempty"`
+}
+
+type callSignal struct {
+	CallID       string          `json:"callId"`
+	RoomID       json.RawMessage `json:"roomId"`
+	FromUserID   string          `json:"fromUserId"`
+	ToUserID     json.RawMessage `json:"toUserId"`
+	Type         string          `json:"type"`
+	MediaType    string          `json:"mediaType"`
+	SDP          json.RawMessage `json:"sdp,omitempty"`
+	ICECandidate json.RawMessage `json:"candidate,omitempty"`
 }
 
 type wsUser struct {
@@ -114,6 +127,18 @@ func (c *Client) handleIncomingMessage(raw []byte) error {
 		return err
 	}
 
+	if envelope.Event == wsCallSignalEvent {
+		response, targetUserID, err := c.hub.handleCallSignal(context.Background(), c.userID, envelope)
+		if err != nil {
+			return c.writeErrorResponseForEvent(envelope.Event, envelope.RequestID, err)
+		}
+		c.hub.targeted <- targetedMessage{
+			userIDs: map[uint]struct{}{targetUserID: {}},
+			payload: response,
+		}
+		return nil
+	}
+
 	if envelope.Event != wsSendMessageEvent {
 		c.hub.broadcast <- raw
 		return nil
@@ -129,8 +154,12 @@ func (c *Client) handleIncomingMessage(raw []byte) error {
 }
 
 func (c *Client) writeErrorResponse(requestID string, err error) error {
+	return c.writeErrorResponseForEvent(wsSendMessageEvent, requestID, err)
+}
+
+func (c *Client) writeErrorResponseForEvent(event, requestID string, err error) error {
 	response, marshalErr := json.Marshal(wsEnvelope{
-		Event:     wsSendMessageEvent,
+		Event:     event,
 		RequestID: requestID,
 		Code:      1,
 		Message:   err.Error(),
@@ -139,6 +168,72 @@ func (c *Client) writeErrorResponse(requestID string, err error) error {
 		return marshalErr
 	}
 	return c.conn.WriteMessage(websocket.TextMessage, response)
+}
+
+func (h *Hub) handleCallSignal(ctx context.Context, callerUserID uint, envelope wsEnvelope) ([]byte, uint, error) {
+	var signal callSignal
+	if err := json.Unmarshal(envelope.Data, &signal); err != nil {
+		return nil, 0, err
+	}
+	roomID, err := rawMessageToUint(signal.RoomID)
+	if err != nil {
+		return nil, 0, errors.New("roomId is required")
+	}
+	targetUserID, err := rawMessageToUint(signal.ToUserID)
+	if err != nil {
+		return nil, 0, errors.New("toUserId is required")
+	}
+	if callerUserID == 0 || targetUserID == callerUserID {
+		return nil, 0, errors.New("invalid call participants")
+	}
+	if signal.CallID == "" {
+		return nil, 0, errors.New("callId is required")
+	}
+	if signal.MediaType != "audio" && signal.MediaType != "video" {
+		return nil, 0, errors.New("unsupported call media type")
+	}
+	switch signal.Type {
+	case "offer", "answer":
+		if len(signal.SDP) == 0 || string(signal.SDP) == "null" {
+			return nil, 0, errors.New("sdp is required")
+		}
+	case "ice-candidate":
+		if len(signal.ICECandidate) == 0 || string(signal.ICECandidate) == "null" {
+			return nil, 0, errors.New("candidate is required")
+		}
+	case "reject", "hangup", "busy":
+	default:
+		return nil, 0, errors.New("unsupported call signal type")
+	}
+	if h.userRepo == nil {
+		return nil, 0, errors.New("call signaling is unavailable")
+	}
+	membershipRepo, ok := h.userRepo.(repository.RoomMembershipRepository)
+	if !ok {
+		return nil, 0, errors.New("call signaling is unavailable")
+	}
+	allowed, err := membershipRepo.AreUsersInRoom(ctx, roomID, []uint{callerUserID, targetUserID})
+	if err != nil {
+		return nil, 0, err
+	}
+	if !allowed {
+		return nil, 0, errors.New("call participants are not room members")
+	}
+
+	signal.FromUserID = strconv.Itoa(int(callerUserID))
+	signal.RoomID = mustMarshalRawMessage(strconv.Itoa(int(roomID)))
+	signal.ToUserID = mustMarshalRawMessage(strconv.Itoa(int(targetUserID)))
+	payload, err := json.Marshal(signal)
+	if err != nil {
+		return nil, 0, err
+	}
+	response, err := json.Marshal(wsEnvelope{
+		Event:     wsCallSignalEvent,
+		RequestID: envelope.RequestID,
+		Code:      0,
+		Data:      payload,
+	})
+	return response, targetUserID, err
 }
 
 func (h *Hub) handleSendMessage(ctx context.Context, envelope wsEnvelope) ([]byte, error) {

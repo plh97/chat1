@@ -50,12 +50,20 @@ jobs:
             IdentitiesOnly yes
             CheckHostIP no
             StrictHostKeyChecking no
+            ConnectTimeout 30
+            ConnectionAttempts 3
+            ServerAliveInterval 30
+            ServerAliveCountMax 10
+            TCPKeepAlive yes
           EOF
           cat > ansible-ci.cfg <<'EOF'
           [defaults]
           log_path=./ansible.log
+          timeout=60
 
           [ssh_connection]
+          pipelining=true
+          retries=3
           ssh_args = -F ./ssh_config_ci
           EOF
 

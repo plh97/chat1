@@ -36,6 +36,21 @@ func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
 	return m.recorder
 }
 
+// AreUsersInRoom mocks base method.
+func (m *MockUserRepository) AreUsersInRoom(ctx context.Context, roomID uint, userIDs []uint) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AreUsersInRoom", ctx, roomID, userIDs)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// AreUsersInRoom indicates an expected call of AreUsersInRoom.
+func (mr *MockUserRepositoryMockRecorder) AreUsersInRoom(ctx, roomID, userIDs interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AreUsersInRoom", reflect.TypeOf((*MockUserRepository)(nil).AreUsersInRoom), ctx, roomID, userIDs)
+}
+
 // Create mocks base method.
 func (m *MockUserRepository) Create(ctx context.Context, user *model.User) error {
 	m.ctrl.T.Helper()

@@ -5,6 +5,7 @@
   become_method: sudo
   vars:
     go_version: 1.24.5
+    pnpm_version: 10.34.5
   tasks:
     - name: Update apt cache
       apt:
@@ -143,6 +144,6 @@
       changed_when: false
 
     - name: Activate pnpm
-      command: corepack prepare pnpm@10.0.0-alpha.2 --activate
+      command: "corepack prepare pnpm@{{ pnpm_version }} --activate"
       changed_when: false
 ...

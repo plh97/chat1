@@ -89,6 +89,27 @@ func TestUserRepository_GetById(t *testing.T) {
 	assert.Equal(t, user.Email, fetched.Email)
 }
 
+func TestUserRepository_AreUsersInRoom(t *testing.T) {
+	userRepo, db := setupRepositoryWithDB(t)
+	ctx := context.Background()
+	room := &model.Room{Name: "Call Room", ChannelType: model.RoomTypePrivate}
+	assert.NoError(t, db.Create(room).Error)
+	assert.NoError(t, db.Create([]model.RoomMember{
+		{RoomID: room.ID, UserID: 7, Role: model.Member},
+		{RoomID: room.ID, UserID: 9, Role: model.Member},
+	}).Error)
+
+	membershipRepo, ok := userRepo.(repository.RoomMembershipRepository)
+	assert.True(t, ok)
+	allowed, err := membershipRepo.AreUsersInRoom(ctx, room.ID, []uint{7, 9})
+	assert.NoError(t, err)
+	assert.True(t, allowed)
+
+	allowed, err = membershipRepo.AreUsersInRoom(ctx, room.ID, []uint{7, 10})
+	assert.NoError(t, err)
+	assert.False(t, allowed)
+}
+
 func TestUserRepository_GetByID_LoadsPrivateRoomPeer(t *testing.T) {
 	userRepo, db := setupRepositoryWithDB(t)
 	ctx := context.Background()
