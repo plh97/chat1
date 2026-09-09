@@ -1,7 +1,8 @@
 import { HoverCard, Portal } from "@/components/ui/chakra-compat";
 import type { IMessage, IRoom, IUser } from "@/interfaces";
 import { Loader2 } from "lucide-react";
-import { getMessageReaders } from "@/utils";
+import React, { useMemo, useRef, useState } from "react";
+import { getMessageReaders } from "@/utils/messageRead";
 import { loadMessageReaders } from "@/utils/messageReaders";
 
 interface Props {
@@ -70,17 +71,25 @@ export const ReadReceiptHoverCard = ({
 
   return (
     <HoverCard.Root
-      openDelay={200}
-      closeDelay={100}
+      openDelay={100}
+      closeDelay={150}
       positioning={{ placement: "top" }}
       onOpenChange={({ open }) => {
         if (open) loadReaders();
       }}
     >
-      <HoverCard.Trigger asChild>{children}</HoverCard.Trigger>
+      <HoverCard.Trigger asChild>
+        <button
+          type="button"
+          aria-label={`查看已读用户，${readCount}/${recipientCount} 人已读`}
+          className="flex h-7 w-7 items-center justify-center rounded-full outline-none transition hover:bg-slate-700 focus-visible:ring-2 focus-visible:ring-teal-400"
+        >
+          {children}
+        </button>
+      </HoverCard.Trigger>
       <Portal>
         <HoverCard.Positioner>
-          <HoverCard.Content className="w-56 rounded-lg border border-slate-600 bg-slate-800 p-3 text-white shadow-xl">
+          <HoverCard.Content className="z-[120] w-56 rounded-lg border border-slate-600 bg-slate-800 p-3 text-white shadow-xl">
             <HoverCard.Arrow>
               <HoverCard.ArrowTip />
             </HoverCard.Arrow>

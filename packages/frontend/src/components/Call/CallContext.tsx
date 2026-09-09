@@ -74,8 +74,10 @@ export function CallProvider({
   const [error, setError] = useState("");
   const [microphoneEnabled, setMicrophoneEnabled] = useState(true);
   const [cameraEnabled, setCameraEnabled] = useState(true);
+  const [screenSharing, setScreenSharing] = useState(false);
   const sessionRef = useRef<CallSession | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const screenStreamRef = useRef<MediaStream | null>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const pendingOfferRef = useRef<CallSignal | null>(null);
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
@@ -98,6 +100,8 @@ export function CallProvider({
     timeoutRef.current = undefined;
     peerConnectionRef.current?.close();
     peerConnectionRef.current = null;
+    screenStreamRef.current?.getTracks().forEach((track) => track.stop());
+    screenStreamRef.current = null;
     localStreamRef.current?.getTracks().forEach((track) => track.stop());
     localStreamRef.current = null;
     pendingOfferRef.current = null;
@@ -106,6 +110,7 @@ export function CallProvider({
     setRemoteStream(null);
     setMicrophoneEnabled(true);
     setCameraEnabled(true);
+    setScreenSharing(false);
     updateSession(null);
   }, [updateSession]);
 
@@ -422,6 +427,67 @@ export function CallProvider({
     setCameraEnabled(track.enabled);
   };
 
+  const stopScreenShare = useCallback(async () => {
+    const screenStream = screenStreamRef.current;
+    if (!screenStream) return;
+    screenStreamRef.current = null;
+    const screenTrack = screenStream.getVideoTracks()[0];
+    if (screenTrack) screenTrack.onended = null;
+
+    try {
+      const cameraTrack = localStreamRef.current?.getVideoTracks()[0] ?? null;
+      const videoSender = peerConnectionRef.current
+        ?.getSenders()
+        .find((sender) => sender.track?.kind === "video");
+      if (videoSender) await videoSender.replaceTrack(cameraTrack);
+    } catch (screenError) {
+      setError(mediaErrorMessage(screenError));
+    } finally {
+      screenStream.getTracks().forEach((track) => track.stop());
+      setLocalStream(localStreamRef.current);
+      setScreenSharing(false);
+    }
+  }, []);
+
+  const toggleScreenShare = useCallback(async () => {
+    if (screenStreamRef.current) {
+      await stopScreenShare();
+      return;
+    }
+    if (sessionRef.current?.mediaType !== "video") return;
+
+    let displayStream: MediaStream | null = null;
+    try {
+      displayStream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: false,
+      });
+      const displayTrack = displayStream.getVideoTracks()[0];
+      const videoSender = peerConnectionRef.current
+        ?.getSenders()
+        .find((sender) => sender.track?.kind === "video");
+      if (!displayTrack || !videoSender) {
+        throw new Error("当前视频连接无法共享屏幕");
+      }
+      await videoSender.replaceTrack(displayTrack);
+      screenStreamRef.current = displayStream;
+      displayTrack.onended = () => void stopScreenShare();
+      setLocalStream(new MediaStream([displayTrack]));
+      setScreenSharing(true);
+      setError("");
+    } catch (screenError) {
+      displayStream?.getTracks().forEach((track) => track.stop());
+      if (
+        screenError instanceof DOMException &&
+        screenError.name === "NotAllowedError"
+      ) {
+        setError("未授权共享屏幕");
+      } else {
+        setError(mediaErrorMessage(screenError));
+      }
+    }
+  }, [stopScreenShare]);
+
   return (
     <CallContext.Provider value={{ session, startCall }}>
       {children}
@@ -432,11 +498,13 @@ export function CallProvider({
         error={error}
         microphoneEnabled={microphoneEnabled}
         cameraEnabled={cameraEnabled}
+        screenSharing={screenSharing}
         onAccept={acceptCall}
         onReject={rejectCall}
         onHangup={endCall}
         onToggleMicrophone={toggleMicrophone}
         onToggleCamera={toggleCamera}
+        onToggleScreenShare={toggleScreenShare}
         onDismissError={() => setError("")}
       />
     </CallContext.Provider>

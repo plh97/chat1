@@ -25,11 +25,13 @@ const createProps = () => ({
   error: "",
   microphoneEnabled: true,
   cameraEnabled: true,
+  screenSharing: false,
   onAccept: jest.fn(),
   onReject: jest.fn(),
   onHangup: jest.fn(),
   onToggleMicrophone: jest.fn(),
   onToggleCamera: jest.fn(),
+  onToggleScreenShare: jest.fn(),
   onDismissError: jest.fn(),
 });
 
@@ -57,10 +59,12 @@ describe("CallOverlay", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "静音" }));
     fireEvent.click(screen.getByRole("button", { name: "关闭摄像头" }));
+    fireEvent.click(screen.getByRole("button", { name: "共享屏幕" }));
     fireEvent.click(screen.getByRole("button", { name: "挂断通话" }));
 
     expect(props.onToggleMicrophone).toHaveBeenCalledTimes(1);
     expect(props.onToggleCamera).toHaveBeenCalledTimes(1);
+    expect(props.onToggleScreenShare).toHaveBeenCalledTimes(1);
     expect(props.onHangup).toHaveBeenCalledTimes(1);
   });
 });

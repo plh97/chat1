@@ -159,7 +159,7 @@ export const Indicator = ({
       <span className="text-gray-400	opacity-0 group-hover:opacity-100 text-xs">
         {formatTime(message.createdAt)}
       </span>
-      <div className="mt-1 flex h-4 w-4 shrink-0 items-center justify-center">
+      <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center">
         <DeliveryIndicator message={message} isMine={isMine} />
       </div>
     </div>

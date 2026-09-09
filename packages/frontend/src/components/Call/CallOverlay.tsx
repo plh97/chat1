@@ -1,4 +1,16 @@
-import { Mic, MicOff, Phone, PhoneOff, Video, VideoOff, X } from "lucide-react";
+import { Avatar } from "@/components/Avatar";
+import clsx from "clsx";
+import {
+  Mic,
+  MicOff,
+  Phone,
+  PhoneOff,
+  ScreenShare,
+  ScreenShareOff,
+  Video,
+  VideoOff,
+  X,
+} from "lucide-react";
 import React, { useEffect, useRef } from "react";
 import { CallSession } from "./types";
 
@@ -9,11 +21,13 @@ interface CallOverlayProps {
   error: string;
   microphoneEnabled: boolean;
   cameraEnabled: boolean;
+  screenSharing: boolean;
   onAccept: () => void;
   onReject: () => void;
   onHangup: () => void;
   onToggleMicrophone: () => void;
   onToggleCamera: () => void;
+  onToggleScreenShare: () => void;
   onDismissError: () => void;
 }
 
@@ -59,11 +73,13 @@ export function CallOverlay({
   error,
   microphoneEnabled,
   cameraEnabled,
+  screenSharing,
   onAccept,
   onReject,
   onHangup,
   onToggleMicrophone,
   onToggleCamera,
+  onToggleScreenShare,
   onDismissError,
 }: Readonly<CallOverlayProps>) {
   if (!session) {
@@ -168,7 +184,12 @@ export function CallOverlay({
                 <MediaElement
                   stream={localStream}
                   muted
-                  className="absolute bottom-5 right-5 h-36 w-28 rounded-xl border border-white/30 bg-black object-cover shadow-xl sm:h-48 sm:w-36"
+                  className={clsx(
+                    "absolute bottom-5 right-5 rounded-xl border border-white/30 bg-black shadow-xl",
+                    screenSharing
+                      ? "h-28 w-52 object-contain sm:h-40 sm:w-72"
+                      : "h-36 w-28 object-cover sm:h-48 sm:w-36"
+                  )}
                 />
               ) : null}
             </>
@@ -207,24 +228,51 @@ export function CallOverlay({
             )}
           </button>
           {session.mediaType === "video" ? (
-            <button
-              type="button"
-              aria-label={cameraEnabled ? "关闭摄像头" : "打开摄像头"}
-              title={cameraEnabled ? "关闭摄像头" : "打开摄像头"}
-              onClick={onToggleCamera}
-              className={clsx(
-                "flex h-12 w-12 items-center justify-center rounded-full transition",
-                cameraEnabled
-                  ? "bg-slate-700 hover:bg-slate-600"
-                  : "bg-white text-slate-900"
-              )}
-            >
-              {cameraEnabled ? (
-                <Video className="h-5 w-5" />
-              ) : (
-                <VideoOff className="h-5 w-5" />
-              )}
-            </button>
+            <>
+              <button
+                type="button"
+                aria-label={screenSharing ? "停止共享屏幕" : "共享屏幕"}
+                title={screenSharing ? "停止共享屏幕" : "共享屏幕"}
+                onClick={onToggleScreenShare}
+                className={clsx(
+                  "flex h-12 w-12 items-center justify-center rounded-full transition",
+                  screenSharing
+                    ? "bg-cyan-400 text-slate-950 hover:bg-cyan-300"
+                    : "bg-slate-700 hover:bg-slate-600"
+                )}
+              >
+                {screenSharing ? (
+                  <ScreenShareOff className="h-5 w-5" />
+                ) : (
+                  <ScreenShare className="h-5 w-5" />
+                )}
+              </button>
+              <button
+                type="button"
+                aria-label={cameraEnabled ? "关闭摄像头" : "打开摄像头"}
+                title={
+                  screenSharing
+                    ? "共享屏幕时不能切换摄像头"
+                    : cameraEnabled
+                      ? "关闭摄像头"
+                      : "打开摄像头"
+                }
+                disabled={screenSharing}
+                onClick={onToggleCamera}
+                className={clsx(
+                  "flex h-12 w-12 items-center justify-center rounded-full transition disabled:cursor-not-allowed disabled:opacity-40",
+                  cameraEnabled
+                    ? "bg-slate-700 hover:bg-slate-600"
+                    : "bg-white text-slate-900"
+                )}
+              >
+                {cameraEnabled ? (
+                  <Video className="h-5 w-5" />
+                ) : (
+                  <VideoOff className="h-5 w-5" />
+                )}
+              </button>
+            </>
           ) : null}
           <button
             type="button"
@@ -240,5 +288,3 @@ export function CallOverlay({
     </div>
   );
 }
-import { Avatar } from "@/components/Avatar";
-import clsx from "clsx";
