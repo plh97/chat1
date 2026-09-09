@@ -13,6 +13,9 @@ export interface IRoom extends Omit<Room, "member" | "message"> {
   adminTotalCount?: number;
   participantTotalCount?: number;
   hasMoreMessage?: boolean;
+  hasMoreBefore?: boolean;
+  hasMoreAfter?: boolean;
+  messageWindowMode?: boolean;
   // createdAt: Date;
   // updatedAt: Date;
   totalCount: number;

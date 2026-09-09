@@ -7,9 +7,9 @@ import (
 type Message struct {
 	gorm.Model
 	ID            uint   `gorm:"primarykey" json:"id"`
-	Seq           int    `gorm:"column:seq;index" json:"seq"`
+	Seq           int    `gorm:"column:seq;index:idx_messages_channel_seq,priority:2" json:"seq"`
 	ContentType   string `gorm:"column:content_type" json:"content_type"`
-	ChannelId     string `gorm:"column:channel_id;index" json:"channel_id"`
+	ChannelId     string `gorm:"column:channel_id;index:idx_messages_channel_seq,priority:1" json:"channel_id"`
 	TextMessage   string `gorm:"column:text_message;type:json" json:"text_message"`
 	MediaMessage  string `gorm:"column:media_message;type:json" json:"media_message"`
 	ReadMessage   string `gorm:"column:read_message;type:json" json:"read_message"`

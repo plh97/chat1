@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	v1 "backend-go/api/v1"
 
@@ -18,6 +19,8 @@ type RoomService interface {
 	CreateRoom(ctx context.Context, req v1.RoomCreateRequest) (interface{}, error)
 	GetRoomByID(ctx context.Context, id, viewerID uint, memberLimit, memberOffset, adminLimit, adminOffset int) (interface{}, error)
 	GetRoomMessages(ctx context.Context, roomID uint, limit, offset int) (interface{}, error)
+	GetRoomMessagesByCursor(ctx context.Context, roomID uint, direction string, seq, limit int) (interface{}, error)
+	SearchRoomMessages(ctx context.Context, roomID uint, query string, limit, offset int) (interface{}, error)
 	GetRoomUsers(ctx context.Context, roomID, viewerID uint, role string, limit, offset int) (interface{}, error)
 	GetMessageReaders(ctx context.Context, roomID, messageID uint, limit, offset int) (interface{}, error)
 	GetRoomMessageWindow(ctx context.Context, roomID, messageID uint, limit int) (interface{}, error)
@@ -106,10 +109,17 @@ type roomMessagePageResponse struct {
 }
 
 type roomMessageWindowResponse struct {
-	Message     []*roomMessageResponse `json:"message"`
-	TargetID    uint                   `json:"targetId"`
-	TargetIndex int64                  `json:"targetIndex"`
-	TotalCount  int64                  `json:"totalCount"`
+	Message       []*roomMessageResponse `json:"message"`
+	TargetID      uint                   `json:"targetId"`
+	TargetIndex   int64                  `json:"targetIndex"`
+	TotalCount    int64                  `json:"totalCount"`
+	HasMoreBefore bool                   `json:"hasMoreBefore"`
+	HasMoreAfter  bool                   `json:"hasMoreAfter"`
+}
+
+type roomMessageSearchResponse struct {
+	Message    []*roomMessageResponse `json:"message"`
+	TotalCount int64                  `json:"totalCount"`
 }
 
 func uniqueUintIDs(ids []uint, excluded ...uint) []uint {
@@ -406,6 +416,108 @@ func (s *roomService) GetRoomMessages(ctx context.Context, roomID uint, limit, o
 	}, nil
 }
 
+func (s *roomService) GetRoomMessagesByCursor(ctx context.Context, roomID uint, direction string, seq, limit int) (interface{}, error) {
+	db := s.tm.(*repository.Repository).DB(ctx)
+	room, err := loadRoomForMessages(db, roomID)
+	if err != nil {
+		return nil, err
+	}
+	if limit <= 0 {
+		limit = 50
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	if seq <= 0 {
+		return nil, errors.New("invalid message cursor")
+	}
+
+	channelID := strconv.Itoa(int(room.ID))
+	query := db.Where("channel_id = ?", channelID)
+	if direction == "before" {
+		query = query.Where("seq < ?", seq).Order("seq DESC")
+	} else if direction == "after" {
+		query = query.Where("seq > ?", seq).Order("seq ASC")
+	} else {
+		return nil, errors.New("invalid message direction")
+	}
+
+	var messages []model.Message
+	if err := query.Limit(limit + 1).Find(&messages).Error; err != nil {
+		return nil, err
+	}
+	hasMore := len(messages) > limit
+	if hasMore {
+		messages = messages[:limit]
+	}
+	if direction == "before" {
+		for left, right := 0, len(messages)-1; left < right; left, right = left+1, right-1 {
+			messages[left], messages[right] = messages[right], messages[left]
+		}
+	}
+
+	responseMessages, err := buildRoomMessageResponses(db, room, messages)
+	if err != nil {
+		return nil, err
+	}
+	return &roomMessagePageResponse{Message: responseMessages, HasMore: hasMore}, nil
+}
+
+func (s *roomService) SearchRoomMessages(ctx context.Context, roomID uint, searchQuery string, limit, offset int) (interface{}, error) {
+	db := s.tm.(*repository.Repository).DB(ctx)
+	room, err := loadRoomForMessages(db, roomID)
+	if err != nil {
+		return nil, err
+	}
+	searchQuery = strings.TrimSpace(searchQuery)
+	if searchQuery == "" {
+		return &roomMessageSearchResponse{Message: []*roomMessageResponse{}, TotalCount: 0}, nil
+	}
+	if limit <= 0 {
+		limit = 20
+	}
+	if limit > 50 {
+		limit = 50
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	channelID := strconv.Itoa(int(room.ID))
+	baseQuery := db.Model(&model.Message{}).
+		Where("channel_id = ? AND content_type = ? AND is_recalled = ?", channelID, "TEXT_MESSAGE", false).
+		Where("text_message LIKE ?", "%"+searchQuery+"%")
+	var totalCount int64
+	if err := baseQuery.Count(&totalCount).Error; err != nil {
+		return nil, err
+	}
+	var messages []model.Message
+	if err := baseQuery.Order("seq DESC").Offset(offset).Limit(limit).Find(&messages).Error; err != nil {
+		return nil, err
+	}
+	responseMessages, err := buildRoomMessageResponses(db, room, messages)
+	if err != nil {
+		return nil, err
+	}
+	return &roomMessageSearchResponse{Message: responseMessages, TotalCount: totalCount}, nil
+}
+
+func buildRoomMessageResponses(db *gorm.DB, room *model.Room, messages []model.Message) ([]*roomMessageResponse, error) {
+	replyMessagesByID, err := loadReplyMessages(db, messages)
+	if err != nil {
+		return nil, err
+	}
+	userMap, err := buildMessageUserMap(db, room, messages, replyMessagesByID)
+	if err != nil {
+		return nil, err
+	}
+	responseMessages := make([]*roomMessageResponse, 0, len(messages))
+	for _, message := range messages {
+		responseMessages = append(responseMessages, buildRoomMessageResponse(message, userMap[message.UserId], userMap, replyMessagesByID))
+	}
+	return responseMessages, nil
+}
+
 func (s *roomService) GetRoomUsers(ctx context.Context, roomID, viewerID uint, role string, limit, offset int) (interface{}, error) {
 	db := s.tm.(*repository.Repository).DB(ctx)
 	if role != model.Admin {
@@ -452,46 +564,36 @@ func (s *roomService) GetRoomMessageWindow(ctx context.Context, roomID, messageI
 		return nil, err
 	}
 
-	start := int(targetIndex) - limit/2
-	if start < 0 {
-		start = 0
-	}
-	if totalCount > int64(limit) && int64(start+limit) > totalCount {
-		start = int(totalCount) - limit
-		if start < 0 {
-			start = 0
-		}
-	}
-
-	var messages []model.Message
-	if err := db.Where("channel_id = ?", channelID).
-		Order("seq ASC").
-		Limit(limit).
-		Offset(start).
-		Find(&messages).Error; err != nil {
+	beforeLimit := limit / 2
+	var beforeMessages []model.Message
+	if err := db.Where("channel_id = ? AND seq < ?", channelID, targetMessage.Seq).
+		Order("seq DESC").Limit(beforeLimit).Find(&beforeMessages).Error; err != nil {
 		return nil, err
 	}
-
-	replyMessagesByID, err := loadReplyMessages(db, messages)
+	for left, right := 0, len(beforeMessages)-1; left < right; left, right = left+1, right-1 {
+		beforeMessages[left], beforeMessages[right] = beforeMessages[right], beforeMessages[left]
+	}
+	afterLimit := limit - len(beforeMessages)
+	var afterMessages []model.Message
+	if err := db.Where("channel_id = ? AND seq >= ?", channelID, targetMessage.Seq).
+		Order("seq ASC").Limit(afterLimit).Find(&afterMessages).Error; err != nil {
+		return nil, err
+	}
+	messages := append(beforeMessages, afterMessages...)
+	responseMessages, err := buildRoomMessageResponses(db, room, messages)
 	if err != nil {
 		return nil, err
 	}
-	userMap, err := buildMessageUserMap(db, room, messages, replyMessagesByID)
-	if err != nil {
-		return nil, err
-	}
-	responseMessages := make([]*roomMessageResponse, 0, len(messages))
-	for i := range messages {
-		message := messages[i]
-		user := userMap[message.UserId]
-		responseMessages = append(responseMessages, buildRoomMessageResponse(message, user, userMap, replyMessagesByID))
-	}
+	hasMoreBefore := targetIndex > int64(len(beforeMessages))
+	hasMoreAfter := totalCount > targetIndex+int64(len(afterMessages))
 
 	return &roomMessageWindowResponse{
-		Message:     responseMessages,
-		TargetID:    targetMessage.ID,
-		TargetIndex: targetIndex,
-		TotalCount:  totalCount,
+		Message:       responseMessages,
+		TargetID:      targetMessage.ID,
+		TargetIndex:   targetIndex,
+		TotalCount:    totalCount,
+		HasMoreBefore: hasMoreBefore,
+		HasMoreAfter:  hasMoreAfter,
 	}, nil
 }
 

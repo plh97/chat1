@@ -36,6 +36,20 @@ export interface MessageWindowResponse {
   targetId: string;
   targetIndex: number;
   totalCount: number;
+  hasMoreBefore: boolean;
+  hasMoreAfter: boolean;
+}
+
+export interface MessageSearchResponse {
+  message: IMessage[];
+  totalCount: number;
+}
+
+export interface MessageCursorRequest {
+  id: string;
+  seq: number;
+  direction: "before" | "after";
+  pageSize?: number;
 }
 
 export interface MessagePageResponse {

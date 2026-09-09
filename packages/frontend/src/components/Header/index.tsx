@@ -1,6 +1,7 @@
 import { Config } from "./config";
 import { Loading } from "./Loading";
 import { getRoomDisplay } from "@/utils/roomDisplay";
+import { MessageSearch } from "@/components/Message/Search";
 
 export function Content() {
   const room = useAppSelector((state) => state.room.data);
@@ -33,7 +34,10 @@ export function Header({ className }: { readonly className?: string }) {
       <div className="flex flex-1 items-center">
         <Content />
       </div>
-      <Config />
+      <div className="flex items-center gap-1">
+        <MessageSearch />
+        <Config />
+      </div>
     </div>
   );
 }

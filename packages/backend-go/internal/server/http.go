@@ -83,6 +83,8 @@ func NewHTTPServer(
 			strictAuthRouter.POST("/room", roomHandler.AddRoom)
 			strictAuthRouter.GET("/room", roomHandler.GetRoom)
 			strictAuthRouter.GET("/room/messages", roomHandler.GetRoomMessages)
+			strictAuthRouter.GET("/room/messages/cursor", roomHandler.GetRoomMessagesByCursor)
+			strictAuthRouter.GET("/room/messages/search", roomHandler.SearchRoomMessages)
 			strictAuthRouter.GET("/room/member", roomHandler.GetRoomMembers)
 			strictAuthRouter.GET("/room/message/readers", roomHandler.GetMessageReaders)
 			strictAuthRouter.PATCH("/room", roomHandler.UpdateRoom)

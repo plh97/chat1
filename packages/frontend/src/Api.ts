@@ -7,6 +7,8 @@ import {
   IUser,
   MessageWindowRequest,
   MessageWindowResponse,
+  MessageSearchResponse,
+  MessageCursorRequest,
   MessageRequest,
 } from "@/interfaces";
 import { getToken } from "./utils";
@@ -352,6 +354,33 @@ const Api = {
   getRoomMessages: (params: MessageRequest) =>
     request<MessagePageResponse>({
       url: "/room/messages",
+      method: "get",
+      params,
+    }).then((data) => ({
+      ...data,
+      message: Array.isArray(data.message)
+        ? data.message.map(normalizeMessage)
+        : data.message,
+    })),
+  getRoomMessagesByCursor: (params: MessageCursorRequest) =>
+    request<MessagePageResponse>({
+      url: "/room/messages/cursor",
+      method: "get",
+      params,
+    }).then((data) => ({
+      ...data,
+      message: Array.isArray(data.message)
+        ? data.message.map(normalizeMessage)
+        : data.message,
+    })),
+  searchRoomMessages: (params: {
+    id: string;
+    q: string;
+    pageSize?: number;
+    start?: number;
+  }) =>
+    request<MessageSearchResponse>({
+      url: "/room/messages/search",
       method: "get",
       params,
     }).then((data) => ({

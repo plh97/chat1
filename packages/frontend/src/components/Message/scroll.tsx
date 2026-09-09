@@ -84,9 +84,8 @@ export function Scroll({
     });
   }, [id]);
   const { loadingMessage } = useAppSelector((state) => state.room);
-  const { message, hasMoreMessage } = useAppSelector(
-    (state) => state.room.data
-  );
+  const { message, hasMoreMessage, hasMoreBefore, hasMoreAfter } =
+    useAppSelector((state) => state.room.data);
 
   useLayoutEffect(() => {
     if (!room?.id || !message.length) {
@@ -152,7 +151,7 @@ export function Scroll({
           initialScrolledRoomIdRef.current === room.id &&
           !loadingMessage &&
           message.length &&
-          hasMoreMessage
+          ((hasMoreBefore ?? hasMoreMessage) || hasMoreAfter)
         ) {
           handleScroll(offset);
         }

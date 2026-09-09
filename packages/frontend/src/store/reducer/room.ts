@@ -3,7 +3,14 @@ import Api from "@/Api";
 import { AppThunk } from "@/hooks/app";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { IMessage, MessageRequest, IRoom } from "@/interfaces";
+import {
+  IMessage,
+  MessageCursorRequest,
+  MessageRequest,
+  MessageWindowRequest,
+  MessageWindowResponse,
+  IRoom,
+} from "@/interfaces";
 import { fetchUserInfoThunk, shiftRoom } from "./user";
 import { IReadMessage } from "@/core";
 import { mergeReadSeqForward } from "./readSeq";
@@ -68,6 +75,9 @@ export const getRoomInfoThunk = createAsyncThunk<void, string>(
       initialMessage({
         message: messagePage.message,
         hasMoreMessage: messagePage.hasMore,
+        hasMoreBefore: messagePage.hasMore,
+        hasMoreAfter: false,
+        messageWindowMode: false,
       })
     );
     // 加载结束
@@ -95,6 +105,27 @@ export const addRoomThunk = createAsyncThunk<IRoom, Partial<IRoom>>(
     return res;
   }
 );
+
+export const loadRoomCursorMessagesThunk = createAsyncThunk<
+  { message: IMessage[]; hasMore: boolean },
+  MessageCursorRequest
+>(`loadRoomCursorMessagesThunk`, async (data) => {
+  return Api.getRoomMessagesByCursor(data);
+});
+
+export const openMessageWindowThunk = createAsyncThunk<
+  MessageWindowResponse,
+  MessageWindowRequest
+>(`openMessageWindowThunk`, async (data, { dispatch }) => {
+  dispatch(changeLoading(true));
+  try {
+    const windowData = await Api.getRoomMessageWindow(data);
+    dispatch(openMessageWindow(windowData));
+    return windowData;
+  } finally {
+    dispatch(changeLoading(false));
+  }
+});
 
 export const updateRoomThunk =
   (data: Partial<Room>): AppThunk =>
@@ -136,8 +167,20 @@ export const roomSlice = createSlice({
     loadMoreMessage(state, action: PayloadAction<IMessage[]>) {
       state.data.message = [...action.payload, ...state.data.message];
     },
+    appendMoreMessage(state, action: PayloadAction<IMessage[]>) {
+      const existing = new Set(
+        state.data.message.map((item) => String(item.id))
+      );
+      state.data.message.push(
+        ...action.payload.filter((item) => !existing.has(String(item.id)))
+      );
+    },
     setHasMoreMessage(state, action: PayloadAction<boolean>) {
       state.data.hasMoreMessage = action.payload;
+      state.data.hasMoreBefore = action.payload;
+    },
+    setHasMoreAfter(state, action: PayloadAction<boolean>) {
+      state.data.hasMoreAfter = action.payload;
     },
     mergeMessages(state, action: PayloadAction<IMessage[]>) {
       const merged = [...state.data.message, ...action.payload];
@@ -153,6 +196,9 @@ export const roomSlice = createSlice({
       state.id = action.payload;
     },
     addMessage(state, action: PayloadAction<IMessage>) {
+      if (state.data.messageWindowMode && state.data.hasMoreAfter) {
+        return state;
+      }
       state.data.message.push(action.payload);
       return state;
     },
@@ -213,6 +259,14 @@ export const roomSlice = createSlice({
     initialMessage(state, action: PayloadAction<Partial<IRoom>>) {
       state.data = { ...state.data, ...action.payload };
     },
+    openMessageWindow(state, action: PayloadAction<MessageWindowResponse>) {
+      state.data.message = action.payload.message;
+      state.data.totalCount = action.payload.totalCount;
+      state.data.hasMoreMessage = action.payload.hasMoreBefore;
+      state.data.hasMoreBefore = action.payload.hasMoreBefore;
+      state.data.hasMoreAfter = action.payload.hasMoreAfter;
+      state.data.messageWindowMode = true;
+    },
     // sync method, just modify state
     markReadMessage(
       state,
@@ -253,10 +307,13 @@ export const {
   addMessage,
   replaceMessage,
   loadMoreMessage,
+  appendMoreMessage,
   setHasMoreMessage,
+  setHasMoreAfter,
   mergeMessages,
   appendRoomUsers,
   initialMessage,
+  openMessageWindow,
   changeLoading,
   changeRoomId,
   markReadMessage,

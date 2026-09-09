@@ -197,6 +197,51 @@ func (h *RoomHandler) GetRoomMessages(ctx *gin.Context) {
 	v1.HandleSuccess(ctx, roomMessages)
 }
 
+// GetRoomMessagesByCursor loads messages before or after a sequence cursor.
+func (h *RoomHandler) GetRoomMessagesByCursor(ctx *gin.Context) {
+	roomID, roomErr := strconv.ParseUint(ctx.Query("id"), 10, 64)
+	seq, seqErr := strconv.Atoi(ctx.Query("seq"))
+	direction := ctx.Query("direction")
+	if roomErr != nil || seqErr != nil || roomID == 0 || seq <= 0 || (direction != "before" && direction != "after") {
+		v1.HandleError(ctx, 400, v1.ErrBadRequest, "invalid id, seq, or direction")
+		return
+	}
+	pageSize := 50
+	if parsed, err := strconv.Atoi(ctx.Query("pageSize")); err == nil && parsed > 0 {
+		pageSize = parsed
+	}
+	messages, err := h.roomService.GetRoomMessagesByCursor(ctx, uint(roomID), direction, seq, pageSize)
+	if err != nil {
+		v1.HandleError(ctx, 500, err, nil)
+		return
+	}
+	v1.HandleSuccess(ctx, messages)
+}
+
+// SearchRoomMessages searches text messages in a room.
+func (h *RoomHandler) SearchRoomMessages(ctx *gin.Context) {
+	roomID, err := strconv.ParseUint(ctx.Query("id"), 10, 64)
+	query := ctx.Query("q")
+	if err != nil || roomID == 0 || query == "" {
+		v1.HandleError(ctx, 400, v1.ErrBadRequest, "invalid id or query")
+		return
+	}
+	pageSize := 20
+	if parsed, parseErr := strconv.Atoi(ctx.Query("pageSize")); parseErr == nil && parsed > 0 {
+		pageSize = parsed
+	}
+	offset := 0
+	if parsed, parseErr := strconv.Atoi(ctx.Query("start")); parseErr == nil && parsed >= 0 {
+		offset = parsed
+	}
+	result, err := h.roomService.SearchRoomMessages(ctx, uint(roomID), query, pageSize, offset)
+	if err != nil {
+		v1.HandleError(ctx, 500, err, nil)
+		return
+	}
+	v1.HandleSuccess(ctx, result)
+}
+
 // GetRoomMembers godoc
 // @Summary 获取房间用户分页
 // @Schemes

@@ -3,7 +3,7 @@ import Api from "@/Api";
 import { MessageTemplate } from "@/messages";
 import { IMessage } from "@/interfaces/IMessage";
 import { Indicator } from "./Indicator";
-import { scrollToMessageIndex, useMsgWatch } from "./hook";
+import { focusMessage, useMsgWatch } from "./hook";
 import { mergeMessages, updateSelectedMessage } from "@/store/reducer/room";
 import { WithProfile } from "../WithProfile";
 import { useContextMenu } from "@/hooks";
@@ -62,30 +62,10 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
     return <>{Component}</>;
   }
 
-  const navigateToMessage = (messageId: string, index: number) => {
-    window.requestAnimationFrame(() => {
-      scrollToMessageIndex(index);
-      window.requestAnimationFrame(() => {
-        const target = document.querySelector(
-          `[data-id="${messageId}"] [data-msg]`
-        );
-        target?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-          inline: "center",
-        });
-        target?.classList.add("brightness-200");
-        window.setTimeout(() => {
-          target?.classList.remove("brightness-200");
-        }, 1000);
-      });
-    });
-  };
-
   const handleNavigateReply = async (msg: IMessage) => {
     const targetIndex = room.message.findIndex((item) => item.id === msg.id);
     if (targetIndex >= 0) {
-      navigateToMessage(String(msg.id), targetIndex);
+      focusMessage(String(msg.id), targetIndex);
       return;
     }
 
@@ -109,7 +89,7 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
           (item) => item.id === msg.id
         );
         if (loadedTargetIndex >= 0) {
-          navigateToMessage(String(msg.id), loadedTargetIndex);
+          focusMessage(String(msg.id), loadedTargetIndex);
           return;
         }
       } catch (error) {

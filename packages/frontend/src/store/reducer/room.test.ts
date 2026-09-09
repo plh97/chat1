@@ -10,8 +10,11 @@ jest.mock("@/Api", () => ({
 
 import {
   changeRoomId,
+  appendMoreMessage,
   initialMessage,
+  loadMoreMessage,
   markReadMessage,
+  openMessageWindow,
   roomReducer,
   updateRoomThunk,
 } from "./room";
@@ -68,5 +71,40 @@ describe("room read sequence", () => {
     );
 
     expect(state.data.readSeq["2"]).toBe(17);
+  });
+});
+
+describe("message search window", () => {
+  it("opens a middle window and extends it in both directions", () => {
+    let state = roomReducer(
+      undefined,
+      openMessageWindow({
+        message: [
+          { id: "100", seq: 100 },
+          { id: "101", seq: 101 },
+        ] as IMessage[],
+        targetId: "101",
+        targetIndex: 100,
+        totalCount: 20_000,
+        hasMoreBefore: true,
+        hasMoreAfter: true,
+      })
+    );
+
+    state = roomReducer(
+      state,
+      loadMoreMessage([{ id: "99", seq: 99 }] as IMessage[])
+    );
+    state = roomReducer(
+      state,
+      appendMoreMessage([{ id: "102", seq: 102 }] as IMessage[])
+    );
+
+    expect(state.data.message.map((message) => message.seq)).toEqual([
+      99, 100, 101, 102,
+    ]);
+    expect(state.data.messageWindowMode).toBe(true);
+    expect(state.data.hasMoreBefore).toBe(true);
+    expect(state.data.hasMoreAfter).toBe(true);
   });
 });
