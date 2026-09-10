@@ -39,10 +39,10 @@ const FileButton = ({ onChange }: any) => {
         variant="solid"
         colorScheme="teal"
         aria-label="Change Avatar"
-        fontSize="15px"
-        width="6"
-        height="6"
-        minW="6"
+        fontSize="12px"
+        width="5"
+        height="5"
+        minW="5"
         icon={<FaImage />}
         onClick={() => {
           fileRef.current?.click();
@@ -91,34 +91,32 @@ export const AvatarEditButton = ({ onChange }: any) => {
           visibility: isStreaming ? "visible" : "hidden",
         }}
       />
-      <span className="absolute bottom-[3px] left-[50%] transform translate-y-1/2 -translate-x-1/2 inline-flex">
+      <span className="absolute bottom-1 left-1/2 inline-flex -translate-x-1/2 translate-y-1/2 gap-0.5">
         <FileButton onChange={onChange} />
         {isLaptop &&
           (!isStreaming ? (
             <IconButton
-              className="ml-1"
               isRound
               variant="solid"
               colorScheme="teal"
               aria-label="Change Avatar"
-              fontSize="15px"
-              width="6"
-              height="6"
-              minW="6"
+              fontSize="12px"
+              width="5"
+              height="5"
+              minW="5"
               icon={<FaCamera />}
               onClick={startCamera}
             />
           ) : (
             <IconButton
-              className="ml-1"
               isRound
               variant="solid"
               colorScheme="teal"
               aria-label="Change Avatar"
-              fontSize="15px"
-              width="6"
-              height="6"
-              minW="6"
+              fontSize="12px"
+              width="5"
+              height="5"
+              minW="5"
               icon={<FaPauseCircle />}
               onClick={handleStopCamera}
             />

@@ -137,41 +137,47 @@ export function AddAdmin() {
         <Portal>
           <Dialog.Backdrop />
           <Dialog.Positioner>
-            <Dialog.Content>
-              <Dialog.Header>Set Admin</Dialog.Header>
+            <Dialog.Content className="flex h-[32rem] max-h-[calc(100dvh-2rem)] flex-col overflow-hidden sm:h-[27rem]">
+              <Dialog.Header className="shrink-0">Set Admin</Dialog.Header>
               <Dialog.CloseTrigger />
-              <Dialog.Body>
+              <Dialog.Body className="min-h-0 flex-1 overflow-y-auto">
                 <Form onSubmit={handleAddRoomAdmin}>
                   <Field.Root id="name">
                     <Field.Label>Name: </Field.Label>
-                    {isLoading ? (
-                      <Spinner />
-                    ) : pageUsers.length ? (
-                      <CheckboxGroup
-                        colorPalette="green"
-                        value={selectedUserIds}
-                        onValueChange={(ids) =>
-                          setSelectedUserIds(ids.map((id) => String(id)))
-                        }
-                      >
-                        <SimpleGrid columns={{ base: 1, sm: 2 }} gap={4}>
-                          {pageUsers.map((user) => (
-                            <Checkbox.Root key={user.id} value={user.id}>
-                              <Checkbox.HiddenInput />
-                              <Checkbox.Control>
-                                <Checkbox.Indicator />
-                              </Checkbox.Control>
-                              <Checkbox.Label>{user.userName}</Checkbox.Label>
-                            </Checkbox.Root>
-                          ))}
-                        </SimpleGrid>
-                      </CheckboxGroup>
-                    ) : (
-                      <Text color="gray.500">No members available</Text>
-                    )}
+                    <div className="h-56 sm:h-32">
+                      {isLoading ? (
+                        <div className="flex h-full items-center justify-center">
+                          <Spinner />
+                        </div>
+                      ) : pageUsers.length ? (
+                        <CheckboxGroup
+                          colorPalette="green"
+                          value={selectedUserIds}
+                          onValueChange={(ids) =>
+                            setSelectedUserIds(ids.map((id) => String(id)))
+                          }
+                        >
+                          <SimpleGrid columns={{ base: 1, sm: 2 }} gap={4}>
+                            {pageUsers.map((user) => (
+                              <Checkbox.Root key={user.id} value={user.id}>
+                                <Checkbox.HiddenInput />
+                                <Checkbox.Control>
+                                  <Checkbox.Indicator />
+                                </Checkbox.Control>
+                                <Checkbox.Label>{user.userName}</Checkbox.Label>
+                              </Checkbox.Root>
+                            ))}
+                          </SimpleGrid>
+                        </CheckboxGroup>
+                      ) : (
+                        <div className="flex h-full items-center justify-center">
+                          <Text color="gray.500">No members available</Text>
+                        </div>
+                      )}
+                    </div>
                   </Field.Root>
                 </Form>
-                <div className="mt-6 flex justify-center">
+                <div className="mt-6 flex h-10 shrink-0 items-center justify-center">
                   <AppPagination
                     count={totalCount}
                     page={page}
@@ -181,7 +187,7 @@ export function AddAdmin() {
                   />
                 </div>
               </Dialog.Body>
-              <Dialog.Footer>
+              <Dialog.Footer className="shrink-0">
                 <Text mr="auto" color="gray.500">
                   {selectedUserIds.length} selected
                 </Text>

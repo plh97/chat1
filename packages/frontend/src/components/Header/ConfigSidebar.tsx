@@ -5,6 +5,7 @@ import { AddMember } from "./AddMemberDialog";
 import { AddAdmin } from "./AddAdminDialog";
 import { setLocalUserInfo } from "@/store/reducer/user";
 import { uploadFileWithPresignedUrl } from "@/utils/uploadFile";
+import { WithProfile } from "@/components/WithProfile";
 
 export const ConfigSidebar = ({
   isOpen,
@@ -106,7 +107,9 @@ export const ConfigSidebar = ({
                   <div className="flex flex-row gap-2 items-center flex-wrap">
                     <div className="flex flex-wrap gap-2">
                       {room.admin.map((m) => (
-                        <Avatar key={m.id} src={m.image} name={m.userName} />
+                        <WithProfile key={m.id} profile={m}>
+                          <Avatar src={m.image} name={m.userName} />
+                        </WithProfile>
                       ))}
                     </div>
                     <AddAdmin />
@@ -117,7 +120,9 @@ export const ConfigSidebar = ({
                   <div className="flex flex-row gap-2 items-center flex-wrap">
                     <div className="flex flex-wrap gap-2">
                       {room.member.map((m) => (
-                        <Avatar key={m.id} src={m.image} name={m.userName} />
+                        <WithProfile key={m.id} profile={m}>
+                          <Avatar src={m.image} name={m.userName} />
+                        </WithProfile>
                       ))}
                     </div>
                     <AddMember />
