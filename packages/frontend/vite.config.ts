@@ -39,7 +39,13 @@ export default defineConfig({
   plugins: [
     viteCompression(),
     VitePWA({
+      registerType: "autoUpdate",
       includeAssets: ["icon.svg"],
+      workbox: {
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+      },
       manifest: {
         name: "Chat room",
         short_name: "Chat",
