@@ -44,6 +44,9 @@ export default defineConfig({
       workbox: {
         cleanupOutdatedCaches: true,
         clientsClaim: true,
+        // Chat requires a live connection, so page navigations should always
+        // fetch the current HTML instead of using a precached SPA shell.
+        navigateFallback: null,
         skipWaiting: true,
       },
       manifest: {
