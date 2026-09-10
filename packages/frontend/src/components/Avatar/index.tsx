@@ -2,7 +2,10 @@ import * as AvatarComponent from "@radix-ui/react-avatar";
 import { FaCamera, FaImage, FaPauseCircle } from "react-icons/fa";
 import { Loader2 } from "lucide-react";
 import { captureVideo } from "@/utils/capture";
+import { generateAvatarColor } from "./colors";
 import "./styles.css";
+
+export { generateAvatarColor } from "./colors";
 
 interface IProps extends React.PropsWithChildren {
   className?: string;
@@ -14,11 +17,6 @@ interface IProps extends React.PropsWithChildren {
   showBorder?: boolean;
   marginEnd?: string;
 }
-
-const generateColor = (name: string) => {
-  const hash = name.charCodeAt(0) / 200;
-  return "#" + Math.floor(hash * 0xffffff).toString(16);
-};
 
 function dataURLtoFile(base64: string, filename: string) {
   const arr = base64.split(",");
@@ -160,8 +158,7 @@ export const Avatar = ({
       <AvatarComponent.Root
         {...args}
         style={{
-          // backgroundColor: 'red',
-          backgroundColor: generateColor(name),
+          backgroundColor: generateAvatarColor(name),
           marginInlineEnd: marginEnd,
         }}
         className={clsx("AvatarRoot", size, {

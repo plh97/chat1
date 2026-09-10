@@ -71,12 +71,14 @@ export const Profile = ({
     dispatch(uploadImageThunk({ file, updateUserImage: true }));
   };
   if (!profile) return null;
+  const fieldClassName =
+    "border-slate-600 bg-slate-900/70 text-slate-100 placeholder:text-slate-500 read-only:cursor-default read-only:text-slate-200";
   return (
     <Form
-      className={clsx("flex flex-col gap-2", className)}
+      className={clsx("flex min-w-0 flex-col gap-3", className)}
       onSubmit={handleSubmit}
     >
-      <FormControl className="relative flex justify-center mb-5">
+      <FormControl className="relative mb-4 flex shrink-0 justify-center">
         <Avatar
           size="lg"
           name={profile.userName}
@@ -87,17 +89,34 @@ export const Profile = ({
       </FormControl>
       {config.map(({ label, value, name }) => {
         return (
-          <FormControl className="flex justify-center" id={name} key={name}>
-            <FormLabel>{label}</FormLabel>
-            <Input
-              autoComplete="off"
-              size="sm"
-              defaultValue={value}
-              disabled={!edit}
-              // value={value}
-              name={name}
-              placeholder={`User's ${name}`}
-            />
+          <FormControl className="min-w-0" id={name} key={name}>
+            <FormLabel className="text-sm font-medium text-slate-200">
+              {label}
+            </FormLabel>
+            {name === "bio" ? (
+              <Textarea
+                autoComplete="off"
+                className={clsx(
+                  fieldClassName,
+                  "min-h-20 resize-y whitespace-pre-wrap break-words"
+                )}
+                defaultValue={value}
+                name={name}
+                placeholder={`User's ${name}`}
+                readOnly={!edit}
+                rows={3}
+              />
+            ) : (
+              <Input
+                autoComplete="off"
+                className={fieldClassName}
+                defaultValue={value}
+                name={name}
+                placeholder={`User's ${name}`}
+                readOnly={!edit}
+                size="sm"
+              />
+            )}
           </FormControl>
         );
       })}
