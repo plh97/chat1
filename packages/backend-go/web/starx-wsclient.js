@@ -479,14 +479,27 @@
     handlers[Package.TYPE_DATA] = onData;
     handlers[Package.TYPE_KICK] = onKick;
 
+    var dispatchHandler = function(type, body) {
+        if(!Object.prototype.hasOwnProperty.call(handlers, type)) {
+            return;
+        }
+
+        var handler = handlers[type];
+        if(typeof handler !== 'function') {
+            return;
+        }
+
+        handler(body);
+    };
+
     var processPackage = function(msgs) {
         if(Array.isArray(msgs)) {
             for(var i=0; i<msgs.length; i++) {
                 var msg = msgs[i];
-                handlers[msg.type](msg.body);
+                dispatchHandler(msg.type, msg.body);
             }
         } else {
-            handlers[msgs.type](msgs.body);
+            dispatchHandler(msgs.type, msgs.body);
         }
     };
 
