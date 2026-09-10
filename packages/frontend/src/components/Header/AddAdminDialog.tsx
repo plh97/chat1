@@ -23,7 +23,7 @@ import { AppPagination } from "@/components/ui/Pagination";
 
 const PAGE_SIZE = 6;
 
-export function AddAdmin() {
+export function AddAdmin({ onUpdated }: { onUpdated?: () => void } = {}) {
   const { open, onOpen, onClose } = useDisclosure();
   const roomInfo = useAppSelector((state) => state.room.data);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
@@ -82,6 +82,7 @@ export function AddAdmin() {
   };
 
   const handleAddRoomAdmin = async () => {
+    if (isSubmitting) return;
     if (!selectedUserIds.length) {
       toast({
         title: "Warning.",
@@ -114,7 +115,15 @@ export function AddAdmin() {
         position: "top",
         duration: 1500,
       });
+      onUpdated?.();
       handleClose();
+    } catch {
+      toast({
+        title: "Unable to update admins",
+        status: "error",
+        position: "top",
+        duration: 2000,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -122,8 +131,8 @@ export function AddAdmin() {
 
   return (
     <>
-      <IconButton size="lg" onClick={handleOpen} aria-label="add admin">
-        <FaPlus className="text-2xl" />
+      <IconButton size="sm" onClick={handleOpen} aria-label="add admin">
+        <FaPlus className="text-base" />
       </IconButton>
       <Dialog.Root
         open={open}

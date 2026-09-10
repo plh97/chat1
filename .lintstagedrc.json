@@ -1,7 +1,13 @@
 {
-  "**/*.{json,md,html}": ["pnpm run lint:prettier"],
-  "**/frontend/**/*.{js,ts,tsx}": ["pnpm run lint:prettier"],
-  "**/backend/**/*.{js,ts,tsx}": ["pnpm run lint:prettier"],
-  "**/*.css": "stylelint",
-  "**/*.scss": ["pnpm run lint:prettier", "stylelint --customSyntax=post-scss"]
+  "**/*.{json,md,html}": ["pnpm --filter frontend exec prettier --write"],
+  "packages/frontend/**/*.{js,ts,tsx}": [
+    "pnpm --filter frontend exec prettier --write",
+    "pnpm --filter frontend exec eslint --fix"
+  ],
+  "packages/backend-go/**/*.go": ["gofmt -w"],
+  "**/*.css": "stylelint --fix",
+  "**/*.scss": [
+    "pnpm --filter frontend exec prettier --write",
+    "stylelint --fix --customSyntax=post-scss"
+  ]
 }

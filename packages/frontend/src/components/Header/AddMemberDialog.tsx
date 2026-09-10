@@ -8,14 +8,24 @@ import {
 } from "@/components/ui/chakra-compat";
 import { updateRoomThunk } from "@/store/reducer/room";
 
-export function AddMember() {
+export function AddMember({ onUpdated }: { onUpdated?: () => void } = {}) {
   const { open, onOpen, onClose } = useDisclosure();
   const roomInfo = useAppSelector((state) => state.room.data);
   const userInfo = useAppSelector((state) => state.user.data);
   const [user, setUser] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const dispatch = useThunkDispatch();
   const toast = useToast();
+  const handleOpen = () => {
+    setUser([]);
+    onOpen();
+  };
+  const handleClose = () => {
+    setUser([]);
+    onClose();
+  };
   const handleAddMember = async () => {
+    if (isSubmitting) return;
     if (!user.length) {
       toast({
         title: "Warning.",
@@ -29,25 +39,43 @@ export function AddMember() {
     const invitedList = user.filter(
       (u) => !roomInfo.member?.find((m) => m.id === u)
     );
-    await dispatch(
-      updateRoomThunk({
-        id: roomInfo.id,
-        memberId: invitedList,
-      })
-    );
-    onClose();
-    setUser([]);
-    onClose();
+    if (!invitedList.length) {
+      handleClose();
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await dispatch(
+        updateRoomThunk({
+          id: roomInfo.id,
+          memberId: invitedList,
+        })
+      );
+      onUpdated?.();
+      toast({
+        title: "Members updated",
+        status: "success",
+        position: "top",
+        duration: 1500,
+      });
+      handleClose();
+    } catch {
+      toast({
+        title: "Unable to update members",
+        status: "error",
+        position: "top",
+        duration: 2000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-  const memberList = roomInfo.member
-    .map((m) => m.id)
-    .filter((m) => m !== userInfo.id);
   return (
     <>
-      <IconButton aria-label="add member" size="lg" onClick={onOpen}>
-        <FaPlus className="text-2xl" />
+      <IconButton aria-label="add member" size="sm" onClick={handleOpen}>
+        <FaPlus className="text-base" />
       </IconButton>
-      <Modal isOpen={open} onClose={onClose}>
+      <Modal isOpen={open} onClose={handleClose}>
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Invite friend</ModalHeader>
@@ -58,7 +86,7 @@ export function AddMember() {
                 <FormLabel>Name: </FormLabel>
                 <CheckboxGroup
                   colorPalette="green"
-                  defaultValue={memberList}
+                  value={user}
                   onValueChange={(id: string[]) => {
                     setUser(id);
                   }}
@@ -89,10 +117,15 @@ export function AddMember() {
             </Form>
           </ModalBody>
           <ModalFooter>
-            <Button mr={3} onClick={onClose}>
+            <Button mr={3} onClick={handleClose}>
               Close
             </Button>
-            <Button type="button" colorScheme="blue" onClick={handleAddMember}>
+            <Button
+              type="button"
+              colorScheme="blue"
+              loading={isSubmitting}
+              onClick={handleAddMember}
+            >
               Submit
             </Button>
           </ModalFooter>

@@ -1,4 +1,3 @@
-import type { Room } from "@/interfaces/chat";
 import Api from "@/Api";
 import { AppThunk } from "@/hooks/app";
 import type { PayloadAction } from "@reduxjs/toolkit";
@@ -10,8 +9,9 @@ import {
   MessageWindowRequest,
   MessageWindowResponse,
   IRoom,
+  RoomUpdateRequest,
 } from "@/interfaces";
-import { fetchUserInfoThunk, shiftRoom } from "./user";
+import { fetchUserInfoThunk, shiftRoom, updateLocalUserRoom } from "./user";
 import { IReadMessage } from "@/core";
 import { mergeReadSeqForward } from "./readSeq";
 
@@ -61,29 +61,45 @@ export const getRoomInfoThunk = createAsyncThunk<void, string>(
     dispatch(changeRoomId(id));
     // 加载中
     dispatch(changeLoading(true));
-    // 获取当前房间基本信息
-    const res = await Api.getRoom({
-      id: id,
-    });
-    // 将当前房间基本信息存到store里面
-    dispatch(initialMessage(res));
-    const messagePage = await Api.getRoomMessages({
-      pageSize: 50,
-      id,
-    });
-    dispatch(
-      initialMessage({
-        message: messagePage.message,
-        hasMoreMessage: messagePage.hasMore,
-        hasMoreBefore: messagePage.hasMore,
-        hasMoreAfter: false,
-        messageWindowMode: false,
-      })
-    );
-    // 加载结束
-    dispatch(changeLoading(false));
-    // div元素撑开后，滚动到底部
-    dispatch(scrollToEnd(true));
+    try {
+      // 获取当前房间基本信息
+      const res = await Api.getRoom({ id });
+      // 将当前房间基本信息存到store里面
+      dispatch(initialMessage(res));
+      // Public rooms can be previewed by outsiders, but message history is
+      // member-only. Joining will run this thunk again and load the history.
+      if (res.isMember === false) {
+        dispatch(
+          initialMessage({
+            message: [],
+            totalCount: 0,
+            hasMoreMessage: false,
+            hasMoreBefore: false,
+            hasMoreAfter: false,
+            messageWindowMode: false,
+          })
+        );
+        return;
+      }
+      const messagePage = await Api.getRoomMessages({
+        pageSize: 50,
+        id,
+      });
+      dispatch(
+        initialMessage({
+          message: messagePage.message,
+          hasMoreMessage: messagePage.hasMore,
+          hasMoreBefore: messagePage.hasMore,
+          hasMoreAfter: false,
+          messageWindowMode: false,
+        })
+      );
+      // div元素撑开后，滚动到底部
+      dispatch(scrollToEnd(true));
+    } finally {
+      // Loading must also end when room/history requests are rejected.
+      dispatch(changeLoading(false));
+    }
   }
 );
 // 加载更多消息
@@ -127,26 +143,47 @@ export const openMessageWindowThunk = createAsyncThunk<
   }
 });
 
+const preserveActiveMessageState = (
+  room: IRoom,
+  currentRoom: IRoom
+): IRoom => ({
+  ...room,
+  message: currentRoom.message,
+  totalCount: currentRoom.totalCount,
+  hasMoreMessage: currentRoom.hasMoreMessage,
+  hasMoreBefore: currentRoom.hasMoreBefore,
+  hasMoreAfter: currentRoom.hasMoreAfter,
+  messageWindowMode: currentRoom.messageWindowMode,
+});
+
+export const refreshRoomInfoThunk =
+  (id: string): AppThunk<Promise<IRoom>> =>
+  async (dispatch, getState) => {
+    const room = await Api.getRoom({ id });
+    const currentRoom = getState().room.data as IRoom;
+    if (String(currentRoom.id) === String(id)) {
+      dispatch(initialMessage(preserveActiveMessageState(room, currentRoom)));
+    }
+    dispatch(updateLocalUserRoom(room));
+    return room;
+  };
+
 export const updateRoomThunk =
-  (data: Partial<Room>): AppThunk =>
+  (data: RoomUpdateRequest): AppThunk<Promise<IRoom>> =>
   async (dispatch, getState) => {
     const room = await Api.updateRoom(data);
-    const currentRoom = getState().room.data;
-    dispatch(
-      initialMessage({
-        ...room,
-        message: currentRoom.message,
-        totalCount: currentRoom.totalCount,
-        hasMoreMessage: currentRoom.hasMoreMessage,
-      })
-    );
+    const currentRoom = getState().room.data as IRoom;
+    dispatch(initialMessage(preserveActiveMessageState(room, currentRoom)));
+    dispatch(updateLocalUserRoom(room));
+    return room;
   };
 
 export const joinRoomThunk = createAsyncThunk<IRoom, { id?: string }>(
   "joinRoom",
   async (data, { dispatch }) => {
     const res = await Api.joinRoom(data);
-    dispatch(fetchUserInfoThunk());
+    await dispatch(fetchUserInfoThunk());
+    await dispatch(getRoomInfoThunk(String(res.id)));
     return res;
   }
 );

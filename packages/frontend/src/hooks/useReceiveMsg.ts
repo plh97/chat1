@@ -1,6 +1,7 @@
 import { IWsData, WS_EVENT } from "@/core";
 import { normalizeMessage } from "@/Api";
 import { IMessage, IRoom } from "@/interfaces";
+import type { SystemActionType } from "@/interfaces/chat";
 import {
   fetchUserInfoThunk,
   topUserRoom,
@@ -9,34 +10,58 @@ import {
 } from "@/store/reducer/user";
 import {
   addMessage,
+  initialMessage,
   markReadMessage,
   recallExistMessage,
+  refreshRoomInfoThunk,
   scrollToEnd,
 } from "@/store/reducer/room";
-import { MutableRefObject } from "react";
+import { useEffect, useRef, type MutableRefObject } from "react";
+
+const ROOM_DETAIL_ACTIONS = new Set<SystemActionType>([
+  "ADD_MEMBER",
+  "REMOVE_MEMBER",
+  "ADD_ADMIN",
+  "REMOVE_ADMIN",
+  "CHANGE_ROOM",
+  "UPDATE_ROOM",
+  "TRANSFER_OWNER",
+]);
+
+export const isRoomDetailAction = (action?: SystemActionType) =>
+  Boolean(action && ROOM_DETAIL_ACTIONS.has(action));
 
 export const useReceiveMsg = (roomRef: MutableRefObject<IRoom>) => {
   const dispatch = useAppDispatch();
-  const userInfo = useAppSelector((state) => state.user.data);
+  const pendingRefresh = useRef<{
+    roomId: string;
+    timer: ReturnType<typeof setTimeout>;
+  } | null>(null);
+  const cancelPendingRefresh = () => {
+    if (!pendingRefresh.current) return;
+    clearTimeout(pendingRefresh.current.timer);
+    pendingRefresh.current = null;
+  };
+  const scheduleRoomRefresh = (roomId: string) => {
+    cancelPendingRefresh();
+    const timer = setTimeout(() => {
+      pendingRefresh.current = null;
+      void dispatch(refreshRoomInfoThunk(roomId)).catch(() => undefined);
+    }, 50);
+    pendingRefresh.current = { roomId, timer };
+  };
+  useEffect(() => cancelPendingRefresh, []);
+
   const onReceiveMsg = async (data?: IWsData<IMessage>) => {
     const msg = data?.data ? normalizeMessage(data.data) : undefined;
     if (!msg) return;
     const room = roomRef.current;
     if (msg.contentType === "SYSTEM_MESSAGE") {
-      const sysMsg = msg.systemMessage;
-      if (
-        sysMsg?.actionType === "ADD_FRIEND" ||
-        sysMsg?.actionType === "CREATE_ROOM" ||
-        sysMsg?.actionType === "REMOVE_ROOM"
-      ) {
-        await dispatch(fetchUserInfoThunk());
-      } else if (
-        sysMsg?.actionType === "ADD_MEMBER" ||
-        sysMsg?.actionType === "REMOVE_MEMBER"
-      ) {
-        if (sysMsg.content?.includes(userInfo.id)) {
-          await dispatch(fetchUserInfoThunk());
-        }
+      const action = msg.systemMessage?.actionType;
+      if (isRoomDetailAction(action) && msg.channelId === room.id) {
+        // One room mutation can emit several system messages. Coalesce those
+        // into one metadata refresh; ROOM_LIST_CHANGED below flushes it early.
+        scheduleRoomRefresh(msg.channelId);
       }
     }
     if (
@@ -65,7 +90,19 @@ export const useReceiveMsg = (roomRef: MutableRefObject<IRoom>) => {
     }
   };
   const onRoomListChanged = async () => {
+    cancelPendingRefresh();
     await dispatch(fetchUserInfoThunk());
+    const currentRoomId = roomRef.current?.id;
+    if (!currentRoomId) return;
+    try {
+      // Also refresh the active room so a removed user immediately becomes an
+      // outsider. The refresh thunk keeps the current message/search window.
+      await dispatch(refreshRoomInfoThunk(currentRoomId));
+    } catch {
+      // A deleted/private room may no longer be readable. Disable sending
+      // against stale membership while its entry disappears from the list.
+      dispatch(initialMessage({ isMember: false }));
+    }
   };
   useEventListener(WS_EVENT.SEND_MSG, onReceiveMsg);
   useEventListener(WS_EVENT.ROOM_LIST_CHANGED, onRoomListChanged);

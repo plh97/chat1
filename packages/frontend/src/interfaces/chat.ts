@@ -17,7 +17,9 @@ export type SystemActionType =
   | "REMOVE_ROOM"
   | "ADD_FRIEND"
   | "REMOVE_FRIEND"
-  | "CHANGE_ROOM";
+  | "CHANGE_ROOM"
+  | "UPDATE_ROOM"
+  | "TRANSFER_OWNER";
 
 export interface TextMessage {
   text: string;

@@ -236,6 +236,21 @@ func (h *UserHandler) AddFriend(ctx *gin.Context) {
 		return
 	}
 	if h.roomEvents != nil {
+		if publishErr := h.roomEvents.PublishSystemMessage(
+			ctx,
+			room.ID,
+			uint(userId),
+			systemActionAddFriend,
+			systemMessageContent(uint(userId), systemActionAddFriend, req.GetFriendID()),
+		); publishErr != nil && h.logger != nil {
+			h.logger.WithContext(ctx).Error(
+				"publish friend system message failed",
+				zap.Uint("room_id", room.ID),
+				zap.Int("actor_id", userId),
+				zap.Uint("friend_id", req.GetFriendID()),
+				zap.Error(publishErr),
+			)
+		}
 		h.roomEvents.NotifyRoomListChanged([]uint{uint(userId), req.GetFriendID()})
 	}
 
@@ -270,6 +285,9 @@ func (h *UserHandler) DeleteFriend(ctx *gin.Context) {
 		h.logger.WithContext(ctx).Error("userService.DeleteFriend error", zap.Error(err))
 		v1.HandleError(ctx, http.StatusBadRequest, err, nil)
 		return
+	}
+	if h.roomEvents != nil {
+		h.roomEvents.NotifyRoomListChanged([]uint{uint(userId), req.GetFriendID()})
 	}
 
 	v1.HandleSuccess(ctx, nil, "Friend removed successfully")

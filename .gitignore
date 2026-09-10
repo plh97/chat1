@@ -5,6 +5,7 @@ dist
 static/*
 .DS_Store
 .eslintcache
+*.tsbuildinfo
 # terraform/variable.tf
 terraform.tfstate.backup
 .terraform

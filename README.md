@@ -191,11 +191,11 @@ ansible-playbook -i hosts.vultr cicd.yml
   - [x] send create new friend system message
   - [x] broadcast ws to all channal member
   - [x] add member should be reduce
-  - [ ] add member/admin should also update opposite user room info
+  - [x] add member/admin should also update opposite user room info
 - [x] recall message
-- [ ] change room name
-- [ ] change room avatar
-- [ ] remove room admin/member
-- [ ] transfer room owner
-- [ ] virtual scroll
-- [ ] make simple-git-hooks can work
+- [x] change room name
+- [x] change room avatar
+- [x] remove room admin/member
+- [x] transfer room owner
+- [x] virtual scroll
+- [x] make simple-git-hooks can work

@@ -10,6 +10,7 @@ import {
   MessageSearchResponse,
   MessageCursorRequest,
   MessageRequest,
+  RoomUpdateRequest,
 } from "@/interfaces";
 import { getToken } from "./utils";
 import { ws } from "@/hooks/useWebsocket";
@@ -439,7 +440,7 @@ const Api = {
       method: "delete",
       params: { id },
     }),
-  updateRoom: (data: Partial<IRoom>) =>
+  updateRoom: (data: RoomUpdateRequest) =>
     request<IRoom>({
       url: "/room",
       method: "patch",

@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -27,6 +28,35 @@ func (h *RoomHandler) SetRoomEventPublisher(publisher RoomEventPublisher) {
 	h.roomEvents = publisher
 }
 
+func (h *RoomHandler) publishSystemMessage(ctx context.Context, roomID, actorID uint, action string, targetIDs ...uint) {
+	if h.roomEvents == nil {
+		return
+	}
+	content := systemMessageContent(actorID, action, targetIDs...)
+	if err := h.roomEvents.PublishSystemMessage(ctx, roomID, actorID, action, content); err != nil && h.logger != nil {
+		h.logger.WithContext(ctx).Error(
+			"publish room system message failed",
+			zap.Uint("room_id", roomID),
+			zap.Uint("actor_id", actorID),
+			zap.String("action", action),
+			zap.Error(err),
+		)
+	}
+}
+
+func (h *RoomHandler) authorizeRoomAccess(ctx *gin.Context, roomID uint, allowPublic bool) bool {
+	userID := uint(GetUserIdFromCtx(ctx))
+	if userID == 0 {
+		v1.HandleError(ctx, http.StatusUnauthorized, v1.ErrUnauthorized, nil)
+		return false
+	}
+	if err := h.roomService.AuthorizeRoomAccess(ctx, roomID, userID, allowPublic); err != nil {
+		handleRoomMutationError(ctx, err)
+		return false
+	}
+	return true
+}
+
 func NewRoomHandler(
 	handler *Handler,
 	roomService service.RoomService,
@@ -34,6 +64,19 @@ func NewRoomHandler(
 	return &RoomHandler{
 		Handler:     handler,
 		roomService: roomService,
+	}
+}
+
+func handleRoomMutationError(ctx *gin.Context, err error) {
+	switch {
+	case errors.Is(err, service.ErrRoomForbidden):
+		v1.HandleError(ctx, http.StatusForbidden, v1.ErrForbidden, nil)
+	case errors.Is(err, service.ErrInvalidRoomUpdate):
+		v1.HandleError(ctx, http.StatusBadRequest, v1.ErrBadRequest, map[string]string{"reason": err.Error()})
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		v1.HandleError(ctx, http.StatusNotFound, v1.ErrNotFound, nil)
+	default:
+		v1.HandleError(ctx, http.StatusInternalServerError, err, nil)
 	}
 }
 
@@ -77,26 +120,35 @@ func (h *RoomHandler) Create(ctx context.Context, msg []byte) (*v1.Response, err
 // @Success 200 {object} v1.Response
 // @Router /room [post]
 func (h *RoomHandler) AddRoom(ctx *gin.Context) {
-	// TODO: 实现创建房间逻辑
 	body := v1.RoomCreateRequest{}
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		v1.HandleError(ctx, 400, v1.ErrBadRequest, nil)
 		return
 	}
-	room, err := h.roomService.CreateRoom(ctx, body)
+	currentUserID := uint(GetUserIdFromCtx(ctx))
+	if currentUserID == 0 {
+		v1.HandleError(ctx, http.StatusUnauthorized, v1.ErrUnauthorized, nil)
+		return
+	}
+	// The authenticated user is always the creator. Never trust creatorId from
+	// the request body as an authority-bearing identity.
+	body.CreatorID = v1.RoomUserID(currentUserID)
+	result, err := h.roomService.CreateRoom(ctx, body)
 	if err != nil {
-		v1.HandleError(ctx, 500, err, nil)
+		handleRoomMutationError(ctx, err)
 		return
 	}
 	if h.roomEvents != nil {
-		currentUserID := uint(GetUserIdFromCtx(ctx))
-		h.roomEvents.NotifyRoomListChanged(uniqueRoomEventUserIDs(
-			[]uint{currentUserID, body.GetCreatorID()},
-			body.GetAdminIDs(),
-			body.GetMemberIDs(),
-		))
+		h.publishSystemMessage(ctx, result.RoomID, currentUserID, systemActionCreateRoom)
+		if len(result.AdminIDs) > 0 {
+			h.publishSystemMessage(ctx, result.RoomID, currentUserID, systemActionAddAdmin, result.AdminIDs...)
+		}
+		if len(result.MemberIDs) > 0 {
+			h.publishSystemMessage(ctx, result.RoomID, currentUserID, systemActionAddMember, result.MemberIDs...)
+		}
+		h.roomEvents.NotifyRoomListChanged(result.RoomUserIDs)
 	}
-	v1.HandleSuccess(ctx, room, "Room created successfully")
+	v1.HandleSuccess(ctx, result.Room, "Room created successfully")
 }
 
 // GetRoom godoc
@@ -144,9 +196,12 @@ func (h *RoomHandler) GetRoom(ctx *gin.Context) {
 			v1.HandleError(ctx, 400, v1.ErrBadRequest, "invalid id")
 			return
 		}
+		if !h.authorizeRoomAccess(ctx, uint(idUint64), true) {
+			return
+		}
 		room, err = h.roomService.GetRoomByID(ctx, uint(idUint64), userID, memberPageSize, memberOffset, adminPageSize, adminOffset)
 	} else {
-		room, err = h.roomService.ListRooms(ctx)
+		room, err = h.roomService.ListRooms(ctx, userID)
 	}
 	if err != nil {
 		v1.HandleError(ctx, 500, err, nil)
@@ -175,6 +230,9 @@ func (h *RoomHandler) GetRoomMessages(ctx *gin.Context) {
 	roomID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		v1.HandleError(ctx, 400, v1.ErrBadRequest, "invalid id")
+		return
+	}
+	if !h.authorizeRoomAccess(ctx, uint(roomID), false) {
 		return
 	}
 	pageSize := 50
@@ -206,6 +264,9 @@ func (h *RoomHandler) GetRoomMessagesByCursor(ctx *gin.Context) {
 		v1.HandleError(ctx, 400, v1.ErrBadRequest, "invalid id, seq, or direction")
 		return
 	}
+	if !h.authorizeRoomAccess(ctx, uint(roomID), false) {
+		return
+	}
 	pageSize := 50
 	if parsed, err := strconv.Atoi(ctx.Query("pageSize")); err == nil && parsed > 0 {
 		pageSize = parsed
@@ -224,6 +285,9 @@ func (h *RoomHandler) SearchRoomMessages(ctx *gin.Context) {
 	query := ctx.Query("q")
 	if err != nil || roomID == 0 || query == "" {
 		v1.HandleError(ctx, 400, v1.ErrBadRequest, "invalid id or query")
+		return
+	}
+	if !h.authorizeRoomAccess(ctx, uint(roomID), false) {
 		return
 	}
 	pageSize := 20
@@ -263,6 +327,9 @@ func (h *RoomHandler) GetRoomMembers(ctx *gin.Context) {
 	roomID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
 		v1.HandleError(ctx, 400, v1.ErrBadRequest, "invalid id")
+		return
+	}
+	if !h.authorizeRoomAccess(ctx, uint(roomID), false) {
 		return
 	}
 	pageSize := 20
@@ -306,6 +373,9 @@ func (h *RoomHandler) GetMessageReaders(ctx *gin.Context) {
 		v1.HandleError(ctx, 400, v1.ErrBadRequest, "invalid roomId or id")
 		return
 	}
+	if !h.authorizeRoomAccess(ctx, uint(roomID), false) {
+		return
+	}
 
 	pageSize := 50
 	if pageSizeStr := ctx.Query("pageSize"); pageSizeStr != "" {
@@ -342,7 +412,6 @@ func (h *RoomHandler) GetMessageReaders(ctx *gin.Context) {
 // @Success 200 {object} v1.Response
 // @Router /room [patch]
 func (h *RoomHandler) UpdateRoom(ctx *gin.Context) {
-	// TODO: 实现更新房间逻辑
 	req := v1.RoomUpdateRequest{}
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		v1.HandleError(ctx, 400, v1.ErrBadRequest, nil)
@@ -352,19 +421,41 @@ func (h *RoomHandler) UpdateRoom(ctx *gin.Context) {
 		v1.HandleError(ctx, 400, v1.ErrBadRequest, "missing id")
 		return
 	}
-	room, err := h.roomService.UpdateRoom(ctx, req)
+	operatorID := uint(GetUserIdFromCtx(ctx))
+	if operatorID == 0 {
+		v1.HandleError(ctx, http.StatusUnauthorized, v1.ErrUnauthorized, nil)
+		return
+	}
+	result, err := h.roomService.UpdateRoom(ctx, operatorID, req)
 	if err != nil {
-		v1.HandleError(ctx, 500, err, nil)
+		handleRoomMutationError(ctx, err)
 		return
 	}
 	if h.roomEvents != nil {
+		if len(result.AddedMemberIDs) > 0 {
+			h.publishSystemMessage(ctx, req.GetID(), operatorID, systemActionAddMember, result.AddedMemberIDs...)
+		}
+		if len(result.AddedAdminIDs) > 0 {
+			h.publishSystemMessage(ctx, req.GetID(), operatorID, systemActionAddAdmin, result.AddedAdminIDs...)
+		}
+		if len(result.RemovedMemberIDs) > 0 {
+			h.publishSystemMessage(ctx, req.GetID(), operatorID, systemActionRemoveMember, result.RemovedMemberIDs...)
+		}
+		if len(result.RemovedAdminIDs) > 0 {
+			h.publishSystemMessage(ctx, req.GetID(), operatorID, systemActionRemoveAdmin, result.RemovedAdminIDs...)
+		}
+		if result.NewCreatorID != 0 {
+			h.publishSystemMessage(ctx, req.GetID(), operatorID, systemActionTransferOwner, result.NewCreatorID)
+		}
+		if result.MetadataChanged {
+			h.publishSystemMessage(ctx, req.GetID(), operatorID, systemActionChangeRoom)
+		}
 		h.roomEvents.NotifyRoomListChanged(uniqueRoomEventUserIDs(
-			[]uint{uint(GetUserIdFromCtx(ctx)), req.GetCreatorID()},
-			req.GetAdminIDs(),
-			req.GetMemberIDs(),
+			result.RoomUserIDs,
+			result.RemovedMemberIDs,
 		))
 	}
-	v1.HandleSuccess(ctx, room, "Room updated successfully")
+	v1.HandleSuccess(ctx, result.Room, "Room updated successfully")
 }
 
 // DeleteRoom godoc
@@ -388,10 +479,18 @@ func (h *RoomHandler) DeleteRoom(ctx *gin.Context) {
 		v1.HandleError(ctx, 400, v1.ErrBadRequest, "invalid id")
 		return
 	}
-	err = h.roomService.DeleteRoom(ctx, uint(idUint64))
-	if err != nil {
-		v1.HandleError(ctx, 500, err, nil)
+	operatorID := uint(GetUserIdFromCtx(ctx))
+	if operatorID == 0 {
+		v1.HandleError(ctx, http.StatusUnauthorized, v1.ErrUnauthorized, nil)
 		return
+	}
+	result, err := h.roomService.DeleteRoom(ctx, operatorID, uint(idUint64))
+	if err != nil {
+		handleRoomMutationError(ctx, err)
+		return
+	}
+	if h.roomEvents != nil {
+		h.roomEvents.NotifyRoomListChanged(result.RoomUserIDs)
 	}
 	v1.HandleSuccess(ctx, nil, "Room deleted successfully")
 }
@@ -416,19 +515,16 @@ func (h *RoomHandler) JoinRoom(ctx *gin.Context) {
 		v1.HandleError(ctx, 401, v1.ErrEmptyUserId, nil)
 		return
 	}
-	room, err := h.roomService.JoinRoom(ctx, uint(userID), req.ID)
+	result, err := h.roomService.JoinRoom(ctx, uint(userID), req.ID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			v1.HandleError(ctx, 404, v1.ErrNotFound, nil)
-			return
-		}
-		v1.HandleError(ctx, 500, err, nil)
+		handleRoomMutationError(ctx, err)
 		return
 	}
-	if h.roomEvents != nil {
-		h.roomEvents.NotifyRoomListChanged([]uint{uint(userID)})
+	if h.roomEvents != nil && result.Added {
+		h.publishSystemMessage(ctx, result.RoomID, uint(userID), systemActionAddMember, uint(userID))
+		h.roomEvents.NotifyRoomListChanged(result.RoomUserIDs)
 	}
-	v1.HandleSuccess(ctx, room, "Joined room successfully")
+	v1.HandleSuccess(ctx, result.Room, "Joined room successfully")
 }
 
 // GetMessage godoc
@@ -458,6 +554,9 @@ func (h *RoomHandler) GetMessage(ctx *gin.Context) {
 	roomUint64, err := strconv.ParseUint(roomID, 10, 64)
 	if err != nil {
 		v1.HandleError(ctx, 400, v1.ErrBadRequest, "invalid roomId")
+		return
+	}
+	if !h.authorizeRoomAccess(ctx, uint(roomUint64), false) {
 		return
 	}
 

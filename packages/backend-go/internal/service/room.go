@@ -13,10 +13,50 @@ import (
 	v1 "backend-go/api/v1"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
+var (
+	ErrRoomForbidden     = errors.New("room operation forbidden")
+	ErrInvalidRoomUpdate = errors.New("invalid room update")
+)
+
+// RoomUpdateResult keeps the HTTP response compatible while exposing the
+// committed changes to event publishers. Every ID slice contains actual
+// database changes, not merely IDs supplied by the caller.
+type RoomUpdateResult struct {
+	Room              interface{}
+	AddedMemberIDs    []uint
+	AddedAdminIDs     []uint
+	RemovedMemberIDs  []uint
+	RemovedAdminIDs   []uint
+	PreviousCreatorID uint
+	NewCreatorID      uint
+	MetadataChanged   bool
+	RoomUserIDs       []uint
+}
+
+type RoomCreateResult struct {
+	Room        interface{}
+	RoomID      uint
+	AdminIDs    []uint
+	MemberIDs   []uint
+	RoomUserIDs []uint
+}
+
+type RoomJoinResult struct {
+	Room        interface{}
+	RoomID      uint
+	Added       bool
+	RoomUserIDs []uint
+}
+
+type RoomDeleteResult struct {
+	RoomUserIDs []uint
+}
+
 type RoomService interface {
-	CreateRoom(ctx context.Context, req v1.RoomCreateRequest) (interface{}, error)
+	CreateRoom(ctx context.Context, req v1.RoomCreateRequest) (*RoomCreateResult, error)
 	GetRoomByID(ctx context.Context, id, viewerID uint, memberLimit, memberOffset, adminLimit, adminOffset int) (interface{}, error)
 	GetRoomMessages(ctx context.Context, roomID uint, limit, offset int) (interface{}, error)
 	GetRoomMessagesByCursor(ctx context.Context, roomID uint, direction string, seq, limit int) (interface{}, error)
@@ -24,10 +64,11 @@ type RoomService interface {
 	GetRoomUsers(ctx context.Context, roomID, viewerID uint, role string, limit, offset int) (interface{}, error)
 	GetMessageReaders(ctx context.Context, roomID, messageID uint, limit, offset int) (interface{}, error)
 	GetRoomMessageWindow(ctx context.Context, roomID, messageID uint, limit int) (interface{}, error)
-	ListRooms(ctx context.Context) (interface{}, error)
-	UpdateRoom(ctx context.Context, req v1.RoomUpdateRequest) (interface{}, error)
-	JoinRoom(ctx context.Context, userID, roomID uint) (interface{}, error)
-	DeleteRoom(ctx context.Context, id uint) error
+	AuthorizeRoomAccess(ctx context.Context, roomID, userID uint, allowPublic bool) error
+	ListRooms(ctx context.Context, userID uint) (interface{}, error)
+	UpdateRoom(ctx context.Context, operatorID uint, req v1.RoomUpdateRequest) (*RoomUpdateResult, error)
+	JoinRoom(ctx context.Context, userID, roomID uint) (*RoomJoinResult, error)
+	DeleteRoom(ctx context.Context, operatorID, id uint) (*RoomDeleteResult, error)
 }
 
 func NewRoomService(service *Service) RoomService {
@@ -149,7 +190,10 @@ func uniqueUintIDs(ids []uint, excluded ...uint) []uint {
 
 func upsertRoomMember(db *gorm.DB, roomID, userID uint, role string) error {
 	var roomMember model.RoomMember
-	err := db.Where("room_id = ? AND user_id = ?", roomID, userID).First(&roomMember).Error
+	err := db.Unscoped().
+		Where("room_id = ? AND user_id = ?", roomID, userID).
+		Order("CASE WHEN deleted_at IS NULL THEN 0 ELSE 1 END").
+		First(&roomMember).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return db.Create(&model.RoomMember{
@@ -160,12 +204,71 @@ func upsertRoomMember(db *gorm.DB, roomID, userID uint, role string) error {
 		}
 		return err
 	}
+	if roomMember.DeletedAt.Valid {
+		return db.Unscoped().Model(&roomMember).Updates(map[string]interface{}{
+			"role":       role,
+			"deleted_at": nil,
+		}).Error
+	}
 
-	if roomMember.Role == role {
+	if roomMember.Role == role || roomMember.Role == model.Creator {
+		return nil
+	}
+	// Adding a regular member must never silently demote an administrator.
+	if role == model.Member && roomMember.Role == model.Admin {
 		return nil
 	}
 
 	return db.Model(&roomMember).Update("role", role).Error
+}
+
+func containsUintID(ids []uint, target uint) bool {
+	for _, id := range ids {
+		if id == target {
+			return true
+		}
+	}
+	return false
+}
+
+func hasZeroUintID(ids ...[]uint) bool {
+	for _, group := range ids {
+		for _, id := range group {
+			if id == 0 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func hasUintIDOverlap(left, right []uint) bool {
+	set := make(map[uint]struct{}, len(left))
+	for _, id := range left {
+		set[id] = struct{}{}
+	}
+	for _, id := range right {
+		if _, exists := set[id]; exists {
+			return true
+		}
+	}
+	return false
+}
+
+func ensureUsersExist(db *gorm.DB, ids []uint) error {
+	ids = uniqueUintIDs(ids)
+	if len(ids) == 0 {
+		return nil
+	}
+
+	var count int64
+	if err := db.Model(&model.User{}).Where("id IN ?", ids).Count(&count).Error; err != nil {
+		return err
+	}
+	if count != int64(len(ids)) {
+		return fmt.Errorf("%w: one or more users do not exist", ErrInvalidRoomUpdate)
+	}
+	return nil
 }
 
 // 假设房间表名为 rooms，字段有 id, name, created_at, updated_at
@@ -177,44 +280,61 @@ func upsertRoomMember(db *gorm.DB, roomID, userID uint, role string) error {
 // 	// UpdatedAt int64  `json:"updated_at"`
 // }
 
-func (s *roomService) CreateRoom(ctx context.Context, req v1.RoomCreateRequest) (interface{}, error) {
-	db := s.tm.(*repository.Repository).DB(ctx)
-
-	// 1. 创建房间
-	room := &model.Room{
-		Name:  req.Name,
-		Image: req.Image,
+func (s *roomService) CreateRoom(ctx context.Context, req v1.RoomCreateRequest) (*RoomCreateResult, error) {
+	creatorID := req.GetCreatorID()
+	name := strings.TrimSpace(req.Name)
+	if creatorID == 0 || name == "" {
+		return nil, fmt.Errorf("%w: creator and room name are required", ErrInvalidRoomUpdate)
 	}
-	if err := db.Create(room).Error; err != nil {
+
+	adminIDs := uniqueUintIDs(req.GetAdminIDs(), creatorID)
+	excludedMemberIDs := append([]uint{creatorID}, adminIDs...)
+	memberIDs := uniqueUintIDs(req.GetMemberIDs(), excludedMemberIDs...)
+	roomUserIDs := append([]uint{creatorID}, adminIDs...)
+	roomUserIDs = append(roomUserIDs, memberIDs...)
+	room := &model.Room{Name: name, Image: req.Image}
+
+	if err := s.tm.Transaction(ctx, func(txCtx context.Context) error {
+		db := s.tm.(*repository.Repository).DB(txCtx)
+		if err := ensureUsersExist(db, roomUserIDs); err != nil {
+			return err
+		}
+		if err := db.Create(room).Error; err != nil {
+			return err
+		}
+		if err := db.Create(&model.RoomMember{
+			RoomID: room.ID,
+			UserID: creatorID,
+			Role:   model.Creator,
+		}).Error; err != nil {
+			return err
+		}
+		for _, adminID := range adminIDs {
+			if err := upsertRoomMember(db, room.ID, adminID, model.Admin); err != nil {
+				return err
+			}
+		}
+		for _, memberID := range memberIDs {
+			if err := upsertRoomMember(db, room.ID, memberID, model.Member); err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 
-	// 2. 添加创建者为成员（可选，如果创建者也应该在成员列表中）
-	if err := db.Create(&model.RoomMember{
-		RoomID: room.ID,
-		UserID: req.GetCreatorID(),
-		Role:   model.Creator,
-	}).Error; err != nil {
+	detail, err := s.GetRoomByID(ctx, room.ID, creatorID, 6, 0, 6, 0)
+	if err != nil {
 		return nil, err
 	}
-
-	// 3. 添加管理员
-	adminIDs := uniqueUintIDs(req.GetAdminIDs(), req.GetCreatorID())
-	for _, adminID := range adminIDs {
-		if err := upsertRoomMember(db, room.ID, adminID, model.Admin); err != nil {
-			return nil, err
-		}
-	}
-
-	// 4. 添加普通成员
-	memberIDs := uniqueUintIDs(req.GetMemberIDs(), req.GetCreatorID())
-	for _, memberID := range memberIDs {
-		if err := upsertRoomMember(db, room.ID, memberID, model.Member); err != nil {
-			return nil, err
-		}
-	}
-
-	return s.GetRoomByID(ctx, room.ID, req.GetCreatorID(), 6, 0, 6, 0)
+	return &RoomCreateResult{
+		Room:        detail,
+		RoomID:      room.ID,
+		AdminIDs:    adminIDs,
+		MemberIDs:   memberIDs,
+		RoomUserIDs: roomUserIDs,
+	}, nil
 }
 
 func (s *roomService) GetRoomByID(ctx context.Context, id, viewerID uint, memberLimit, memberOffset, adminLimit, adminOffset int) (interface{}, error) {
@@ -839,75 +959,271 @@ func buildRoomMessageResponse(message model.Message, user *roomMessageUser, user
 	return response
 }
 
-func (s *roomService) ListRooms(ctx context.Context) (interface{}, error) {
+func (s *roomService) AuthorizeRoomAccess(ctx context.Context, roomID, userID uint, allowPublic bool) error {
+	if roomID == 0 || userID == 0 {
+		return ErrRoomForbidden
+	}
+
+	db := s.tm.(*repository.Repository).DB(ctx)
+	var room model.Room
+	if err := db.Select("id", "channel_type").Where("id = ?", roomID).First(&room).Error; err != nil {
+		return err
+	}
+
+	var membershipCount int64
+	if err := db.Model(&model.RoomMember{}).
+		Where("room_id = ? AND user_id = ?", roomID, userID).
+		Count(&membershipCount).Error; err != nil {
+		return err
+	}
+	if membershipCount > 0 || (allowPublic && room.ChannelType == model.RoomTypeGroup) {
+		return nil
+	}
+	return ErrRoomForbidden
+}
+
+func (s *roomService) ListRooms(ctx context.Context, userID uint) (interface{}, error) {
+	if userID == 0 {
+		return nil, ErrRoomForbidden
+	}
 	db := s.tm.(*repository.Repository).DB(ctx)
 	var rooms []model.Room
 	if err := db.
+		Joins("JOIN room_members ON room_members.room_id = rooms.id").
+		Where("room_members.user_id = ? AND room_members.deleted_at IS NULL", userID).
+		Distinct("rooms.*").
 		Preload("Members").
 		Preload("Admins").
-		Preload("Creator").
+		Preload("CreatorList").
 		Find(&rooms).Error; err != nil {
 		return nil, err
 	}
 	return rooms, nil
 }
 
-func (s *roomService) UpdateRoom(ctx context.Context, req v1.RoomUpdateRequest) (interface{}, error) {
-	db := s.tm.(*repository.Repository).DB(ctx)
-	var room model.Room
-	if err := db.Where("id = ?", req.GetID()).First(&room).Error; err != nil {
+func (s *roomService) UpdateRoom(ctx context.Context, operatorID uint, req v1.RoomUpdateRequest) (*RoomUpdateResult, error) {
+	if operatorID == 0 || req.GetID() == 0 {
+		return nil, fmt.Errorf("%w: missing room or operator", ErrInvalidRoomUpdate)
+	}
+
+	adminIDs := uniqueUintIDs(req.GetAdminIDs())
+	memberIDs := uniqueUintIDs(req.GetMemberIDs())
+	removeAdminIDs := uniqueUintIDs(req.GetRemoveAdminIDs())
+	removeMemberIDs := uniqueUintIDs(req.GetRemoveMemberIDs())
+	newCreatorID := req.GetNewCreatorID()
+
+	if hasZeroUintID(req.GetAdminIDs(), req.GetMemberIDs(), req.GetRemoveAdminIDs(), req.GetRemoveMemberIDs()) {
+		return nil, fmt.Errorf("%w: user ids must be positive", ErrInvalidRoomUpdate)
+	}
+	if req.NewCreatorID != nil && newCreatorID == 0 {
+		return nil, fmt.Errorf("%w: new creator id must be positive", ErrInvalidRoomUpdate)
+	}
+	if hasUintIDOverlap(adminIDs, removeAdminIDs) || hasUintIDOverlap(memberIDs, removeMemberIDs) {
+		return nil, fmt.Errorf("%w: the same role cannot be added and removed", ErrInvalidRoomUpdate)
+	}
+	if newCreatorID != 0 && (containsUintID(removeAdminIDs, newCreatorID) || containsUintID(removeMemberIDs, newCreatorID)) {
+		return nil, fmt.Errorf("%w: new creator cannot also be removed", ErrInvalidRoomUpdate)
+	}
+	if newCreatorID != 0 && (containsUintID(adminIDs, newCreatorID) || containsUintID(memberIDs, newCreatorID)) {
+		return nil, fmt.Errorf("%w: new creator cannot also receive another role", ErrInvalidRoomUpdate)
+	}
+	if req.Name != nil && strings.TrimSpace(*req.Name) == "" {
+		return nil, fmt.Errorf("%w: room name cannot be empty", ErrInvalidRoomUpdate)
+	}
+
+	result := &RoomUpdateResult{}
+	err := s.tm.Transaction(ctx, func(txCtx context.Context) error {
+		db := s.tm.(*repository.Repository).DB(txCtx)
+		var room model.Room
+		if err := db.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ?", req.GetID()).First(&room).Error; err != nil {
+			return err
+		}
+
+		var memberships []model.RoomMember
+		if err := db.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("room_id = ?", room.ID).
+			Find(&memberships).Error; err != nil {
+			return err
+		}
+		roles := make(map[uint]string, len(memberships))
+		for _, membership := range memberships {
+			roles[membership.UserID] = membership.Role
+		}
+
+		operatorRole := roles[operatorID]
+		if operatorRole != model.Creator && operatorRole != model.Admin {
+			return ErrRoomForbidden
+		}
+		creatorOnlyChange := len(adminIDs) > 0 || len(removeAdminIDs) > 0 || req.NewCreatorID != nil
+		if operatorRole != model.Creator && creatorOnlyChange {
+			return ErrRoomForbidden
+		}
+		if operatorRole == model.Creator &&
+			(containsUintID(removeAdminIDs, operatorID) || containsUintID(removeMemberIDs, operatorID)) {
+			return fmt.Errorf("%w: creator cannot be removed or downgraded", ErrInvalidRoomUpdate)
+		}
+
+		if err := ensureUsersExist(db, append(append([]uint{}, adminIDs...), memberIDs...)); err != nil {
+			return err
+		}
+		if newCreatorID != 0 && newCreatorID != operatorID {
+			if _, exists := roles[newCreatorID]; !exists {
+				return fmt.Errorf("%w: new creator must already be a room participant", ErrInvalidRoomUpdate)
+			}
+		}
+
+		updates := map[string]interface{}{}
+		if req.Name != nil {
+			name := strings.TrimSpace(*req.Name)
+			if name != room.Name {
+				updates["name"] = name
+			}
+		}
+		if req.Image != nil && *req.Image != room.Image {
+			// An explicitly supplied empty string clears the room avatar.
+			updates["image"] = *req.Image
+		}
+		if len(updates) > 0 {
+			if err := db.Model(&room).Updates(updates).Error; err != nil {
+				return err
+			}
+			result.MetadataChanged = true
+		}
+
+		// Removing an administrator means demoting them to a regular member.
+		for _, userID := range removeAdminIDs {
+			if roles[userID] != model.Admin {
+				continue
+			}
+			if err := db.Model(&model.RoomMember{}).
+				Where("room_id = ? AND user_id = ? AND role = ?", room.ID, userID, model.Admin).
+				Update("role", model.Member).Error; err != nil {
+				return err
+			}
+			roles[userID] = model.Member
+			result.RemovedAdminIDs = append(result.RemovedAdminIDs, userID)
+		}
+		for _, userID := range removeMemberIDs {
+			if roles[userID] != model.Member {
+				continue
+			}
+			if err := db.Unscoped().Where("room_id = ? AND user_id = ? AND role = ?", room.ID, userID, model.Member).
+				Delete(&model.RoomMember{}).Error; err != nil {
+				return err
+			}
+			delete(roles, userID)
+			result.RemovedMemberIDs = append(result.RemovedMemberIDs, userID)
+		}
+
+		for _, userID := range adminIDs {
+			previousRole := roles[userID]
+			if previousRole == model.Admin || previousRole == model.Creator {
+				continue
+			}
+			if err := upsertRoomMember(db, room.ID, userID, model.Admin); err != nil {
+				return err
+			}
+			roles[userID] = model.Admin
+			result.AddedAdminIDs = append(result.AddedAdminIDs, userID)
+		}
+		for _, userID := range memberIDs {
+			if _, exists := roles[userID]; exists {
+				continue
+			}
+			if err := upsertRoomMember(db, room.ID, userID, model.Member); err != nil {
+				return err
+			}
+			roles[userID] = model.Member
+			result.AddedMemberIDs = append(result.AddedMemberIDs, userID)
+		}
+
+		if newCreatorID != 0 && newCreatorID != operatorID {
+			if err := db.Model(&model.RoomMember{}).
+				Where("room_id = ? AND user_id = ? AND role = ?", room.ID, operatorID, model.Creator).
+				Update("role", model.Admin).Error; err != nil {
+				return err
+			}
+			if err := db.Model(&model.RoomMember{}).
+				Where("room_id = ? AND user_id = ?", room.ID, newCreatorID).
+				Update("role", model.Creator).Error; err != nil {
+				return err
+			}
+			roles[operatorID] = model.Admin
+			roles[newCreatorID] = model.Creator
+			result.PreviousCreatorID = operatorID
+			result.NewCreatorID = newCreatorID
+		}
+
+		result.RoomUserIDs = make([]uint, 0, len(roles))
+		for userID := range roles {
+			result.RoomUserIDs = append(result.RoomUserIDs, userID)
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
 
-	updates := map[string]interface{}{}
-	if req.Name != "" {
-		updates["name"] = req.Name
+	room, err := s.GetRoomByID(ctx, req.GetID(), operatorID, 6, 0, 6, 0)
+	if err != nil {
+		return nil, err
 	}
-	if req.Image != "" {
-		updates["image"] = req.Image
-	}
-	if len(updates) > 0 {
-		if err := db.Model(&room).Updates(updates).Error; err != nil {
-			return nil, err
-		}
-	}
-
-	adminIDs := uniqueUintIDs(req.GetAdminIDs(), req.GetCreatorID())
-	for _, adminID := range adminIDs {
-		if err := upsertRoomMember(db, room.ID, adminID, model.Admin); err != nil {
-			return nil, err
-		}
-	}
-
-	memberIDs := uniqueUintIDs(req.GetMemberIDs(), req.GetCreatorID())
-	for _, memberID := range memberIDs {
-		if err := upsertRoomMember(db, room.ID, memberID, model.Member); err != nil {
-			return nil, err
-		}
-	}
-
-	return s.GetRoomByID(ctx, room.ID, 0, 6, 0, 6, 0)
+	result.Room = room
+	return result, nil
 }
 
-func (s *roomService) JoinRoom(ctx context.Context, userID, roomID uint) (interface{}, error) {
-	db := s.tm.(*repository.Repository).DB(ctx)
-	var room model.Room
-	query := db.Model(&model.Room{})
-	if roomID == 0 {
-		if err := query.Order("id ASC").First(&room).Error; err != nil {
-			return nil, err
-		}
-	} else {
-		if err := query.Where("id = ?", roomID).First(&room).Error; err != nil {
-			return nil, err
-		}
+func (s *roomService) JoinRoom(ctx context.Context, userID, roomID uint) (*RoomJoinResult, error) {
+	if userID == 0 {
+		return nil, ErrRoomForbidden
 	}
 
-	if err := upsertRoomMember(db, room.ID, userID, model.Member); err != nil {
+	result := &RoomJoinResult{}
+	err := s.tm.Transaction(ctx, func(txCtx context.Context) error {
+		db := s.tm.(*repository.Repository).DB(txCtx)
+		var room model.Room
+		query := db.Clauses(clause.Locking{Strength: "UPDATE"}).Model(&model.Room{})
+		if roomID == 0 {
+			if err := query.Where("channel_type = ?", model.RoomTypeGroup).Order("id ASC").First(&room).Error; err != nil {
+				return err
+			}
+		} else if err := query.Where("id = ?", roomID).First(&room).Error; err != nil {
+			return err
+		}
+		result.RoomID = room.ID
+
+		var membership model.RoomMember
+		err := db.Where("room_id = ? AND user_id = ?", room.ID, userID).First(&membership).Error
+		isMember := err == nil
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+		if !isMember {
+			if room.ChannelType == model.RoomTypePrivate {
+				return ErrRoomForbidden
+			}
+			if err := ensureUsersExist(db, []uint{userID}); err != nil {
+				return err
+			}
+			if err := upsertRoomMember(db, room.ID, userID, model.Member); err != nil {
+				return err
+			}
+			result.Added = true
+		}
+		return db.Model(&model.RoomMember{}).
+			Where("room_id = ?", room.ID).
+			Distinct("user_id").
+			Pluck("user_id", &result.RoomUserIDs).Error
+	})
+	if err != nil {
 		return nil, err
 	}
 
-	return s.GetRoomByID(ctx, room.ID, userID, 6, 0, 6, 0)
+	room, err := s.GetRoomByID(ctx, result.RoomID, userID, 6, 0, 6, 0)
+	if err != nil {
+		return nil, err
+	}
+	result.Room = room
+	return result, nil
 }
 
 func buildRoomMessageUser(user *model.User) *roomMessageUser {
@@ -939,10 +1255,41 @@ func jsonStringToObject(value string) interface{} {
 	return object
 }
 
-func (s *roomService) DeleteRoom(ctx context.Context, id uint) error {
-	db := s.tm.(*repository.Repository).DB(ctx)
-	if err := db.Where("room_id = ?", id).Delete(&model.RoomMember{}).Error; err != nil {
-		return err
+func (s *roomService) DeleteRoom(ctx context.Context, operatorID, id uint) (*RoomDeleteResult, error) {
+	if operatorID == 0 || id == 0 {
+		return nil, ErrRoomForbidden
 	}
-	return db.Delete(&model.Room{}, id).Error
+
+	result := &RoomDeleteResult{}
+	err := s.tm.Transaction(ctx, func(txCtx context.Context) error {
+		db := s.tm.(*repository.Repository).DB(txCtx)
+		var room model.Room
+		if err := db.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ?", id).First(&room).Error; err != nil {
+			return err
+		}
+
+		var creator model.RoomMember
+		if err := db.Where("room_id = ? AND user_id = ? AND role = ?", id, operatorID, model.Creator).
+			First(&creator).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrRoomForbidden
+			}
+			return err
+		}
+
+		if err := db.Model(&model.RoomMember{}).
+			Where("room_id = ?", id).
+			Distinct("user_id").
+			Pluck("user_id", &result.RoomUserIDs).Error; err != nil {
+			return err
+		}
+		if err := db.Unscoped().Where("room_id = ?", id).Delete(&model.RoomMember{}).Error; err != nil {
+			return err
+		}
+		return db.Delete(&room).Error
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }

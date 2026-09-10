@@ -9,6 +9,7 @@ import {
   setLocalUserInfo,
   shiftRoom,
   topUserRoom,
+  updateLocalUserRoom,
   updateUserRoomReadSeq,
   userReducer,
 } from "./user";
@@ -38,6 +39,26 @@ describe("user room unread count", () => {
 
     expect(state.data.room).toHaveLength(1);
     expect(state.data.room?.[0].name).toBe("Updated room");
+  });
+
+  it("updates room metadata in place without changing sidebar order", () => {
+    const otherRoom = { ...room, id: "20", name: "Other" } as IRoom;
+    const initialState = userReducer(
+      undefined,
+      setLocalUserInfo({
+        id: "1",
+        userId: "1",
+        room: [otherRoom, room],
+      })
+    );
+
+    const state = userReducer(
+      initialState,
+      updateLocalUserRoom({ ...room, name: "Renamed" } as IRoom)
+    );
+
+    expect(state.data.room?.map((entry) => entry.id)).toEqual(["20", "10"]);
+    expect(state.data.room?.[1].name).toBe("Renamed");
   });
 
   it("moves the active room to the top and updates its preview", () => {

@@ -17,9 +17,9 @@ type RoomMember struct {
 	Role string `gorm:"column:role;type:varchar(50);default:'member'" json:"role"` // "creator", "admin", "member"
 
 	// Relations
-	UserID    uint  `gorm:"primaryKey;"`
+	UserID    uint  `gorm:"primaryKey;uniqueIndex:idx_room_members_room_user,priority:2"`
 	UserModel *User `gorm:"foreignKey:UserID" json:"user"`
-	RoomID    uint  `gorm:"primaryKey"`
+	RoomID    uint  `gorm:"primaryKey;uniqueIndex:idx_room_members_room_user,priority:1"`
 	RoomModel *Room `gorm:"foreignKey:RoomID" json:"room"`
 }
 

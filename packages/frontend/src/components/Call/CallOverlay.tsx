@@ -11,7 +11,7 @@ import {
   VideoOff,
   X,
 } from "lucide-react";
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { CallSession } from "./types";
 
 interface CallOverlayProps {

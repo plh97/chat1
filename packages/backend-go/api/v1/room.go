@@ -57,14 +57,19 @@ type (
 
 	// RoomUpdateRequest 用于更新房间的请求体
 	RoomUpdateRequest struct {
-		ID        RoomUserID   `json:"id"`
-		Name      string       `json:"name"`
-		Image     string       `json:"image"`
-		CreatorID RoomUserID   `json:"creatorId"`
-		AdminID   []RoomUserID `json:"adminId"`
-		AdminIDs  []RoomUserID `json:"adminIds"`
-		MemberID  []RoomUserID `json:"memberId"`
-		MemberIDs []RoomUserID `json:"memberIds"`
+		ID              RoomUserID   `json:"id"`
+		Name            *string      `json:"name"`
+		Image           *string      `json:"image"`
+		CreatorID       RoomUserID   `json:"creatorId"`
+		NewCreatorID    *RoomUserID  `json:"newCreatorId"`
+		AdminID         []RoomUserID `json:"adminId"`
+		AdminIDs        []RoomUserID `json:"adminIds"`
+		MemberID        []RoomUserID `json:"memberId"`
+		MemberIDs       []RoomUserID `json:"memberIds"`
+		RemoveAdminID   []RoomUserID `json:"removeAdminId"`
+		RemoveAdminIDs  []RoomUserID `json:"removeAdminIds"`
+		RemoveMemberID  []RoomUserID `json:"removeMemberId"`
+		RemoveMemberIDs []RoomUserID `json:"removeMemberIds"`
 	}
 
 	// JoinRoomRequest 用于加入房间的请求体
@@ -113,6 +118,13 @@ func (r RoomUpdateRequest) GetCreatorID() uint {
 	return uint(r.CreatorID)
 }
 
+func (r RoomUpdateRequest) GetNewCreatorID() uint {
+	if r.NewCreatorID == nil {
+		return 0
+	}
+	return uint(*r.NewCreatorID)
+}
+
 func (r RoomUpdateRequest) GetID() uint {
 	return uint(r.ID)
 }
@@ -129,4 +141,18 @@ func (r RoomUpdateRequest) GetMemberIDs() []uint {
 		return roomUserIDsToUint(r.MemberIDs)
 	}
 	return roomUserIDsToUint(r.MemberID)
+}
+
+func (r RoomUpdateRequest) GetRemoveAdminIDs() []uint {
+	if len(r.RemoveAdminIDs) > 0 {
+		return roomUserIDsToUint(r.RemoveAdminIDs)
+	}
+	return roomUserIDsToUint(r.RemoveAdminID)
+}
+
+func (r RoomUpdateRequest) GetRemoveMemberIDs() []uint {
+	if len(r.RemoveMemberIDs) > 0 {
+		return roomUserIDsToUint(r.RemoveMemberIDs)
+	}
+	return roomUserIDsToUint(r.RemoveMemberID)
 }

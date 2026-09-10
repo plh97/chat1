@@ -68,6 +68,11 @@ func (m *Migrate) Run(ctx context.Context) error {
 		}
 	}
 
+	if err := deduplicateRoomMembers(db); err != nil {
+		m.log.Error("deduplicate room members error", zap.Error(err))
+		return err
+	}
+
 	if err := db.AutoMigrate(
 		&model.User{},
 		&model.Room{},
@@ -100,6 +105,91 @@ func (m *Migrate) Run(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// deduplicateRoomMembers prepares legacy room_members tables for the composite
+// unique index on (room_id, user_id). It intentionally reads soft-deleted rows:
+// the index guarantees one durable row per pair, so re-adding a deleted member
+// must restore that row rather than insert another one.
+func deduplicateRoomMembers(db *gorm.DB) error {
+	if !db.Migrator().HasTable(&model.RoomMember{}) {
+		return nil
+	}
+
+	return db.Transaction(func(tx *gorm.DB) error {
+		type roomUserPair struct {
+			RoomID uint
+			UserID uint
+		}
+		var duplicatePairs []roomUserPair
+		if err := tx.Unscoped().Model(&model.RoomMember{}).
+			Select("room_id, user_id").
+			Group("room_id, user_id").
+			Having("COUNT(*) > 1").
+			Scan(&duplicatePairs).Error; err != nil {
+			return err
+		}
+
+		for _, pair := range duplicatePairs {
+			var duplicates []model.RoomMember
+			if err := tx.Unscoped().
+				Where("room_id = ? AND user_id = ?", pair.RoomID, pair.UserID).
+				Order("id ASC").
+				Find(&duplicates).Error; err != nil {
+				return err
+			}
+
+			keep := duplicates[0]
+			for _, candidate := range duplicates[1:] {
+				if preferRoomMember(candidate, keep) {
+					keep = candidate
+				}
+			}
+
+			removeIDs := make([]uint, 0, len(duplicates)-1)
+			for _, duplicate := range duplicates {
+				if duplicate.ID != keep.ID {
+					removeIDs = append(removeIDs, duplicate.ID)
+				}
+			}
+			if len(removeIDs) > 0 {
+				if err := tx.Unscoped().Where("id IN ?", removeIDs).Delete(&model.RoomMember{}).Error; err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
+func preferRoomMember(candidate, current model.RoomMember) bool {
+	candidateActive := !candidate.DeletedAt.Valid
+	currentActive := !current.DeletedAt.Valid
+	if candidateActive != currentActive {
+		return candidateActive
+	}
+
+	candidateRole := roomMemberRolePriority(candidate.Role)
+	currentRole := roomMemberRolePriority(current.Role)
+	if candidateRole != currentRole {
+		return candidateRole > currentRole
+	}
+
+	return candidate.ID < current.ID
+}
+
+func roomMemberRolePriority(role string) int {
+	switch role {
+	case model.Creator:
+		return 3
+	case model.Admin:
+		return 2
+	case model.Member:
+		return 1
+	default:
+		return 0
+	}
 }
 
 func (m *Migrate) createFakeUsers(total int) ([]model.User, error) {

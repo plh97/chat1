@@ -24,8 +24,6 @@ func NewFriendRepository(r *Repository) FriendRepository {
 	return &friendRepository{Repository: r}
 }
 
-const RoomTypePrivate = 1
-
 // AddFriend 添加好友 + 创建私聊房间
 func (r *friendRepository) AddFriend(ctx context.Context, userId, friendId uint) (*model.Room, error) {
 	if userId == friendId {
@@ -87,7 +85,22 @@ func (r *friendRepository) DeleteFriend(ctx context.Context, userId, friendId ui
 		user := model.User{ID: userId}
 		friend := model.User{ID: friendId}
 
-		// 1. 删除好友关系 (双向)
+		// 1. 查找只包含这两名用户的私聊房间。
+		// 所有条件都使用占位符，并忽略已软删除的成员关系。
+		var roomIDs []uint
+		if err := tx.Model(&model.Room{}).
+			Select("rooms.id").
+			Joins("JOIN room_members AS user_membership ON user_membership.room_id = rooms.id AND user_membership.user_id = ? AND user_membership.deleted_at IS NULL", userId).
+			Joins("JOIN room_members AS friend_membership ON friend_membership.room_id = rooms.id AND friend_membership.user_id = ? AND friend_membership.deleted_at IS NULL", friendId).
+			Joins("JOIN room_members AS active_membership ON active_membership.room_id = rooms.id AND active_membership.deleted_at IS NULL").
+			Where("rooms.channel_type = ?", model.RoomTypePrivate).
+			Group("rooms.id").
+			Having("COUNT(DISTINCT active_membership.user_id) = ?", 2).
+			Pluck("rooms.id", &roomIDs).Error; err != nil {
+			return err
+		}
+
+		// 2. 删除好友关系 (双向)
 		if err := tx.Model(&user).Association("Friends").Delete(&friend); err != nil {
 			return err
 		}
@@ -95,44 +108,13 @@ func (r *friendRepository) DeleteFriend(ctx context.Context, userId, friendId ui
 			return err
 		}
 
-		// 2. 查找这两个人共有的“私聊”房间 ID
-		// 逻辑：在 room_members 表中，找到同时包含 userId 和 friendId，且对应的 Room 类型是 Private 的记录
-		// 这是一个比较复杂的查询，用原生 SQL 或 Join 最稳妥
-		var roomId uint
-
-		// SQL思路:
-		// 找到一个 room_id, 它关联了 user_id, 也关联了 friend_id, 并且该 room 的 type 是 1
-		query := `
-            SELECT r.id 
-            FROM rooms r
-            JOIN room_members rm1 ON r.id = rm1.room_id AND rm1.user_id = ?
-            JOIN room_members rm2 ON r.id = rm2.room_id AND rm2.user_id = ?
-            WHERE r.type = ?
-            LIMIT 1
-        `
-
-		// 执行查询
-		if err := tx.Raw(query, userId, friendId, RoomTypePrivate).Scan(&roomId).Error; err != nil {
-			// 如果没找到房间，可能之前数据不一致，这里可以选择忽略错误，或者返回错误
-			// 这里选择记录日志但不中断事务，或者直接 return nil 视为成功
-			return nil
-		}
-
-		// 3. 删除房间
-		if roomId > 0 {
-			// 这里使用了 Unscoped() 硬删除，如果你想保留聊天记录(软删除)，去掉 Unscoped() 即可
-			// 注意：删除 Room 时，GORM 会自动删除 room_members 中间表的记录（如果设置了级联），
-			// 但 Gorm 默认 many2many 不会自动级联删除中间表数据，最好手动处理或确保数据库有外键级联约束。
-			// 最简单的办法是 Select("Members").Delete... 但删除 Room 本身通常就够了
-
-			// 先清空该房间的成员关联 (这一步在使用 many2many 时很重要，防止中间表残留)
-			targetRoom := model.Room{Model: gorm.Model{ID: roomId}}
-			if err := tx.Model(&targetRoom).Association("Members").Clear(); err != nil {
+		// 3. 显式硬删除中间表记录，再软删除私聊房间。
+		// GORM 默认不会在删除 many-to-many 主记录时清理中间表。
+		if len(roomIDs) > 0 {
+			if err := tx.Unscoped().Where("room_id IN ?", roomIDs).Delete(&model.RoomMember{}).Error; err != nil {
 				return err
 			}
-
-			// 再删除房间本身
-			if err := tx.Delete(&targetRoom).Error; err != nil {
+			if err := tx.Where("id IN ?", roomIDs).Delete(&model.Room{}).Error; err != nil {
 				return err
 			}
 		}

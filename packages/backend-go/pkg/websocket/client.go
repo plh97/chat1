@@ -268,6 +268,13 @@ func (h *Hub) handleSendMessage(ctx context.Context, authenticatedUserID uint, e
 	if err := json.Unmarshal(envelope.Data, &payload); err != nil {
 		return nil, nil, err
 	}
+	// System messages describe trusted room state changes. They must only be
+	// created by the HTTP/service path after its authorization checks have
+	// succeeded; accepting them from a WebSocket client lets any member forge
+	// events such as adding an administrator or transferring ownership.
+	if payload.ContentType == "SYSTEM_MESSAGE" || rawMessageHasValue(payload.SystemMessage) {
+		return nil, nil, errors.New("system messages are server-only")
+	}
 	channelID := rawMessageToScalarString(payload.ChannelID)
 	if channelID == "" {
 		return nil, nil, errors.New("channelId is required")
@@ -283,7 +290,7 @@ func (h *Hub) handleSendMessage(ctx context.Context, authenticatedUserID uint, e
 	userID := strconv.Itoa(int(authenticatedUserID))
 
 	switch payload.ContentType {
-	case "TEXT_MESSAGE", "MEDIA_MESSAGE", "SYSTEM_MESSAGE":
+	case "TEXT_MESSAGE", "MEDIA_MESSAGE":
 		responseData, err := h.persistMessage(ctx, payload, userID, channelID)
 		if err != nil {
 			return nil, nil, err
@@ -346,6 +353,10 @@ func (h *Hub) handleSendMessage(ctx context.Context, authenticatedUserID uint, e
 	default:
 		return nil, nil, fmt.Errorf("unsupported contentType: %s", payload.ContentType)
 	}
+}
+
+func rawMessageHasValue(raw json.RawMessage) bool {
+	return len(raw) != 0 && string(raw) != "null"
 }
 
 func (h *Hub) persistMessage(ctx context.Context, payload incomingMessage, userID, channelID string) (*outgoingMessage, error) {

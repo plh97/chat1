@@ -129,6 +129,14 @@ export const userSlice = createSlice({
         ],
       });
     },
+    updateLocalUserRoom(state, action: PayloadAction<IRoom>) {
+      const roomId = toRoomKey(action.payload.id);
+      const room = state.data.room?.find(
+        (entry) => toRoomKey(entry.id) === roomId
+      );
+      if (!room) return;
+      Object.assign(room, action.payload);
+    },
     logout(state) {
       Object.assign(state, {
         auth: false,
@@ -215,6 +223,7 @@ export const {
   updateUserRoomReadSeq,
   topUserRoom,
   shiftRoom,
+  updateLocalUserRoom,
   updateUserLastMsg,
 } = userSlice.actions;
 

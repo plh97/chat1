@@ -2,7 +2,7 @@ import { FiSend, FiPause } from "react-icons/fi";
 import { IconButton } from "@/components/ui/chakra-compat";
 import { FaRecordVinyl } from "react-icons/fa";
 import { useAppSelector } from "@/hooks/app";
-import { scrollToEnd, updateRoomThunk } from "@/store/reducer/room";
+import { joinRoomThunk, scrollToEnd } from "@/store/reducer/room";
 import { sendMessageAction } from "@/store/action/message";
 import {
   formatTime,
@@ -16,7 +16,6 @@ import { UploadFile } from "./UploadFile";
 import { useDraft } from "./useDraft";
 import { Reply } from "../Reply";
 import { Link } from "@/components/ui/chakra-compat";
-import { setLocalUserInfo } from "@/store/reducer/user";
 import { getFileExtension, getNormalizedMimeType } from "@/utils/uploadFile";
 
 const MAX_INPUT = 2000;
@@ -169,17 +168,7 @@ export function InputBox({ className }: { readonly className?: string }) {
   const isRoomMember =
     room.isMember ?? room.member.find((m) => m.id === userInfo.id);
   const handleJoinRoom = () => {
-    dispatch(
-      updateRoomThunk({
-        id: room.id,
-        memberId: [userInfo.id],
-      })
-    );
-    dispatch(
-      setLocalUserInfo({
-        room: [room, ...(userInfo.room ?? [])],
-      })
-    );
+    dispatch(joinRoomThunk({ id: room.id }));
   };
   if (!isRoomMember) {
     return (

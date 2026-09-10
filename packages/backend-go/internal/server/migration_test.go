@@ -5,6 +5,7 @@ import (
 	appLog "backend-go/pkg/log"
 	"context"
 	"testing"
+	"time"
 
 	"github.com/glebarez/sqlite"
 	"github.com/spf13/viper"
@@ -12,6 +13,17 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
+
+type legacyRoomMember struct {
+	gorm.Model
+	Role   string
+	UserID uint `gorm:"primaryKey"`
+	RoomID uint `gorm:"primaryKey"`
+}
+
+func (legacyRoomMember) TableName() string {
+	return "room_members"
+}
 
 func TestMigrationPreservesExistingDataByDefault(t *testing.T) {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
@@ -38,4 +50,49 @@ func TestMigrationResetMustBeExplicit(t *testing.T) {
 	conf.Set("migration.reset", true)
 	migration = NewMigrate(nil, &appLog.Logger{Logger: zap.NewNop()}, conf)
 	require.True(t, migration.reset)
+}
+
+func TestMigrationDeduplicatesRoomMembersBeforeAddingUniqueIndex(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	require.NoError(t, err)
+	require.NoError(t, db.Migrator().CreateTable(&legacyRoomMember{}))
+
+	deletedAt := gorm.DeletedAt{Time: time.Now().UTC(), Valid: true}
+	legacyRows := []legacyRoomMember{
+		{Model: gorm.Model{ID: 1}, RoomID: 10, UserID: 20, Role: model.Member},
+		{Model: gorm.Model{ID: 2}, RoomID: 10, UserID: 20, Role: model.Admin},
+		{Model: gorm.Model{ID: 3, DeletedAt: deletedAt}, RoomID: 10, UserID: 20, Role: model.Creator},
+		{Model: gorm.Model{ID: 4}, RoomID: 11, UserID: 21, Role: model.Member},
+		{Model: gorm.Model{ID: 5, DeletedAt: deletedAt}, RoomID: 11, UserID: 21, Role: model.Creator},
+		{Model: gorm.Model{ID: 6, DeletedAt: deletedAt}, RoomID: 12, UserID: 22, Role: model.Member},
+		{Model: gorm.Model{ID: 7, DeletedAt: deletedAt}, RoomID: 12, UserID: 22, Role: model.Creator},
+	}
+	require.NoError(t, db.Create(&legacyRows).Error)
+
+	migration := NewMigrate(db, &appLog.Logger{Logger: zap.NewNop()}, viper.New())
+	require.NoError(t, migration.Run(context.Background()))
+
+	var memberships []model.RoomMember
+	require.NoError(t, db.Unscoped().Order("room_id ASC").Find(&memberships).Error)
+	require.Len(t, memberships, 3)
+
+	require.Equal(t, uint(2), memberships[0].ID)
+	require.Equal(t, model.Admin, memberships[0].Role)
+	require.False(t, memberships[0].DeletedAt.Valid)
+	require.Equal(t, uint(4), memberships[1].ID)
+	require.Equal(t, model.Member, memberships[1].Role)
+	require.False(t, memberships[1].DeletedAt.Valid)
+	require.Equal(t, uint(7), memberships[2].ID)
+	require.Equal(t, model.Creator, memberships[2].Role)
+	require.True(t, memberships[2].DeletedAt.Valid)
+
+	require.True(t, db.Migrator().HasIndex(&model.RoomMember{}, "idx_room_members_room_user"))
+	err = db.Create(&model.RoomMember{RoomID: 10, UserID: 20, Role: model.Member}).Error
+	require.Error(t, err)
+
+	// A second startup is safe and leaves the same canonical rows in place.
+	require.NoError(t, migration.Run(context.Background()))
+	var count int64
+	require.NoError(t, db.Unscoped().Model(&model.RoomMember{}).Count(&count).Error)
+	require.Equal(t, int64(3), count)
 }

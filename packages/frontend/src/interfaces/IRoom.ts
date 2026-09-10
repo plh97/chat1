@@ -22,3 +22,18 @@ export interface IRoom extends Omit<Room, "member" | "message"> {
   message: IMessage[];
   lastMsg?: IMessage;
 }
+
+export interface RoomUpdateRequest {
+  id: string;
+  name?: string;
+  image?: string | null;
+  /** Existing fields add users to a role; they do not replace the full list. */
+  memberId?: string[];
+  adminId?: string[];
+  /** Remove ordinary members from the room. */
+  removeMemberIds?: string[];
+  /** Revoke admin privileges and keep the users as ordinary members. */
+  removeAdminIds?: string[];
+  /** Transfer ownership to an existing room participant. */
+  newCreatorId?: string;
+}
