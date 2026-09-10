@@ -182,7 +182,6 @@
     var socket = null;
     var reqId = 0;
     var callbacks = {};
-    var handlers = {};
     //Map from request id to route
     var routeMap = {};
     var dict = {};    // route string to code
@@ -474,16 +473,21 @@
         starx.emit('onKick', data);
     };
 
-    handlers[Package.TYPE_HANDSHAKE] = handshake;
-    handlers[Package.TYPE_HEARTBEAT] = heartbeat;
-    handlers[Package.TYPE_DATA] = onData;
-    handlers[Package.TYPE_KICK] = onKick;
-
     var dispatchPackage = function(msg) {
-        var packageHandler = Object.prototype.hasOwnProperty.call(handlers, msg.type) && handlers[msg.type];
-        if(typeof packageHandler === 'function') {
-            packageHandler(msg.body);
-        } else {
+        switch(msg.type) {
+        case Package.TYPE_HANDSHAKE:
+            handshake(msg.body);
+            break;
+        case Package.TYPE_HEARTBEAT:
+            heartbeat(msg.body);
+            break;
+        case Package.TYPE_DATA:
+            onData(msg.body);
+            break;
+        case Package.TYPE_KICK:
+            onKick(msg.body);
+            break;
+        default:
             starx.emit('error', 'invalid package type: ' + msg.type);
         }
     };
