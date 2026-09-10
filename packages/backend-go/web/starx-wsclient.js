@@ -182,7 +182,6 @@
     var socket = null;
     var reqId = 0;
     var callbacks = {};
-    var handlers = {};
     //Map from request id to route
     var routeMap = {};
     var dict = {};    // route string to code
@@ -474,19 +473,33 @@
         starx.emit('onKick', data);
     };
 
-    handlers[Package.TYPE_HANDSHAKE] = handshake;
-    handlers[Package.TYPE_HEARTBEAT] = heartbeat;
-    handlers[Package.TYPE_DATA] = onData;
-    handlers[Package.TYPE_KICK] = onKick;
+    var dispatchHandler = function(type, body) {
+        switch(type) {
+            case Package.TYPE_HANDSHAKE:
+                handshake(body);
+                return;
+            case Package.TYPE_HEARTBEAT:
+                heartbeat(body);
+                return;
+            case Package.TYPE_DATA:
+                onData(body);
+                return;
+            case Package.TYPE_KICK:
+                onKick(body);
+                return;
+            default:
+                throw new Error('unknown package type: ' + type);
+        }
+    };
 
     var processPackage = function(msgs) {
         if(Array.isArray(msgs)) {
             for(var i=0; i<msgs.length; i++) {
                 var msg = msgs[i];
-                handlers[msg.type](msg.body);
+                dispatchHandler(msg.type, msg.body);
             }
         } else {
-            handlers[msgs.type](msgs.body);
+            dispatchHandler(msgs.type, msgs.body);
         }
     };
 
