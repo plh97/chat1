@@ -479,14 +479,23 @@
     handlers[Package.TYPE_DATA] = onData;
     handlers[Package.TYPE_KICK] = onKick;
 
+    var dispatchPackage = function(msg) {
+        var packageHandler = Object.prototype.hasOwnProperty.call(handlers, msg.type) && handlers[msg.type];
+        if(typeof packageHandler === 'function') {
+            packageHandler(msg.body);
+        } else {
+            starx.emit('error', 'invalid package type: ' + msg.type);
+        }
+    };
+
     var processPackage = function(msgs) {
         if(Array.isArray(msgs)) {
             for(var i=0; i<msgs.length; i++) {
                 var msg = msgs[i];
-                handlers[msg.type](msg.body);
+                dispatchPackage(msg);
             }
         } else {
-            handlers[msgs.type](msgs.body);
+            dispatchPackage(msgs);
         }
     };
 
