@@ -17,10 +17,9 @@ type targetedMessage struct {
 type Hub struct {
 	messageService service.MessageService
 	userRepo       repository.UserRepository
-	// 注册了的客户端 map[客户端指针]布尔值
-	clients map[*Client]bool
-	// 广播通道
-	broadcast chan []byte
+	// Registered clients, also indexed by authenticated user for targeted sends.
+	clients       map[*Client]bool
+	clientsByUser map[uint]map[*Client]struct{}
 	// 按用户推送通道
 	targeted chan targetedMessage
 	// 注册通道
@@ -33,11 +32,47 @@ func NewHub(messageService service.MessageService, userRepo repository.UserRepos
 	return &Hub{
 		messageService: messageService,
 		userRepo:       userRepo,
-		broadcast:      make(chan []byte),
 		targeted:       make(chan targetedMessage, 256),
 		register:       make(chan *Client),
 		unregister:     make(chan *Client),
 		clients:        make(map[*Client]bool),
+		clientsByUser:  make(map[uint]map[*Client]struct{}),
+	}
+}
+
+func (h *Hub) registerClient(client *Client) {
+	h.clients[client] = true
+	userClients := h.clientsByUser[client.userID]
+	if userClients == nil {
+		userClients = make(map[*Client]struct{})
+		h.clientsByUser[client.userID] = userClients
+	}
+	userClients[client] = struct{}{}
+}
+
+func (h *Hub) unregisterClient(client *Client) {
+	if _, ok := h.clients[client]; !ok {
+		return
+	}
+	delete(h.clients, client)
+	if userClients := h.clientsByUser[client.userID]; userClients != nil {
+		delete(userClients, client)
+		if len(userClients) == 0 {
+			delete(h.clientsByUser, client.userID)
+		}
+	}
+	close(client.send)
+}
+
+func (h *Hub) deliverTargeted(message targetedMessage) {
+	for userID := range message.userIDs {
+		for client := range h.clientsByUser[userID] {
+			select {
+			case client.send <- message.payload:
+			default:
+				h.unregisterClient(client)
+			}
+		}
 	}
 }
 
@@ -46,37 +81,13 @@ func (h *Hub) Run() {
 	for {
 		select {
 		case client := <-h.register:
-			h.clients[client] = true
+			h.registerClient(client)
 			log.Printf("Client connected. Total: %d", len(h.clients))
 		case client := <-h.unregister:
-			if _, ok := h.clients[client]; ok {
-				delete(h.clients, client)
-				close(client.send)
-				log.Printf("Client disconnected. Total: %d", len(h.clients))
-			}
-		case message := <-h.broadcast:
-			log.Printf("Broadcasting message to %d clients", len(h.clients))
-			// 广播消息给所有人
-			for client := range h.clients {
-				select {
-				case client.send <- message:
-				default:
-					close(client.send)
-					delete(h.clients, client)
-				}
-			}
+			h.unregisterClient(client)
+			log.Printf("Client disconnected. Total: %d", len(h.clients))
 		case message := <-h.targeted:
-			for client := range h.clients {
-				if _, shouldReceive := message.userIDs[client.userID]; !shouldReceive {
-					continue
-				}
-				select {
-				case client.send <- message.payload:
-				default:
-					close(client.send)
-					delete(h.clients, client)
-				}
-			}
+			h.deliverTargeted(message)
 		}
 	}
 }

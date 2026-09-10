@@ -25,6 +25,7 @@ type UserRepository interface {
 
 type RoomMembershipRepository interface {
 	AreUsersInRoom(ctx context.Context, roomID uint, userIDs []uint) (bool, error)
+	ListRoomUserIDs(ctx context.Context, roomID uint) ([]uint, error)
 }
 
 func NewUserRepository(r *Repository) UserRepository {
@@ -66,6 +67,21 @@ func (r *userRepository) AreUsersInRoom(ctx context.Context, roomID uint, userID
 		Distinct("user_id").
 		Count(&count).Error
 	return count == int64(len(ids)), err
+}
+
+func (r *userRepository) ListRoomUserIDs(ctx context.Context, roomID uint) ([]uint, error) {
+	if roomID == 0 {
+		return nil, nil
+	}
+
+	var userIDs []uint
+	err := r.DB(ctx).
+		Table("room_members").
+		Where("room_id = ? AND deleted_at IS NULL", roomID).
+		Distinct("user_id").
+		Order("user_id ASC").
+		Pluck("user_id", &userIDs).Error
+	return userIDs, err
 }
 
 func (r *userRepository) loadPrivateRoomPeers(ctx context.Context, user *model.User) error {

@@ -108,6 +108,10 @@ func TestUserRepository_AreUsersInRoom(t *testing.T) {
 	allowed, err = membershipRepo.AreUsersInRoom(ctx, room.ID, []uint{7, 10})
 	assert.NoError(t, err)
 	assert.False(t, allowed)
+
+	userIDs, err := membershipRepo.ListRoomUserIDs(ctx, room.ID)
+	assert.NoError(t, err)
+	assert.Equal(t, []uint{7, 9}, userIDs)
 }
 
 func TestUserRepository_GetByID_LoadsPrivateRoomPeer(t *testing.T) {

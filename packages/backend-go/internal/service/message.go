@@ -16,7 +16,7 @@ type MessageService interface {
 	GetMessageByID(ctx context.Context, messageID uint) (*model.Message, error)
 	GetMessages(ctx context.Context, channelID string, limit, offset int) ([]*model.Message, error)
 	MarkAsRead(ctx context.Context, channelID, userID string, seq int) error
-	RecallMessage(ctx context.Context, messageID uint, userID string) (*model.Message, error)
+	RecallMessage(ctx context.Context, messageID uint, userID, channelID string) (*model.Message, error)
 	GetUnreadCount(ctx context.Context, channelID, userID string) (int64, error)
 }
 
@@ -133,7 +133,7 @@ func (s *messageService) MarkAsRead(ctx context.Context, channelID, userID strin
 }
 
 // RecallMessage marks a message as recalled
-func (s *messageService) RecallMessage(ctx context.Context, messageID uint, userID string) (*model.Message, error) {
+func (s *messageService) RecallMessage(ctx context.Context, messageID uint, userID, channelID string) (*model.Message, error) {
 	// Get the message to verify ownership
 	message, err := s.messageRepo.GetByID(ctx, messageID)
 	if err != nil {
@@ -143,6 +143,9 @@ func (s *messageService) RecallMessage(ctx context.Context, messageID uint, user
 	// Verify the user owns this message
 	if message.UserId != userID {
 		return nil, fmt.Errorf("not authorized to recall this message")
+	}
+	if message.ChannelId != channelID {
+		return nil, fmt.Errorf("message does not belong to this room")
 	}
 
 	// Mark as recalled

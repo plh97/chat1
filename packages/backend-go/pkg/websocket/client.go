@@ -140,16 +140,19 @@ func (c *Client) handleIncomingMessage(raw []byte) error {
 	}
 
 	if envelope.Event != wsSendMessageEvent {
-		c.hub.broadcast <- raw
-		return nil
+		return c.writeErrorResponseForEvent(
+			envelope.Event,
+			envelope.RequestID,
+			errors.New("unsupported websocket event"),
+		)
 	}
 
-	response, err := c.hub.handleSendMessage(context.Background(), envelope)
+	response, recipients, err := c.hub.handleSendMessage(context.Background(), c.userID, envelope)
 	if err != nil {
 		return c.writeErrorResponse(envelope.RequestID, err)
 	}
 
-	c.hub.broadcast <- response
+	c.hub.targeted <- targetedMessage{userIDs: recipients, payload: response}
 	return nil
 }
 
@@ -236,32 +239,62 @@ func (h *Hub) handleCallSignal(ctx context.Context, callerUserID uint, envelope 
 	return response, targetUserID, err
 }
 
-func (h *Hub) handleSendMessage(ctx context.Context, envelope wsEnvelope) ([]byte, error) {
-	var payload incomingMessage
-	if err := json.Unmarshal(envelope.Data, &payload); err != nil {
+func (h *Hub) roomRecipients(ctx context.Context, roomID, authenticatedUserID uint) (map[uint]struct{}, error) {
+	if h.userRepo == nil || authenticatedUserID == 0 {
+		return nil, errors.New("unauthorized")
+	}
+	membershipRepo, ok := h.userRepo.(repository.RoomMembershipRepository)
+	if !ok {
+		return nil, errors.New("room membership is unavailable")
+	}
+	userIDs, err := membershipRepo.ListRoomUserIDs(ctx, roomID)
+	if err != nil {
 		return nil, err
 	}
-	userID := rawMessageToScalarString(payload.UserID)
+	recipients := make(map[uint]struct{}, len(userIDs))
+	for _, userID := range userIDs {
+		if userID != 0 {
+			recipients[userID] = struct{}{}
+		}
+	}
+	if _, isMember := recipients[authenticatedUserID]; !isMember {
+		return nil, errors.New("not authorized for this room")
+	}
+	return recipients, nil
+}
+
+func (h *Hub) handleSendMessage(ctx context.Context, authenticatedUserID uint, envelope wsEnvelope) ([]byte, map[uint]struct{}, error) {
+	var payload incomingMessage
+	if err := json.Unmarshal(envelope.Data, &payload); err != nil {
+		return nil, nil, err
+	}
 	channelID := rawMessageToScalarString(payload.ChannelID)
 	if channelID == "" {
-		return nil, errors.New("channelId is required")
+		return nil, nil, errors.New("channelId is required")
 	}
+	roomID, err := strconv.ParseUint(channelID, 10, 64)
+	if err != nil || roomID == 0 {
+		return nil, nil, errors.New("invalid channelId")
+	}
+	recipients, err := h.roomRecipients(ctx, uint(roomID), authenticatedUserID)
+	if err != nil {
+		return nil, nil, err
+	}
+	userID := strconv.Itoa(int(authenticatedUserID))
 
 	switch payload.ContentType {
 	case "TEXT_MESSAGE", "MEDIA_MESSAGE", "SYSTEM_MESSAGE":
-		if userID == "" {
-			return nil, errors.New("userId is required")
-		}
 		responseData, err := h.persistMessage(ctx, payload, userID, channelID)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		return json.Marshal(wsEnvelope{
+		response, err := json.Marshal(wsEnvelope{
 			Event:     wsSendMessageEvent,
 			RequestID: envelope.RequestID,
 			Code:      0,
 			Data:      mustMarshalRawMessage(responseData),
 		})
+		return response, recipients, err
 	case "READ_MESSAGE":
 		var readBody struct {
 			Operator    string                 `json:"operator"`
@@ -269,11 +302,13 @@ func (h *Hub) handleSendMessage(ctx context.Context, envelope wsEnvelope) ([]byt
 			ReadSeq     map[string]interface{} `json:"readSeq"`
 		}
 		if err := json.Unmarshal(payload.ReadMessage, &readBody); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		if readBody.Operator != "" && readBody.LastReadSeq > 0 {
-			if err := h.messageService.MarkAsRead(ctx, channelID, readBody.Operator, readBody.LastReadSeq); err != nil {
-				return nil, err
+		readBody.Operator = userID
+		readBody.ReadSeq = map[string]interface{}{userID: readBody.LastReadSeq}
+		if readBody.LastReadSeq > 0 {
+			if err := h.messageService.MarkAsRead(ctx, channelID, userID, readBody.LastReadSeq); err != nil {
+				return nil, nil, err
 			}
 		}
 		responsePayload := map[string]interface{}{
@@ -283,38 +318,52 @@ func (h *Hub) handleSendMessage(ctx context.Context, envelope wsEnvelope) ([]byt
 			"channelId":     channelID,
 			"textMessage":   rawMessageToObject(payload.TextMessage),
 			"mediaMessage":  rawMessageToObject(payload.MediaMessage),
-			"readMessage":   rawMessageToObject(payload.ReadMessage),
+			"readMessage":   readBody,
 			"recallMessage": rawMessageToObject(payload.RecallMessage),
 			"systemMessage": rawMessageToObject(payload.SystemMessage),
 			"userId":        userID,
 			"replyId":       rawMessageToScalarString(payload.ReplyID),
 		}
-		return json.Marshal(wsEnvelope{
+		response, err := json.Marshal(wsEnvelope{
 			Event:     wsSendMessageEvent,
 			RequestID: envelope.RequestID,
 			Code:      0,
 			Data:      mustMarshalRawMessage(responsePayload),
 		})
+		return response, recipients, err
 	case "RECALL_MESSAGE":
-		if payload.ContentType == "RECALL_MESSAGE" {
-			responseData, err := h.recallMessage(ctx, payload)
-			if err != nil {
-				return nil, err
-			}
-			return json.Marshal(wsEnvelope{
-				Event:     wsSendMessageEvent,
-				RequestID: envelope.RequestID,
-				Code:      0,
-				Data:      mustMarshalRawMessage(responseData),
-			})
+		responseData, err := h.recallMessage(ctx, payload, userID, channelID)
+		if err != nil {
+			return nil, nil, err
 		}
-		return nil, errors.New("unsupported recall message payload")
+		response, err := json.Marshal(wsEnvelope{
+			Event:     wsSendMessageEvent,
+			RequestID: envelope.RequestID,
+			Code:      0,
+			Data:      mustMarshalRawMessage(responseData),
+		})
+		return response, recipients, err
 	default:
-		return nil, fmt.Errorf("unsupported contentType: %s", payload.ContentType)
+		return nil, nil, fmt.Errorf("unsupported contentType: %s", payload.ContentType)
 	}
 }
 
 func (h *Hub) persistMessage(ctx context.Context, payload incomingMessage, userID, channelID string) (*outgoingMessage, error) {
+	replyID := rawMessageToScalarString(payload.ReplyID)
+	if replyID != "" {
+		parsedReplyID, err := strconv.ParseUint(replyID, 10, 64)
+		if err != nil {
+			return nil, errors.New("invalid replyId")
+		}
+		replyMessage, err := h.messageService.GetMessageByID(ctx, uint(parsedReplyID))
+		if err != nil {
+			return nil, errors.New("reply message not found")
+		}
+		if replyMessage.ChannelId != channelID {
+			return nil, errors.New("reply message does not belong to this room")
+		}
+	}
+
 	message := &model.Message{
 		ContentType:   payload.ContentType,
 		ChannelId:     channelID,
@@ -325,7 +374,7 @@ func (h *Hub) persistMessage(ctx context.Context, payload incomingMessage, userI
 		RecallMessage: rawMessageToString(payload.RecallMessage),
 		SystemMessage: rawMessageToString(payload.SystemMessage),
 		UserId:        userID,
-		ReplyId:       rawMessageToScalarString(payload.ReplyID),
+		ReplyId:       replyID,
 	}
 
 	savedMessage, err := h.messageService.SendMessage(ctx, message)
@@ -341,9 +390,8 @@ func (h *Hub) persistMessage(ctx context.Context, payload incomingMessage, userI
 	return h.formatOutgoingMessage(ctx, savedMessage, user)
 }
 
-func (h *Hub) recallMessage(ctx context.Context, payload incomingMessage) (*outgoingMessage, error) {
+func (h *Hub) recallMessage(ctx context.Context, payload incomingMessage, userID, channelID string) (*outgoingMessage, error) {
 	var recallBody struct {
-		Operator    string          `json:"operator"`
 		RecallMsgID json.RawMessage `json:"recallMsgId"`
 	}
 	if err := json.Unmarshal(payload.RecallMessage, &recallBody); err != nil {
@@ -353,7 +401,7 @@ func (h *Hub) recallMessage(ctx context.Context, payload incomingMessage) (*outg
 	if err != nil {
 		return nil, err
 	}
-	recalledMessage, err := h.messageService.RecallMessage(ctx, messageID, recallBody.Operator)
+	recalledMessage, err := h.messageService.RecallMessage(ctx, messageID, userID, channelID)
 	if err != nil {
 		return nil, err
 	}
