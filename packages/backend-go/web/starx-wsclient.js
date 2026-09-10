@@ -182,7 +182,7 @@
     var socket = null;
     var reqId = 0;
     var callbacks = {};
-    var handlers = {};
+    var handlers = Object.create(null);
     //Map from request id to route
     var routeMap = {};
     var dict = {};    // route string to code
@@ -479,14 +479,25 @@
     handlers[Package.TYPE_DATA] = onData;
     handlers[Package.TYPE_KICK] = onKick;
 
+    var dispatchPackage = function(type, body) {
+        if(!Object.prototype.hasOwnProperty.call(handlers, type)) {
+            return;
+        }
+
+        var handler = handlers[type];
+        if(typeof handler === 'function') {
+            handler(body);
+        }
+    };
+
     var processPackage = function(msgs) {
         if(Array.isArray(msgs)) {
             for(var i=0; i<msgs.length; i++) {
                 var msg = msgs[i];
-                handlers[msg.type](msg.body);
+                dispatchPackage(msg.type, msg.body);
             }
         } else {
-            handlers[msgs.type](msgs.body);
+            dispatchPackage(msgs.type, msgs.body);
         }
     };
 
