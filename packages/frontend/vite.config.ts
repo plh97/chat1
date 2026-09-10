@@ -40,7 +40,12 @@ export default defineConfig({
     viteCompression(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["icon.svg"],
+      includeAssets: [
+        "icon.svg",
+        "favicon_io/apple-touch-icon.png",
+        "favicon_io/android-chrome-192x192.png",
+        "favicon_io/android-chrome-512x512.png",
+      ],
       workbox: {
         cleanupOutdatedCaches: true,
         clientsClaim: true,
@@ -50,22 +55,34 @@ export default defineConfig({
         skipWaiting: true,
       },
       manifest: {
+        id: "/",
         name: "Chat room",
         short_name: "Chat",
         description:
           "Chat web application. Send receive message from your friends immediately.",
-        theme_color: "#000",
+        start_url: "/",
+        scope: "/",
+        display: "standalone",
+        background_color: "#000000",
+        theme_color: "#000000",
         icons: [
           {
-            src: "icon.svg",
+            src: "favicon_io/android-chrome-192x192.png",
             sizes: "192x192",
-            type: "image/svg",
-            purpose: "maskable any",
+            type: "image/png",
+            purpose: "any",
+          },
+          {
+            src: "favicon_io/android-chrome-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any",
           },
           {
             src: "icon.svg",
-            sizes: "512x512",
-            type: "image/svg",
+            sizes: "any",
+            type: "image/svg+xml",
+            purpose: "any",
           },
         ],
       },

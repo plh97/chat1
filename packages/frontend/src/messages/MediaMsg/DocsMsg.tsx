@@ -50,21 +50,15 @@ export const FileIcon = ({
 
 export const DocsMsg = ({ message }: { message: IMediaMessage }) => {
   return (
-    <div
-      style={{ width: "300px" }}
-      className="w-[300px] gap-2 box-content p-2.5 h-10 overflow-hidden select-none flex items-start justify-center"
-    >
+    <div className="box-border flex min-h-16 w-full min-w-0 max-w-[300px] items-center gap-2 overflow-hidden p-2.5">
       <FileIcon
         type={message.extension}
-        className="h-10 w-10 flex-initial text-5xl"
+        className="h-10 w-10 flex-none text-5xl"
       />
-      <div
-        className="h-full flex flex-col text-nowrap justify-between flex-1 text-xs truncate"
-        style={{ width: "calc(100% - 100px)", textWrap: "nowrap" }}
-      >
+      <div className="flex h-full min-w-0 flex-1 flex-col justify-between truncate whitespace-nowrap text-xs">
         <div
           style={{ lineHeight: "1em" }}
-          className="text-lg font-bold overflow-hidden text-nowrap text-ellipsis"
+          className="overflow-hidden text-ellipsis whitespace-nowrap text-lg font-bold"
         >
           {message.name}
         </div>
@@ -72,11 +66,10 @@ export const DocsMsg = ({ message }: { message: IMediaMessage }) => {
           {message.extension ?? "❓"} · {formatFileSize(message.size)}
         </div>
       </div>
-      <IconButton
-        onClick={() => open(message.url)}
-        aria-label="download button"
-      >
-        <HiOutlineDocumentSearch className="text-2xl" />
+      <IconButton asChild aria-label={`Open ${message.name || "attachment"}`}>
+        <a href={message.url} target="_blank" rel="noopener noreferrer">
+          <HiOutlineDocumentSearch className="text-2xl" />
+        </a>
       </IconButton>
     </div>
   );

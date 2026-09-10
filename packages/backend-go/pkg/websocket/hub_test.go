@@ -6,10 +6,21 @@ import (
 	"testing"
 
 	"backend-go/internal/model"
+	"backend-go/internal/repository"
 	mockRepository "backend-go/test/mocks/repository"
 
 	"github.com/golang/mock/gomock"
 )
+
+type profileAudienceRepositoryStub struct {
+	repository.UserRepository
+	userIDs []uint
+	err     error
+}
+
+func (s *profileAudienceRepositoryStub) ListProfileAudienceUserIDs(context.Context, uint) ([]uint, error) {
+	return s.userIDs, s.err
+}
 
 type stubMessageService struct {
 	sendMessageFn    func(context.Context, *model.Message) (*model.Message, error)
@@ -311,6 +322,43 @@ func TestNotifyRoomListChangedTargetsOnlyRequestedUsers(t *testing.T) {
 	}
 	if envelope.Event != wsRoomListChangedEvent {
 		t.Fatalf("expected %q event, got %q", wsRoomListChangedEvent, envelope.Event)
+	}
+}
+
+func TestNotifyUserUpdatedTargetsOnlySharedRoomUsersWithPublicFields(t *testing.T) {
+	repo := &profileAudienceRepositoryStub{userIDs: []uint{2, 2, 0}}
+	hub := NewHub(nil, repo)
+	hub.NotifyUserUpdated(context.Background(), 1, "New name", "new.png")
+
+	notification := <-hub.targeted
+	if len(notification.userIDs) != 2 {
+		t.Fatalf("expected editor and one peer, got %d targets", len(notification.userIDs))
+	}
+	if _, ok := notification.userIDs[1]; !ok {
+		t.Fatal("expected every editor session to receive the profile update")
+	}
+	if _, ok := notification.userIDs[2]; !ok {
+		t.Fatal("expected the shared-room peer to receive the profile update")
+	}
+
+	var envelope wsEnvelope
+	if err := json.Unmarshal(notification.payload, &envelope); err != nil {
+		t.Fatalf("unmarshal notification: %v", err)
+	}
+	if envelope.Event != wsUserUpdatedEvent {
+		t.Fatalf("expected %q event, got %q", wsUserUpdatedEvent, envelope.Event)
+	}
+	var profile map[string]interface{}
+	if err := json.Unmarshal(envelope.Data, &profile); err != nil {
+		t.Fatalf("unmarshal profile: %v", err)
+	}
+	if len(profile) != 3 || profile["id"] != "1" || profile["userName"] != "New name" || profile["image"] != "new.png" {
+		t.Fatalf("unexpected public profile payload: %#v", profile)
+	}
+	for _, privateField := range []string{"email", "bio", "permission", "password"} {
+		if _, exists := profile[privateField]; exists {
+			t.Fatalf("private field %q must not be broadcast", privateField)
+		}
 	}
 }
 

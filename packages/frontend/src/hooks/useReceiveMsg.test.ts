@@ -10,6 +10,7 @@ const mockRefreshRoomInfoThunk = jest.fn((id: string) => ({
 
 jest.mock("@/Api", () => ({
   normalizeMessage: (message: IMessage) => message,
+  normalizeUser: (user: unknown) => user,
 }));
 
 jest.mock("@/store/reducer/user", () => ({
@@ -105,5 +106,31 @@ describe("useReceiveMsg room synchronization", () => {
 
     expect(mockFetchUserInfoThunk).toHaveBeenCalledTimes(1);
     expect(mockRefreshRoomInfoThunk).toHaveBeenCalledWith("7");
+  });
+
+  it("patches loaded user references on USER_UPDATED", async () => {
+    renderHook(() => useReceiveMsg({ current: { id: "7" } as IRoom }));
+
+    await act(async () => {
+      await handlers.get(WS_EVENT.USER_UPDATED)!({
+        data: {
+          id: "2",
+          userId: "2",
+          userName: "Updated peer",
+          image: "peer-new.png",
+        },
+      });
+    });
+
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "user/updateUserReferences",
+        payload: expect.objectContaining({
+          id: "2",
+          userName: "Updated peer",
+          image: "peer-new.png",
+        }),
+      })
+    );
   });
 });

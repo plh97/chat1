@@ -4,7 +4,7 @@ import { wsUrl } from "@/config";
 
 export let ws: SocketClient;
 
-export default function useWebsocket() {
+export default function useWebsocket(roomId = "") {
   const authToken = getToken();
   const tokenChanged = Boolean(ws && ws.authToken !== authToken);
   if (tokenChanged) {
@@ -22,5 +22,5 @@ export default function useWebsocket() {
   const roomRef = useRef<IRoom>(room);
   roomRef.current = room;
   useReceiveMsg(roomRef);
-  useReconnect(ws);
+  useReconnect(ws, roomId);
 }

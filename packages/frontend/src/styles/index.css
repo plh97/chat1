@@ -10,12 +10,30 @@
   #root {
     min-height: 100vh;
     min-height: 100dvh;
+    height: 100vh;
     height: 100dvh;
+  }
+
+  html {
+    text-size-adjust: 100%;
   }
 
   html,
   body {
     margin: 0;
+  }
+
+  button,
+  [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    button:not(:disabled):active,
+    [role="button"]:not([aria-disabled="true"]):active {
+      opacity: 0.72;
+    }
   }
 }
 
@@ -36,6 +54,65 @@
     padding-bottom: calc(0.75rem + constant(safe-area-inset-bottom));
     padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
   }
+
+  .app-scrollbar {
+    scrollbar-color: rgb(71 85 105 / 70%) transparent;
+    scrollbar-width: thin;
+  }
+
+  .app-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .app-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .app-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgb(71 85 105 / 70%);
+    border-radius: 9999px;
+  }
+
+  .app-screen {
+    animation: app-screen-enter 160ms ease-out;
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    .app-scrollbar {
+      scrollbar-width: none;
+    }
+
+    .app-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    [data-msg] {
+      -webkit-touch-callout: none;
+      user-select: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .app-screen {
+      animation: none;
+    }
+
+    button,
+    [role="button"] {
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@keyframes app-screen-enter {
+  from {
+    opacity: 0.75;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 body {
@@ -50,7 +127,9 @@ body {
   background-color: #000;
   color: #fff;
   width: 100%;
+  min-height: 100vh;
   min-height: 100dvh;
+  height: 100vh;
   height: 100dvh;
   overflow: hidden;
   overscroll-behavior: none;

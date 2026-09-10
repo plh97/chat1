@@ -2,9 +2,8 @@ import { SocketClient, WS_EVENT } from "@/core";
 import { fetchUserInfoThunk } from "@/store/reducer/user";
 import { getRoomInfoThunk } from "@/store/reducer/room";
 
-export const useReconnect = (_ws: SocketClient) => {
+export const useReconnect = (_ws: SocketClient, roomId = "") => {
   const toast = useToast();
-  const { id = "" } = useParams();
   const dispatch = useAppDispatch();
   const onReconnect = () => {
     toast.closeAll();
@@ -15,8 +14,8 @@ export const useReconnect = (_ws: SocketClient) => {
     //   position: "top",
     // });
     dispatch(fetchUserInfoThunk());
-    if (id) {
-      dispatch(getRoomInfoThunk(id));
+    if (roomId) {
+      dispatch(getRoomInfoThunk(roomId));
     }
   };
   const onError = () => {

@@ -4,6 +4,8 @@ import { Loader2 } from "lucide-react";
 import React, { useMemo, useRef, useState } from "react";
 import { getMessageReaders } from "@/utils/messageRead";
 import { loadMessageReaders } from "@/utils/messageReaders";
+import { resolveUserReference } from "@/store/reducer/userReferences";
+import { useAppSelector } from "@/hooks/app";
 
 interface Props {
   children: React.ReactElement;
@@ -46,6 +48,9 @@ export const ReadReceiptHoverCard = ({
   const [loading, setLoading] = useState(false);
   const [failed, setFailed] = useState(false);
   const [readerTotalCount, setReaderTotalCount] = useState(readCount);
+  const profileUpdates = useAppSelector(
+    (state) => state.user?.profileUpdates ?? {}
+  );
   const loadedKeyRef = useRef("");
   const readSeq = (room.readSeq ?? {}) as Record<string, number>;
   const readers = useMemo(
@@ -107,14 +112,20 @@ export const ReadReceiptHoverCard = ({
               </p>
             ) : (
               <div className="max-h-48 space-y-2 overflow-y-auto">
-                {readers.map((user) => (
-                  <div key={user.id} className="flex items-center gap-2">
-                    <ReaderAvatar user={user} />
-                    <span className="min-w-0 truncate text-sm">
-                      {user.userName}
-                    </span>
-                  </div>
-                ))}
+                {readers.map((user) => {
+                  const displayedUser = resolveUserReference(
+                    user,
+                    profileUpdates
+                  );
+                  return (
+                    <div key={user.id} className="flex items-center gap-2">
+                      <ReaderAvatar user={displayedUser} />
+                      <span className="min-w-0 truncate text-sm">
+                        {displayedUser.userName}
+                      </span>
+                    </div>
+                  );
+                })}
                 {readerTotalCount > readers.length ? (
                   <p className="text-xs text-slate-400">
                     And {readerTotalCount - readers.length} more

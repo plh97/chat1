@@ -1,5 +1,5 @@
 import Api from "@/Api";
-import type { IMessage, IRoom } from "@/interfaces";
+import type { IMessage, IRoom, IUser } from "@/interfaces";
 import { configureStore } from "@reduxjs/toolkit";
 
 jest.mock("@/Api", () => ({
@@ -19,14 +19,18 @@ import {
   appendMoreMessage,
   initialMessage,
   joinRoomThunk,
+  loadRoomMoreMessageThunk,
   loadMoreMessage,
   markReadMessage,
   openMessageWindow,
   roomReducer,
   refreshRoomInfoThunk,
   updateRoomThunk,
+  updateReplyMessage,
+  updateSelectedMessage,
 } from "./room";
 import { updateLocalUserRoom, userReducer } from "./user";
+import { updateUserReferences } from "./userReferences";
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -171,6 +175,65 @@ describe("room detail refresh", () => {
     ]);
     expect(store.getState().room.loadingMessage).toBe(false);
   });
+
+  it("keeps initial loading active between metadata and message responses", async () => {
+    let resolveRoom!: (room: IRoom) => void;
+    let resolveMessages!: (page: {
+      message: IMessage[];
+      hasMore: boolean;
+    }) => void;
+    (Api.getRoom as jest.Mock).mockReturnValueOnce(
+      new Promise<IRoom>((resolve) => {
+        resolveRoom = resolve;
+      })
+    );
+    (Api.getRoomMessages as jest.Mock).mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveMessages = resolve;
+      })
+    );
+    const store = configureStore({
+      reducer: { room: roomReducer, user: userReducer },
+    });
+
+    const request = store.dispatch(getRoomInfoThunk("room-1"));
+    expect(store.getState().room.loadingMessageKind).toBe("initial");
+
+    resolveRoom({
+      id: "room-1",
+      isMember: true,
+      message: [],
+      member: [],
+    } as unknown as IRoom);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(store.getState().room.data.id).toBe("room-1");
+    expect(store.getState().room.loadingMessageKind).toBe("initial");
+
+    resolveMessages({ message: [], hasMore: false });
+    await request;
+
+    expect(store.getState().room.loadingMessage).toBe(false);
+    expect(store.getState().room.loadingMessageKind).toBeNull();
+  });
+
+  it("clears history loading after a rejected request", async () => {
+    (Api.getRoomMessages as jest.Mock).mockRejectedValueOnce(
+      new Error("network failed")
+    );
+    const store = configureStore({
+      reducer: { room: roomReducer, user: userReducer },
+    });
+
+    const result = await store.dispatch(
+      loadRoomMoreMessageThunk({ id: "room-1", start: 50, pageSize: 50 })
+    );
+
+    expect(loadRoomMoreMessageThunk.rejected.match(result)).toBe(true);
+    expect(store.getState().room.loadingMessage).toBe(false);
+    expect(store.getState().room.loadingMessageKind).toBeNull();
+  });
 });
 
 describe("room read sequence", () => {
@@ -222,5 +285,66 @@ describe("message search window", () => {
     expect(state.data.messageWindowMode).toBe(true);
     expect(state.data.hasMoreBefore).toBe(true);
     expect(state.data.hasMoreAfter).toBe(true);
+  });
+});
+
+describe("active room profile reference updates", () => {
+  it("updates roles, loaded messages, replies and selected snapshots", () => {
+    const oldUser = {
+      id: "7",
+      userId: "7",
+      userName: "Old name",
+      image: "old.png",
+    } as IUser;
+    const nestedReply = {
+      id: "reply-1",
+      userId: "7",
+      user: { ...oldUser },
+    } as IMessage;
+    const message = {
+      id: "message-1",
+      userId: "7",
+      user: { ...oldUser },
+      reply: nestedReply,
+    } as IMessage;
+    let state = roomReducer(
+      undefined,
+      initialMessage({
+        id: "room-1",
+        member: [{ ...oldUser }],
+        admin: [{ ...oldUser }],
+        creator: { ...oldUser },
+        peer: { ...oldUser },
+        message: [message],
+        lastMsg: { ...message, user: { ...oldUser } },
+      })
+    );
+    state = roomReducer(
+      state,
+      updateSelectedMessage({ ...message, user: { ...oldUser } })
+    );
+    state = roomReducer(
+      state,
+      updateReplyMessage({ ...nestedReply, user: { ...oldUser } })
+    );
+
+    state = roomReducer(
+      state,
+      updateUserReferences({
+        userId: "7",
+        userName: "New name",
+        image: "new.png",
+      })
+    );
+
+    expect(state.data.member[0].userName).toBe("New name");
+    expect(state.data.admin[0].image).toBe("new.png");
+    expect(state.data.creator?.userName).toBe("New name");
+    expect(state.data.peer?.image).toBe("new.png");
+    expect(state.data.message[0].user.userName).toBe("New name");
+    expect(state.data.message[0].reply?.user.image).toBe("new.png");
+    expect(state.data.lastMsg?.user.userName).toBe("New name");
+    expect(state.selectedMessage?.user.image).toBe("new.png");
+    expect(state.replyMessage?.user.userName).toBe("New name");
   });
 });

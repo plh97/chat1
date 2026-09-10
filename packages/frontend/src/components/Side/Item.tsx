@@ -11,6 +11,7 @@ interface IProps {
 }
 
 const ItemOriginal = ({ myId, room, active, draft, unreadCount }: IProps) => {
+  const location = useLocation();
   const textMemo = useMemo(() => {
     if (draft) {
       return (
@@ -35,13 +36,14 @@ const ItemOriginal = ({ myId, room, active, draft, unreadCount }: IProps) => {
     <li key={room.id}>
       <NavLink
         to={"/room/" + room.id}
+        state={{ fromChats: location.pathname === "/" }}
         className={clsx(
-          "flex flex-row items-center overflow-hidden rounded-lg px-2 py-1",
+          "flex min-h-14 flex-row items-center overflow-hidden rounded-lg px-2 py-1 transition-colors duration-100 hover:bg-white/5 active:bg-white/15",
           { "bg-white/10": active }
         )}
       >
         <Avatar name={name} src={image} count={unreadCount} />
-        <span className="ml-2 flex-1 inline-flex flex-col leading-4 w-20">
+        <span className="ml-2 inline-flex min-w-0 flex-1 flex-col leading-4">
           <span className="font-bold text-base break-all whitespace-nowrap text-ellipsis overflow-hidden leading-4">
             {name}
           </span>

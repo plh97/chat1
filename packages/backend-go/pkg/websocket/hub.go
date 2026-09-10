@@ -3,11 +3,20 @@ package ws
 import (
 	"backend-go/internal/repository"
 	"backend-go/internal/service"
+	"context"
 	"encoding/json"
 	"log"
+	"strconv"
 )
 
 const wsRoomListChangedEvent = "WS_ROOM_LIST_CHANGED"
+const wsUserUpdatedEvent = "WS_USER_UPDATED"
+
+type userUpdatedPayload struct {
+	ID       string `json:"id"`
+	UserName string `json:"userName"`
+	Image    string `json:"image"`
+}
 
 type targetedMessage struct {
 	userIDs map[uint]struct{}
@@ -110,6 +119,49 @@ func (h *Hub) NotifyRoomListChanged(userIDs []uint) {
 	})
 	if err != nil {
 		log.Printf("marshal room list change event failed: %v", err)
+		return
+	}
+	h.targeted <- targetedMessage{userIDs: targets, payload: payload}
+}
+
+func (h *Hub) NotifyUserUpdated(ctx context.Context, userID uint, userName, image string) {
+	if userID == 0 {
+		return
+	}
+
+	targets := map[uint]struct{}{userID: {}}
+	if audienceRepo, ok := h.userRepo.(repository.ProfileAudienceRepository); ok {
+		userIDs, err := audienceRepo.ListProfileAudienceUserIDs(ctx, userID)
+		if err != nil {
+			// The profile was already saved. Keep the HTTP request successful and
+			// at least update every active session owned by the editor.
+			log.Printf("resolve profile update audience failed: %v", err)
+		} else {
+			for _, audienceUserID := range userIDs {
+				if audienceUserID != 0 {
+					targets[audienceUserID] = struct{}{}
+				}
+			}
+		}
+	}
+
+	id := strconv.FormatUint(uint64(userID), 10)
+	data, err := json.Marshal(userUpdatedPayload{
+		ID:       id,
+		UserName: userName,
+		Image:    image,
+	})
+	if err != nil {
+		log.Printf("marshal profile update data failed: %v", err)
+		return
+	}
+	payload, err := json.Marshal(wsEnvelope{
+		Event: wsUserUpdatedEvent,
+		Code:  0,
+		Data:  data,
+	})
+	if err != nil {
+		log.Printf("marshal profile update event failed: %v", err)
 		return
 	}
 	h.targeted <- targetedMessage{userIDs: targets, payload: payload}

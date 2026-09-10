@@ -28,6 +28,13 @@ type RoomMembershipRepository interface {
 	ListRoomUserIDs(ctx context.Context, roomID uint) ([]uint, error)
 }
 
+// ProfileAudienceRepository resolves the users that share at least one active
+// room with a profile owner. It keeps profile events scoped to people who are
+// already allowed to see that user in the chat UI.
+type ProfileAudienceRepository interface {
+	ListProfileAudienceUserIDs(ctx context.Context, userID uint) ([]uint, error)
+}
+
 func NewUserRepository(r *Repository) UserRepository {
 	return &userRepository{
 		Repository: r,
@@ -81,6 +88,25 @@ func (r *userRepository) ListRoomUserIDs(ctx context.Context, roomID uint) ([]ui
 		Distinct("user_id").
 		Order("user_id ASC").
 		Pluck("user_id", &userIDs).Error
+	return userIDs, err
+}
+
+func (r *userRepository) ListProfileAudienceUserIDs(ctx context.Context, userID uint) ([]uint, error) {
+	if userID == 0 {
+		return nil, nil
+	}
+
+	var userIDs []uint
+	err := r.DB(ctx).
+		Table("room_members AS owner_rooms").
+		Select("DISTINCT audience.user_id").
+		Joins("JOIN room_members AS audience ON audience.room_id = owner_rooms.room_id AND audience.deleted_at IS NULL").
+		Joins("JOIN rooms ON rooms.id = owner_rooms.room_id AND rooms.deleted_at IS NULL").
+		Joins("JOIN users ON users.id = audience.user_id AND users.deleted_at IS NULL").
+		Where("owner_rooms.user_id = ? AND owner_rooms.deleted_at IS NULL", userID).
+		Where("audience.user_id <> 0 AND audience.user_id <> ?", userID).
+		Order("audience.user_id ASC").
+		Pluck("audience.user_id", &userIDs).Error
 	return userIDs, err
 }
 

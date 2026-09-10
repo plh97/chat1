@@ -32,7 +32,7 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
     if (!temp) return null;
     const { Component } = temp(message, room);
     return <Component />;
-  }, [message, room.member]);
+  }, [message, room.admin, room.creator, room.member]);
   const cb = useCallback<
     (position: { clientX: number; clientY: number }) => void
   >(
@@ -131,7 +131,7 @@ export function Item({ data: message, setIsOpen }: IProps): React.JSX.Element {
       </WithProfile>
       <div
         {...contextMenu}
-        className="mx-2.5 max-w-[60%] rounded-lg overflow-hidden whitespace-pre-wrap bg-gray-800 shadow-md"
+        className="mx-2.5 max-w-[80%] select-text overflow-hidden whitespace-pre-wrap rounded-lg bg-gray-800 shadow-md md:max-w-[60%]"
         data-msg
       >
         {message.reply ? (

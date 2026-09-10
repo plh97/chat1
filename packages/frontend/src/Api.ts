@@ -59,7 +59,7 @@ export interface IResponse<T> {
 const normalizeId = (value: unknown) =>
   value == null || value === "" ? "" : String(value);
 
-const normalizeUser = (user: any): IUser => {
+export const normalizeUser = (user: any): IUser => {
   if (!user) return user;
   const rooms = Array.isArray(user.room)
     ? sortRoomsByActivity(user.room.map(normalizeRoom))
@@ -68,6 +68,9 @@ const normalizeUser = (user: any): IUser => {
     ...user,
     id: normalizeId(user.id ?? user.userId),
     userId: normalizeId(user.userId ?? user.id),
+    userName: user.userName ?? user.username ?? "",
+    QQ: user.QQ ?? user.qq ?? "",
+    WeChat: user.WeChat ?? user.wechat ?? "",
     UserId: Array.isArray(user.UserId) ? user.UserId.map(normalizeId) : [],
     room: rooms,
     friend: Array.isArray(user.friend)

@@ -1,16 +1,24 @@
 import { Side } from "./Side";
+import { useMatch } from "react-router-dom";
 
 interface LayoutProps {
   readonly children?: React.ReactNode;
 }
 
 export function Layout(props: LayoutProps) {
+  const isRoomRoute = Boolean(useMatch("/room/:id"));
+
   return (
-    <div className="flex h-dvh overflow-hidden overscroll-none">
+    <div className="flex h-full overflow-hidden overscroll-none">
       <Side />
-      <div className="w-[calc(100%-288px)] flex min-h-0 flex-1 flex-col overflow-hidden overscroll-none">
+      <main
+        className={clsx(
+          "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden overscroll-none",
+          { "max-md:hidden": !isRoomRoute }
+        )}
+      >
         {props.children}
-      </div>
+      </main>
     </div>
   );
 }

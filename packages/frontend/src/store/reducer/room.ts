@@ -14,6 +14,13 @@ import {
 import { fetchUserInfoThunk, shiftRoom, updateLocalUserRoom } from "./user";
 import { IReadMessage } from "@/core";
 import { mergeReadSeqForward } from "./readSeq";
+import {
+  patchMessageUserReferences,
+  patchRoomUserReferences,
+  updateUserReferences,
+} from "./userReferences";
+
+export type MessageLoadingKind = "initial" | "before" | "after" | "window";
 
 export interface IState {
   id: string;
@@ -22,6 +29,7 @@ export interface IState {
   error: string | null;
   data: IRoom;
   loadingMessage: boolean;
+  loadingMessageKind: MessageLoadingKind | null;
   selectedMessage?: IMessage;
   replyMessage?: IMessage;
 }
@@ -31,6 +39,7 @@ const initialState: IState = {
   scrollToEnd: undefined,
   scrollToTop: undefined,
   loadingMessage: false,
+  loadingMessageKind: null,
   error: null,
   data: {
     id: "",
@@ -60,7 +69,7 @@ export const getRoomInfoThunk = createAsyncThunk<void, string>(
     // 修改当前面room id
     dispatch(changeRoomId(id));
     // 加载中
-    dispatch(changeLoading(true));
+    dispatch(changeLoading({ kind: "initial", loading: true }));
     try {
       // 获取当前房间基本信息
       const res = await Api.getRoom({ id });
@@ -98,7 +107,7 @@ export const getRoomInfoThunk = createAsyncThunk<void, string>(
       dispatch(scrollToEnd(true));
     } finally {
       // Loading must also end when room/history requests are rejected.
-      dispatch(changeLoading(false));
+      dispatch(changeLoading({ kind: "initial", loading: false }));
     }
   }
 );
@@ -107,10 +116,12 @@ export const loadRoomMoreMessageThunk = createAsyncThunk<
   { message: IMessage[]; hasMore: boolean },
   MessageRequest
 >(`loadRoomMoreMessageThunk`, async (data, { dispatch }) => {
-  dispatch(changeLoading(true));
-  const res = await Api.getRoomMessages(data);
-  dispatch(changeLoading(false));
-  return res;
+  dispatch(changeLoading({ kind: "before", loading: true }));
+  try {
+    return await Api.getRoomMessages(data);
+  } finally {
+    dispatch(changeLoading({ kind: "before", loading: false }));
+  }
 });
 
 export const addRoomThunk = createAsyncThunk<IRoom, Partial<IRoom>>(
@@ -125,21 +136,27 @@ export const addRoomThunk = createAsyncThunk<IRoom, Partial<IRoom>>(
 export const loadRoomCursorMessagesThunk = createAsyncThunk<
   { message: IMessage[]; hasMore: boolean },
   MessageCursorRequest
->(`loadRoomCursorMessagesThunk`, async (data) => {
-  return Api.getRoomMessagesByCursor(data);
+>(`loadRoomCursorMessagesThunk`, async (data, { dispatch }) => {
+  const kind = data.direction === "before" ? "before" : "after";
+  dispatch(changeLoading({ kind, loading: true }));
+  try {
+    return await Api.getRoomMessagesByCursor(data);
+  } finally {
+    dispatch(changeLoading({ kind, loading: false }));
+  }
 });
 
 export const openMessageWindowThunk = createAsyncThunk<
   MessageWindowResponse,
   MessageWindowRequest
 >(`openMessageWindowThunk`, async (data, { dispatch }) => {
-  dispatch(changeLoading(true));
+  dispatch(changeLoading({ kind: "window", loading: true }));
   try {
     const windowData = await Api.getRoomMessageWindow(data);
     dispatch(openMessageWindow(windowData));
     return windowData;
   } finally {
-    dispatch(changeLoading(false));
+    dispatch(changeLoading({ kind: "window", loading: false }));
   }
 });
 
@@ -192,8 +209,23 @@ export const roomSlice = createSlice({
   name: "message",
   initialState,
   reducers: {
-    changeLoading(state, action: PayloadAction<boolean>) {
-      state.loadingMessage = action.payload;
+    changeLoading(
+      state,
+      action: PayloadAction<{
+        kind: MessageLoadingKind;
+        loading: boolean;
+      }>
+    ) {
+      const { kind, loading } = action.payload;
+      if (loading) {
+        state.loadingMessage = true;
+        state.loadingMessageKind = kind;
+        return;
+      }
+      if (state.loadingMessageKind === kind) {
+        state.loadingMessage = false;
+        state.loadingMessageKind = null;
+      }
     },
     scrollToTop(state, action) {
       state.scrollToTop = action.payload ? Math.random() : -Math.random();
@@ -275,12 +307,10 @@ export const roomSlice = createSlice({
         totalCount?: number;
       }>
     ) {
-      const key = action.payload.role === "admin" ? "admin" : "member";
-      const totalKey =
+      const currentUsers =
         action.payload.role === "admin"
-          ? "adminTotalCount"
-          : "memberTotalCount";
-      const currentUsers = state.data[key] ?? [];
+          ? (state.data.admin ?? [])
+          : (state.data.member ?? []);
       const unique = new Map<string, IRoom["member"][number]>();
       for (const user of currentUsers) {
         unique.set(String(user.id), user);
@@ -288,9 +318,17 @@ export const roomSlice = createSlice({
       for (const user of action.payload.users ?? []) {
         unique.set(String(user.id), user);
       }
-      state.data[key] = Array.from(unique.values()) as any;
-      if (typeof action.payload.totalCount === "number") {
-        state.data[totalKey] = action.payload.totalCount as any;
+      const users = Array.from(unique.values());
+      if (action.payload.role === "admin") {
+        state.data.admin = users;
+        if (typeof action.payload.totalCount === "number") {
+          state.data.adminTotalCount = action.payload.totalCount;
+        }
+      } else {
+        state.data.member = users;
+        if (typeof action.payload.totalCount === "number") {
+          state.data.memberTotalCount = action.payload.totalCount;
+        }
       }
     },
     initialMessage(state, action: PayloadAction<Partial<IRoom>>) {
@@ -335,6 +373,13 @@ export const roomSlice = createSlice({
         replyMessage: message,
       });
     },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(updateUserReferences, (state, action) => {
+      patchRoomUserReferences(state.data, action.payload);
+      patchMessageUserReferences(state.selectedMessage, action.payload);
+      patchMessageUserReferences(state.replyMessage, action.payload);
+    });
   },
 });
 

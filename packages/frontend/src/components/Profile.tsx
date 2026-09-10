@@ -20,7 +20,7 @@ export const Profile = ({
       {
         label: "Username",
         value: profile.userName,
-        name: "username",
+        name: "userName",
       },
       {
         label: "Bio",
@@ -54,21 +54,32 @@ export const Profile = ({
       },
     ];
   }, [profile]);
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = new FormData(e.target as HTMLFormElement);
     const infoList = [...form.entries()];
     const data = infoList.reduce((acc, [key, value]) => {
       return { ...acc, [key]: value };
     }, {} as IUser);
-    dispatch(setUserInfoThunk(data));
-    // close dialog
-    onClose?.();
+    try {
+      await dispatch(setUserInfoThunk(data)).unwrap();
+      onClose?.();
+    } catch {
+      // The API interceptor already presents the request error. Keep the
+      // dialog open so the user can retry without losing their edits.
+    }
   };
   const handleChangeAvatar = async (files: File[]) => {
     const file = files?.[0];
     if (!file) return;
-    dispatch(uploadImageThunk({ file, updateUserImage: true }));
+    try {
+      await dispatch(
+        uploadImageThunk({ file, updateUserImage: true })
+      ).unwrap();
+    } catch {
+      // Upload/profile errors are already shown by the API layer. The old
+      // avatar remains active because the update action was never dispatched.
+    }
   };
   if (!profile) return null;
   const fieldClassName =

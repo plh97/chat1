@@ -13,10 +13,15 @@ type UserHandler struct {
 	*Handler
 	userService service.UserService
 	roomEvents  RoomEventPublisher
+	userEvents  UserEventPublisher
 }
 
 func (h *UserHandler) SetRoomEventPublisher(publisher RoomEventPublisher) {
 	h.roomEvents = publisher
+}
+
+func (h *UserHandler) SetUserEventPublisher(publisher UserEventPublisher) {
+	h.userEvents = publisher
 }
 
 func NewUserHandler(handler *Handler, userService service.UserService) *UserHandler {
@@ -171,6 +176,14 @@ func (h *UserHandler) UpdateProfile(ctx *gin.Context) {
 	if err != nil {
 		v1.HandleError(ctx, http.StatusInternalServerError, v1.ErrInternalServerError, nil)
 		return
+	}
+	if h.userEvents != nil {
+		h.userEvents.NotifyUserUpdated(
+			ctx.Request.Context(),
+			uint(userId),
+			user.UserName,
+			user.Image,
+		)
 	}
 
 	v1.HandleSuccess(ctx, user, "Profile updated successfully")

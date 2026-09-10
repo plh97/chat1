@@ -97,6 +97,7 @@ func NewHTTPServer(
 	// websocketのupgraderを定期
 	hub := ws.NewHub(messageService, userRepo)
 	userHandler.SetRoomEventPublisher(hub)
+	userHandler.SetUserEventPublisher(hub)
 	roomHandler.SetRoomEventPublisher(hub)
 	s.GET("/ws", func(c *gin.Context) {
 		ws.ServeWs(hub, jwt, c)

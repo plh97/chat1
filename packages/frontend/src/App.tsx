@@ -5,6 +5,7 @@ import theme from "./theme";
 import { lazy, StrictMode, Suspense } from "react";
 import { ChakraProvider } from "@chakra-ui/react";
 import { AppToaster } from "@/utils/createStandAlone";
+import { ChatShell } from "@/components/ChatShell";
 
 const HomePage = lazy(() =>
   import("./views/HomePage").then((m) => ({ default: m.HomePage }))
@@ -23,7 +24,17 @@ export const App = (): React.ReactNode => {
   const router = createBrowserRouter([
     {
       path: "/",
-      element: <HomePage />,
+      element: <ChatShell />,
+      children: [
+        {
+          index: true,
+          element: <HomePage />,
+        },
+        {
+          path: "room/:id",
+          element: <RoomPage />,
+        },
+      ],
     },
     {
       path: "/login",
@@ -32,10 +43,6 @@ export const App = (): React.ReactNode => {
     {
       path: "/register",
       element: <RegisterPage />,
-    },
-    {
-      path: "/room/:id",
-      element: <RoomPage />,
     },
   ]);
   // const browserRouter = withFaroRouterInstrumentation(reactBrowserRouter);

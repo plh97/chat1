@@ -1,6 +1,6 @@
 import { IWsData, WS_EVENT } from "@/core";
-import { normalizeMessage } from "@/Api";
-import { IMessage, IRoom } from "@/interfaces";
+import { normalizeMessage, normalizeUser } from "@/Api";
+import { IMessage, IRoom, IUser } from "@/interfaces";
 import type { SystemActionType } from "@/interfaces/chat";
 import {
   fetchUserInfoThunk,
@@ -17,6 +17,7 @@ import {
   scrollToEnd,
 } from "@/store/reducer/room";
 import { useEffect, useRef, type MutableRefObject } from "react";
+import { updateUserReferences } from "@/store/reducer/userReferences";
 
 const ROOM_DETAIL_ACTIONS = new Set<SystemActionType>([
   "ADD_MEMBER",
@@ -104,6 +105,11 @@ export const useReceiveMsg = (roomRef: MutableRefObject<IRoom>) => {
       dispatch(initialMessage({ isMember: false }));
     }
   };
+  const onUserUpdated = async (data?: IWsData<IUser>) => {
+    if (!data?.data) return;
+    dispatch(updateUserReferences(normalizeUser(data.data)));
+  };
   useEventListener(WS_EVENT.SEND_MSG, onReceiveMsg);
   useEventListener(WS_EVENT.ROOM_LIST_CHANGED, onRoomListChanged);
+  useEventListener(WS_EVENT.USER_UPDATED, onUserUpdated);
 };

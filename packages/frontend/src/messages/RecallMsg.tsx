@@ -7,7 +7,11 @@ const Component = ({ message, room }: { message: IMessage; room?: IRoom }) => {
   if (recallMsg?.operator === myUserInfo.userId) {
     return `You recall this message`;
   }
-  const member = room?.member ?? [];
+  const member = [
+    ...(room?.member ?? []),
+    ...(room?.admin ?? []),
+    ...(room?.creator ? [room.creator] : []),
+  ];
   const operator =
     member.find((m) => m.id === recallMsg?.operator)?.userName ??
     recallMsg?.operator ??

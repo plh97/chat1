@@ -5,12 +5,22 @@ import { IRoom, IUser } from "@/interfaces";
 import { IMessage } from "@/interfaces/IMessage";
 import { setToken } from "@/utils";
 import { mergeReadSeqForward } from "./readSeq";
+import {
+  getUserReferenceKey,
+  patchRoomUserReferences,
+  patchMessageUserReferences,
+  patchUserReference,
+  sanitizeUserReferencePatch,
+  type UserReferencePatch,
+  updateUserReferences,
+} from "./userReferences";
 
 export interface IState {
   error: string | null;
   data: IUser;
   auth: boolean | null;
   draftMap: Record<string, Partial<IMessage>>;
+  profileUpdates: Record<string, UserReferencePatch>;
 }
 
 const toRoomKey = (value: unknown) => String(value ?? "");
@@ -19,6 +29,7 @@ const initialState: IState = {
   error: null,
   auth: null,
   draftMap: {},
+  profileUpdates: {},
   data: {
     userId: "",
     room: [],
@@ -72,11 +83,12 @@ export const registerThunk = createAsyncThunk<
   await dispatch(loginThunk(data));
 });
 
-export const setUserInfoThunk = createAsyncThunk<void, Partial<IUser>>(
+export const setUserInfoThunk = createAsyncThunk<IUser, Partial<IUser>>(
   `setUserInfoThunk`,
   async (data, { dispatch }) => {
-    await Api.setMyUserInfo(data);
-    dispatch(setLocalUserInfo(data));
+    const updatedUser = await Api.setMyUserInfo(data);
+    dispatch(updateUserReferences(updatedUser));
+    return updatedUser;
   }
 );
 
@@ -89,7 +101,8 @@ export const uploadImageThunk = createAsyncThunk<
     const { uploadFileWithPresignedUrl } = await import("@/utils/uploadFile");
     const endpoint_url = await uploadFileWithPresignedUrl(file, upload_scene);
     if (updateUserImage) {
-      dispatch(setLocalUserInfo({ image: endpoint_url }));
+      const updatedUser = await Api.setMyUserInfo({ image: endpoint_url });
+      dispatch(updateUserReferences(updatedUser));
     }
     return endpoint_url;
   }
@@ -211,6 +224,27 @@ export const userSlice = createSlice({
         }
       }
     },
+  },
+  extraReducers: (builder) => {
+    builder.addCase(updateUserReferences, (state, action) => {
+      const userId = getUserReferenceKey(action.payload);
+      if (userId) {
+        state.profileUpdates[userId] = {
+          ...state.profileUpdates[userId],
+          ...sanitizeUserReferencePatch(action.payload),
+        };
+      }
+      patchUserReference(state.data, action.payload);
+      state.data.friend?.forEach((user) =>
+        patchUserReference(user, action.payload)
+      );
+      state.data.room?.forEach((room) =>
+        patchRoomUserReferences(room, action.payload)
+      );
+      Object.values(state.draftMap).forEach((draft) =>
+        patchMessageUserReferences(draft as IMessage, action.payload)
+      );
+    });
   },
 });
 

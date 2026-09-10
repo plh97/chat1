@@ -5,6 +5,11 @@ import theme from "@/theme";
 import type { IMessage, IRoom } from "@/interfaces";
 import { ReadReceiptHoverCard } from "./ReadReceiptHoverCard";
 
+jest.mock("@/hooks/app", () => ({
+  useAppSelector: (selector: (state: unknown) => unknown) =>
+    selector({ user: { profileUpdates: {} } }),
+}));
+
 jest.mock("@/utils/messageReaders", () => ({
   loadMessageReaders: jest.fn(),
 }));

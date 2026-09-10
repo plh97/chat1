@@ -66,6 +66,20 @@ type stubUserService struct {
 	uploadPresignedUrlFn func(fileExt string, scene int) (string, string, error)
 }
 
+type recordedUserUpdate struct {
+	userID   uint
+	userName string
+	image    string
+}
+
+type recordingUserEventPublisher struct {
+	updates []recordedUserUpdate
+}
+
+func (p *recordingUserEventPublisher) NotifyUserUpdated(_ context.Context, userID uint, userName, image string) {
+	p.updates = append(p.updates, recordedUserUpdate{userID: userID, userName: userName, image: image})
+}
+
 var _ service.UserService = (*stubUserService)(nil)
 
 func (s *stubUserService) Register(ctx context.Context, req *v1.RegisterRequest) error {
@@ -240,6 +254,8 @@ func TestUserHandler_UpdateProfile(t *testing.T) {
 			}, nil
 		},
 	})
+	publisher := &recordingUserEventPublisher{}
+	userHandler.SetUserEventPublisher(publisher)
 	router := newTestRouter()
 	router.Use(middleware.StrictAuth(jwt, logger))
 	router.PUT("/profile", userHandler.UpdateProfile)
@@ -254,6 +270,11 @@ func TestUserHandler_UpdateProfile(t *testing.T) {
 
 	assert.Equal(t, resp.Code, http.StatusOK)
 	assert.True(t, called)
+	assert.Equal(t, []recordedUserUpdate{{
+		userID:   uint(userId),
+		userName: userName,
+		image:    "",
+	}}, publisher.updates)
 }
 
 func performRequest(r http.Handler, method, path string, body *bytes.Buffer) *httptest.ResponseRecorder {

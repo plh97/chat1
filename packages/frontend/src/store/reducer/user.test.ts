@@ -1,18 +1,30 @@
-import type { IMessage, IRoom } from "@/interfaces";
+import type { IMessage, IRoom, IUser } from "@/interfaces";
+import { configureStore } from "@reduxjs/toolkit";
 
 jest.mock("@/Api", () => ({
   __esModule: true,
-  default: {},
+  default: {
+    setMyUserInfo: jest.fn(),
+  },
 }));
+jest.mock("@/utils/uploadFile", () => ({
+  uploadFileWithPresignedUrl: jest.fn(),
+}));
+
+import Api from "@/Api";
+import { uploadFileWithPresignedUrl } from "@/utils/uploadFile";
 
 import {
   setLocalUserInfo,
+  setUserInfoThunk,
   shiftRoom,
   topUserRoom,
+  uploadImageThunk,
   updateLocalUserRoom,
   updateUserRoomReadSeq,
   userReducer,
 } from "./user";
+import { updateUserReferences } from "./userReferences";
 
 const room = {
   id: "10",
@@ -162,5 +174,139 @@ describe("user room unread count", () => {
     );
 
     expect(state.data.room?.[0].readSeq["2"]).toBe(17);
+  });
+});
+
+const profile = (id: string, userName: string, image = `${id}-old.png`) =>
+  ({
+    id,
+    userId: id,
+    userName,
+    image,
+  }) as IUser;
+
+describe("user profile reference updates", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("updates the current user and every sidebar user snapshot", () => {
+    const target = profile("1", "Old name");
+    const other = profile("2", "Other user");
+    const reply = {
+      id: "reply-1",
+      userId: "1",
+      user: { ...target },
+    } as IMessage;
+    const message = {
+      id: "message-1",
+      userId: "1",
+      user: { ...target },
+      reply,
+    } as IMessage;
+    const profileRoom = {
+      id: "room-1",
+      member: [{ ...target }, other],
+      admin: [{ ...target }],
+      creator: { ...target },
+      peer: { ...target },
+      message: [message],
+      lastMsg: {
+        id: "last-1",
+        userId: "1",
+        user: { ...target },
+        reply: { ...reply, user: { ...target } },
+      },
+    } as IRoom;
+    let state = userReducer(
+      undefined,
+      setLocalUserInfo({
+        ...target,
+        friend: [{ ...target }, other],
+        room: [profileRoom],
+      })
+    );
+
+    state = userReducer(
+      state,
+      updateUserReferences({
+        id: "1",
+        userName: "New name",
+        image: "new.png",
+      })
+    );
+
+    expect(state.data.userName).toBe("New name");
+    expect(state.data.image).toBe("new.png");
+    expect(state.data.friend?.[0].userName).toBe("New name");
+    expect(state.data.friend?.[1].userName).toBe("Other user");
+    expect(state.data.room?.[0].member[0].userName).toBe("New name");
+    expect(state.data.room?.[0].admin[0].image).toBe("new.png");
+    expect(state.data.room?.[0].creator?.userName).toBe("New name");
+    expect(state.data.room?.[0].peer?.image).toBe("new.png");
+    expect(state.data.room?.[0].message[0].user.userName).toBe("New name");
+    expect(state.data.room?.[0].message[0].reply?.user.image).toBe("new.png");
+    expect(state.data.room?.[0].lastMsg?.user.userName).toBe("New name");
+    expect(state.data.room?.[0].lastMsg?.reply?.user.image).toBe("new.png");
+    expect(state.profileUpdates["1"]).toEqual(
+      expect.objectContaining({ userName: "New name", image: "new.png" })
+    );
+  });
+
+  it("uses the saved API response and keeps omitted fields unchanged", async () => {
+    (Api.setMyUserInfo as jest.Mock).mockResolvedValue({
+      id: "1",
+      userId: "1",
+      userName: "Server name",
+    });
+    const store = configureStore({ reducer: { user: userReducer } });
+    store.dispatch(
+      setLocalUserInfo({
+        id: "1",
+        userId: "1",
+        userName: "Old name",
+        image: "keep.png",
+      })
+    );
+
+    await store.dispatch(setUserInfoThunk({ userName: "Submitted name" }));
+
+    expect(Api.setMyUserInfo).toHaveBeenCalledWith({
+      userName: "Submitted name",
+    });
+    expect(store.getState().user.data.userName).toBe("Server name");
+    expect(store.getState().user.data.image).toBe("keep.png");
+  });
+
+  it("persists an uploaded avatar before updating every local reference", async () => {
+    (uploadFileWithPresignedUrl as jest.Mock).mockResolvedValue(
+      "https://cdn.example/new.png"
+    );
+    (Api.setMyUserInfo as jest.Mock).mockResolvedValue({
+      id: "1",
+      userId: "1",
+      userName: "Current name",
+      image: "https://cdn.example/new.png",
+    });
+    const store = configureStore({ reducer: { user: userReducer } });
+    store.dispatch(
+      setLocalUserInfo({
+        id: "1",
+        userId: "1",
+        userName: "Current name",
+        image: "old.png",
+      })
+    );
+    const file = new File(["avatar"], "avatar.png", { type: "image/png" });
+
+    await store.dispatch(uploadImageThunk({ file, updateUserImage: true }));
+
+    expect(uploadFileWithPresignedUrl).toHaveBeenCalledWith(file, 1);
+    expect(Api.setMyUserInfo).toHaveBeenCalledWith({
+      image: "https://cdn.example/new.png",
+    });
+    expect(store.getState().user.data.image).toBe(
+      "https://cdn.example/new.png"
+    );
   });
 });

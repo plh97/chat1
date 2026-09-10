@@ -18,6 +18,8 @@ interface IProps extends React.PropsWithChildren {
   marginEnd?: string;
 }
 
+type AvatarChangeHandler = NonNullable<IProps["onChange"]>;
+
 function dataURLtoFile(base64: string, filename: string) {
   const arr = base64.split(",");
   const mime = arr[0].match(/:(.*?);/)?.[1];
@@ -30,7 +32,7 @@ function dataURLtoFile(base64: string, filename: string) {
   return new File([u8arr], filename, { type: mime });
 }
 
-const FileButton = ({ onChange }: any) => {
+const FileButton = ({ onChange }: { onChange: AvatarChangeHandler }) => {
   const fileRef = useRef<HTMLInputElement>(null);
   return (
     <>
@@ -64,14 +66,18 @@ const FileButton = ({ onChange }: any) => {
   );
 };
 
-export const AvatarEditButton = ({ onChange }: any) => {
+export const AvatarEditButton = ({
+  onChange,
+}: {
+  onChange?: AvatarChangeHandler;
+}) => {
   const [captureLoading, setCaptureLoading] = useState(false);
   const { videoRef, startCamera, stopCamera, isStreaming } = useCamera();
   const handleStopCamera = async () => {
     const { base64 } = captureVideo(videoRef.current!, "image/jpeg");
     const blob = dataURLtoFile(base64, "avatar.jpg");
     setCaptureLoading(true);
-    await onChange([blob]);
+    await onChange?.([blob]);
     setTimeout(() => {
       stopCamera();
       setCaptureLoading(false);
@@ -163,7 +169,12 @@ export const Avatar = ({
           "border-2 border-black": showBorder,
         })}
       >
-        <AvatarComponent.Image className="AvatarImage" src={src} alt="avatar" />
+        <AvatarComponent.Image
+          className="AvatarImage"
+          src={src}
+          alt="avatar"
+          draggable={false}
+        />
         <AvatarComponent.Fallback className="AvatarFallback">
           {name.slice(0, 2)}
         </AvatarComponent.Fallback>

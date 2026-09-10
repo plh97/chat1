@@ -22,7 +22,9 @@ const MAX_INPUT = 2000;
 const { toast } = createStandaloneToast();
 
 export function InputBox({ className }: { readonly className?: string }) {
-  const room = useAppSelector((state) => state.room.data);
+  const { data: room, id: requestedRoomId } = useAppSelector(
+    (state) => state.room
+  );
   const replyMsg = useAppSelector((state) => state.room.replyMessage);
   const userInfo = useAppSelector((state) => state.user.data);
   const dispatch = useThunkDispatch();
@@ -88,8 +90,6 @@ export function InputBox({ className }: { readonly className?: string }) {
       })
     );
   };
-  // @ts-ignore
-  window.sendMsg = sendMsg;
   const handleSendMessage = async () => {
     const trimText = text.trim();
     if (!userInfo.id || !room.id || (!trimText && !attachment)) return;
@@ -170,10 +170,23 @@ export function InputBox({ className }: { readonly className?: string }) {
   const handleJoinRoom = () => {
     dispatch(joinRoomThunk({ id: room.id }));
   };
+  const roomIsReady = Boolean(
+    room.id && (!requestedRoomId || String(room.id) === String(requestedRoomId))
+  );
+  if (!roomIsReady) {
+    return (
+      <div
+        aria-hidden="true"
+        className={clsx("safe-px flex flex-none flex-col", className)}
+      >
+        <div className="safe-pb box-border min-h-20 flex-none" />
+      </div>
+    );
+  }
   if (!isRoomMember) {
     return (
-      <div className={clsx("flex flex-col gap-3 flex-0", className)}>
-        <div className="box-border flex flex-row gap-3 flex-0 basis-20 pt-0 pb-5 px-3 safe-pb">
+      <div className={clsx("safe-px flex flex-col gap-3 flex-0", className)}>
+        <div className="safe-pb box-border flex min-h-20 flex-none flex-row gap-3 pt-0">
           you are not room member,{" "}
           <Link color="teal.500" className="font-bold" onClick={handleJoinRoom}>
             Join it
@@ -184,9 +197,9 @@ export function InputBox({ className }: { readonly className?: string }) {
   }
 
   return (
-    <div className={clsx("flex flex-col gap-3 flex-0", className)}>
+    <div className={clsx("safe-px flex flex-col gap-3 flex-0", className)}>
       {replyMessage}
-      <div className="box-border flex flex-row items-end gap-3 flex-0 basis-20 pt-0 pb-5 px-3 safe-pb">
+      <div className="safe-pb box-border flex min-h-20 flex-none flex-row items-end gap-3 pt-0">
         {!time ? (
           <Input
             maxLength={MAX_INPUT}

@@ -114,6 +114,37 @@ func TestUserRepository_AreUsersInRoom(t *testing.T) {
 	assert.Equal(t, []uint{7, 9}, userIDs)
 }
 
+func TestUserRepository_ListProfileAudienceUserIDs(t *testing.T) {
+	userRepo, db := setupRepositoryWithDB(t)
+	ctx := context.Background()
+	owner := &model.User{UserName: "owner-audience", Email: "owner-audience@example.com"}
+	peer := &model.User{UserName: "peer-audience", Email: "peer-audience@example.com"}
+	removedPeer := &model.User{UserName: "removed-audience", Email: "removed-audience@example.com"}
+	outsider := &model.User{UserName: "outsider-audience", Email: "outsider-audience@example.com"}
+	assert.NoError(t, db.Create([]*model.User{owner, peer, removedPeer, outsider}).Error)
+
+	firstRoom := &model.Room{Name: "Audience room one"}
+	secondRoom := &model.Room{Name: "Audience room two"}
+	otherRoom := &model.Room{Name: "Unrelated room"}
+	assert.NoError(t, db.Create([]*model.Room{firstRoom, secondRoom, otherRoom}).Error)
+	assert.NoError(t, db.Create([]model.RoomMember{
+		{RoomID: firstRoom.ID, UserID: owner.ID, Role: model.Member},
+		{RoomID: firstRoom.ID, UserID: peer.ID, Role: model.Member},
+		{RoomID: firstRoom.ID, UserID: removedPeer.ID, Role: model.Member},
+		{RoomID: secondRoom.ID, UserID: owner.ID, Role: model.Member},
+		{RoomID: secondRoom.ID, UserID: peer.ID, Role: model.Member},
+		{RoomID: otherRoom.ID, UserID: outsider.ID, Role: model.Member},
+	}).Error)
+	assert.NoError(t, db.Where("room_id = ? AND user_id = ?", firstRoom.ID, removedPeer.ID).Delete(&model.RoomMember{}).Error)
+
+	audienceRepo, ok := userRepo.(repository.ProfileAudienceRepository)
+	assert.True(t, ok)
+	userIDs, err := audienceRepo.ListProfileAudienceUserIDs(ctx, owner.ID)
+
+	assert.NoError(t, err)
+	assert.Equal(t, []uint{peer.ID}, userIDs)
+}
+
 func TestUserRepository_GetByID_LoadsPrivateRoomPeer(t *testing.T) {
 	userRepo, db := setupRepositoryWithDB(t)
 	ctx := context.Background()

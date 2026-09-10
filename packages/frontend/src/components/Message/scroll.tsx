@@ -1,40 +1,79 @@
-import { Children, PropsWithChildren, ReactElement } from "react";
+import {
+  Children,
+  PropsWithChildren,
+  ReactElement,
+  useCallback,
+  useLayoutEffect,
+  useRef,
+} from "react";
+import { useParams } from "react-router-dom";
 import clsx from "clsx";
 import { VList, VListHandle } from "virtua";
 import { Loader2 } from "lucide-react";
+import { useAppSelector, useThunkDispatch } from "@/hooks/app";
 import {
   scrollToEnd,
   getRoomInfoThunk,
   initialMessage,
 } from "@/store/reducer/room";
+import type { MessageLoadingKind } from "@/store/reducer/room";
 
 import { useLoadMore, useScroll } from "./hook";
 
 const MESSAGE_SCROLL_VIEWPORT_ID = "message-scroll-viewport";
 
 export const Top = () => {
-  const { loadingMessage, data } = useAppSelector((state) => state.room);
+  const { loadingMessageKind, data } = useAppSelector((state) => state.room);
   const { hasMoreMessage } = data;
+  const loadingBefore = loadingMessageKind === "before";
   return (
-    <>
-      {!hasMoreMessage && !loadingMessage && (
-        <div className="text-center m-4">---------- END ----------</div>
-      )}
-      {loadingMessage && (
-        <div className="mt-2 mb-2 w-full flex justify-center">
-          <Loader2 className="text-2xl w-8 h-8 text-gray-200 animate-spin dark:text-gray-600" />
-          {/* <Spinner
-            thickness="4px"
-            speed="0.65s"
-            emptyColor="gray.200"
-            color="blue.500"
-            size="md"
-          /> */}
-        </div>
-      )}
-    </>
+    <div className="flex h-12 w-full flex-none items-center justify-center">
+      {!hasMoreMessage && !loadingBefore ? (
+        <span className="text-center">---------- END ----------</span>
+      ) : null}
+      {loadingBefore ? (
+        <span
+          role="status"
+          aria-label="Loading earlier messages"
+          className="inline-flex h-8 w-8 items-center justify-center"
+        >
+          <Loader2
+            aria-hidden="true"
+            className="h-8 w-8 animate-spin text-gray-600"
+          />
+        </span>
+      ) : null}
+    </div>
   );
 };
+
+export const shouldCenterMessageLoader = ({
+  roomId,
+  userId,
+  messageCount,
+  loadingMessageKind,
+}: {
+  roomId?: string;
+  userId?: string;
+  messageCount: number;
+  loadingMessageKind: MessageLoadingKind | null;
+}) =>
+  !roomId ||
+  !userId ||
+  (loadingMessageKind === "initial" && messageCount === 0);
+
+const CenteredMessageLoader = () => (
+  <div
+    role="status"
+    aria-label="Loading messages"
+    className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden"
+  >
+    <Loader2
+      aria-hidden="true"
+      className="h-8 w-8 animate-spin text-gray-600"
+    />
+  </div>
+);
 
 export function Scroll({
   children,
@@ -83,7 +122,9 @@ export function Scroll({
       dispatch(scrollToEnd(false));
     });
   }, [id]);
-  const { loadingMessage } = useAppSelector((state) => state.room);
+  const { loadingMessage, loadingMessageKind } = useAppSelector(
+    (state) => state.room
+  );
   const { message, hasMoreMessage, hasMoreBefore, hasMoreAfter } =
     useAppSelector((state) => state.room.data);
 
@@ -123,12 +164,15 @@ export function Scroll({
     };
   }, [loadingMessage, message.length, room?.id, scrollEl]);
 
-  if (!room?.id || !userInfo?.id) {
-    return (
-      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto overscroll-contain px-3.5 py-0 touch-pan-y [WebkitOverflowScrolling:touch]">
-        <Loader2 className="text-2xl w-8 h-8 text-gray-200 animate-spin dark:text-gray-600" />
-      </div>
-    );
+  if (
+    shouldCenterMessageLoader({
+      roomId: room?.id,
+      userId: userInfo?.id,
+      messageCount: message.length,
+      loadingMessageKind,
+    })
+  ) {
+    return <CenteredMessageLoader />;
   }
 
   const items = Children.toArray([
@@ -142,7 +186,7 @@ export function Scroll({
       data={items}
       shift={isPrepend.current}
       className={clsx(
-        "relative flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-3.5 py-0 touch-pan-y [WebkitOverflowScrolling:touch]",
+        "app-scrollbar relative flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-3.5 py-0 touch-pan-y [WebkitOverflowScrolling:touch]",
         className
       )}
       ref={setScrollEl}
