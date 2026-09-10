@@ -487,6 +487,8 @@
             case Package.TYPE_KICK:
                 onKick(body);
                 return;
+            default:
+                throw new Error('unknown package type: ' + type);
         }
     };
 
