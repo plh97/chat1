@@ -213,6 +213,12 @@ export function App() {
   }, []);
 
   useEffect(() => {
+    document.title = authenticated
+      ? `${pageCopy[page].title} · Chat SaaS Admin`
+      : "Sign in · Chat SaaS Admin";
+  }, [authenticated, page]);
+
+  useEffect(() => {
     if (!authenticated) {
       setProfile(null);
       setProfileError("");
