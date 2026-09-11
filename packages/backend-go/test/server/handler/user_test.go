@@ -154,6 +154,30 @@ func (s *stubUserService) UploadPresignedUrl(_ uint, fileExt string, scene int) 
 	return "", "", nil
 }
 
+func TestUserHandler_ListUsersUsesAuthenticatedUserID(t *testing.T) {
+	called := false
+	userHandler := handler.NewUserHandler(hdl, &stubUserService{
+		listUsersFn: func(_ context.Context, req v1.ListUsersRequest) (*v1.ListUsersResponseData, error) {
+			called = true
+			assert.Equal(t, uint(userId), req.CurrentUserID)
+			assert.Equal(t, "fake", req.UserName)
+			return &v1.ListUsersResponseData{}, nil
+		},
+	})
+	router := newTestRouter()
+	router.Use(middleware.StrictAuth(jwt, logger))
+	router.GET("/user", userHandler.ListUsers)
+
+	req, _ := http.NewRequest(http.MethodGet, "/user?userName=fake", nil)
+	req.Header.Set("Authorization", "Bearer "+genToken(t))
+	resp := httptest.NewRecorder()
+
+	router.ServeHTTP(resp, req)
+
+	assert.Equal(t, http.StatusOK, resp.Code)
+	assert.True(t, called)
+}
+
 func newTestRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()

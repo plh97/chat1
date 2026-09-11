@@ -197,6 +197,24 @@ func (s *userService) ListUsers(ctx context.Context, req v1.ListUsersRequest) (*
 	if err != nil {
 		return nil, err
 	}
+
+	friendIDs := make(map[uint]struct{})
+	if req.CurrentUserID != 0 && s.friendRepo != nil {
+		friends, err := s.friendRepo.GetFriends(ctx, req.CurrentUserID)
+		if err != nil {
+			return nil, err
+		}
+		for _, friend := range friends {
+			if friend != nil {
+				friendIDs[friend.ID] = struct{}{}
+			}
+		}
+	}
+	for index := range users {
+		users[index].IsSelf = users[index].ID == req.CurrentUserID
+		_, users[index].IsFriend = friendIDs[users[index].ID]
+	}
+
 	return &v1.ListUsersResponseData{
 		Users:      users,
 		TotalCount: totalCount,

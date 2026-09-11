@@ -153,6 +153,7 @@ func (h *UserHandler) ListUsers(ctx *gin.Context) {
 		v1.HandleError(ctx, http.StatusBadRequest, v1.ErrBadRequest, nil)
 		return
 	}
+	req.CurrentUserID = uint(GetUserIdFromCtx(ctx))
 
 	users, err := h.userService.ListUsers(ctx, req)
 	if err != nil {

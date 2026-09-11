@@ -18,6 +18,8 @@ type User struct {
 	Permission string `gorm:"column:permission" json:"permission"`
 	Status     string `gorm:"size:20;not null;default:active;index:idx_users_tenant" json:"status"`
 	Image      string `gorm:"column:image" json:"image"`
+	IsFriend   bool   `gorm:"-" json:"isFriend"`
+	IsSelf     bool   `gorm:"-" json:"isSelf"`
 
 	// Relations
 	Rooms   []Room  `gorm:"many2many:room_members;joinForeignKey:UserID;joinReferences:RoomID" json:"rooms"`

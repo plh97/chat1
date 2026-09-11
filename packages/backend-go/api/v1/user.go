@@ -112,13 +112,14 @@ func (r *AddFriendRequest) GetFriendID() uint {
 }
 
 type ListUsersRequest struct {
-	ID        uint   `form:"id" json:"id"`
-	UserName  string `form:"userName" json:"userName"`
-	Email     string `form:"email" json:"email"`
-	ChannelID string `form:"channelId" json:"channelId"`
-	Role      string `form:"role" json:"role"`
-	PageSize  int    `form:"pageSize" json:"pageSize"`
-	Start     int    `form:"start" json:"start"`
+	ID            uint   `form:"id" json:"id"`
+	UserName      string `form:"userName" json:"userName"`
+	Email         string `form:"email" json:"email"`
+	ChannelID     string `form:"channelId" json:"channelId"`
+	Role          string `form:"role" json:"role"`
+	PageSize      int    `form:"pageSize" json:"pageSize"`
+	Start         int    `form:"start" json:"start"`
+	CurrentUserID uint   `form:"-" json:"-"`
 }
 
 type ListUsersResponseData struct {

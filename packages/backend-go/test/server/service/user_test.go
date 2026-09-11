@@ -78,7 +78,31 @@ type stubUserRepository struct {
 	listFn         func(ctx context.Context, req v1.ListUsersRequest) ([]model.User, int64, error)
 }
 
+type stubFriendRepository struct {
+	getFriendsFn func(ctx context.Context, userID uint) ([]*model.User, error)
+}
+
 var _ repository.UserRepository = (*stubUserRepository)(nil)
+var _ repository.FriendRepository = (*stubFriendRepository)(nil)
+
+func (s *stubFriendRepository) AddFriend(context.Context, uint, uint) (*model.Room, error) {
+	return nil, nil
+}
+
+func (s *stubFriendRepository) DeleteFriend(context.Context, uint, uint) error {
+	return nil
+}
+
+func (s *stubFriendRepository) GetFriends(ctx context.Context, userID uint) ([]*model.User, error) {
+	if s.getFriendsFn != nil {
+		return s.getFriendsFn(ctx, userID)
+	}
+	return nil, nil
+}
+
+func (s *stubFriendRepository) IsFriend(context.Context, uint, uint) (bool, error) {
+	return false, nil
+}
 
 func (s *stubUserRepository) Create(ctx context.Context, user *model.User) error {
 	if s.createFn != nil {
@@ -137,7 +161,10 @@ func (s *stubUserRepository) List(ctx context.Context, req v1.ListUsersRequest) 
 }
 
 func newUserServiceForTest(tm repository.Transaction, userRepo repository.UserRepository) service.UserService {
-	var friendRepo repository.FriendRepository
+	return newUserServiceWithFriendRepoForTest(tm, userRepo, nil)
+}
+
+func newUserServiceWithFriendRepoForTest(tm repository.Transaction, userRepo repository.UserRepository, friendRepo repository.FriendRepository) service.UserService {
 	var r2Client *aws.CloudflareR2
 	srv := service.NewService(tm, logger, sf, j)
 	return service.NewUserService(srv, userRepo, friendRepo, r2Client)
@@ -231,6 +258,38 @@ func TestUserService_ListUsersReturnsPageMetadata(t *testing.T) {
 	assert.Equal(t, int64(13), result.TotalCount)
 	assert.Len(t, result.Users, 1)
 	assert.Equal(t, "alice", result.Users[0].UserName)
+}
+
+func TestUserService_ListUsersMarksFriendsAndCurrentUser(t *testing.T) {
+	ctx := context.Background()
+	req := v1.ListUsersRequest{UserName: "ali", CurrentUserID: 7}
+	userRepo := &stubUserRepository{
+		listFn: func(ctx context.Context, actual v1.ListUsersRequest) ([]model.User, int64, error) {
+			assert.Equal(t, req, actual)
+			return []model.User{
+				{ID: 7, UserName: "current"},
+				{ID: 8, UserName: "friend"},
+				{ID: 9, UserName: "stranger"},
+			}, 3, nil
+		},
+	}
+	friendRepo := &stubFriendRepository{
+		getFriendsFn: func(_ context.Context, userID uint) ([]*model.User, error) {
+			assert.Equal(t, uint(7), userID)
+			return []*model.User{{ID: 8}}, nil
+		},
+	}
+	userService := newUserServiceWithFriendRepoForTest(&stubTransaction{}, userRepo, friendRepo)
+
+	result, err := userService.ListUsers(ctx, req)
+
+	assert.NoError(t, err)
+	assert.True(t, result.Users[0].IsSelf)
+	assert.False(t, result.Users[0].IsFriend)
+	assert.False(t, result.Users[1].IsSelf)
+	assert.True(t, result.Users[1].IsFriend)
+	assert.False(t, result.Users[2].IsSelf)
+	assert.False(t, result.Users[2].IsFriend)
 }
 
 func TestUserService_Login_UserNotFound(t *testing.T) {

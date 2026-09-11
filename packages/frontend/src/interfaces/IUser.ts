@@ -14,6 +14,8 @@ export interface IUser extends Omit<
   github: string;
   permission: string;
   email: string;
+  isFriend?: boolean;
+  isSelf?: boolean;
   room: IRoom[] | null;
   friend: IUser[];
 }

@@ -1,4 +1,4 @@
-import { FaPlus } from "react-icons/fa";
+import { FaCheck, FaPlus } from "react-icons/fa";
 import type { UIEvent } from "react";
 import {
   Button,
@@ -26,6 +26,7 @@ export const AddFriendDialog = ({
   const [users, setUsers] = useState<IUser[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [addingUserId, setAddingUserId] = useState<string | null>(null);
   const loadingRef = useRef(false);
   const requestVersionRef = useRef(0);
   const toast = useToast();
@@ -35,6 +36,7 @@ export const AddFriendDialog = ({
     const userName = query.trim();
     setUsers([]);
     setTotalCount(0);
+    setAddingUserId(null);
     loadingRef.current = false;
     setIsLoading(false);
 
@@ -142,13 +144,20 @@ export const AddFriendDialog = ({
     onClose();
   };
 
-  const handleAddFriend = async (id: string) => {
-    if (!id) return;
-    const room = await Api.addFriend({ id });
-    if (!room?.id) return;
-    await dispatch<any>(fetchUserInfoThunk());
-    handleClose();
-    navigation(`/room/${room.id}`);
+  const handleAddFriend = async (user: IUser) => {
+    if (!user.id || user.isFriend || user.isSelf || addingUserId) return;
+    setAddingUserId(user.id);
+    try {
+      const room = await Api.addFriend({ id: user.id });
+      if (!room?.id) return;
+      await dispatch(fetchUserInfoThunk());
+      handleClose();
+      navigation(`/room/${room.id}`);
+    } catch {
+      // The shared API interceptor already presents the server error.
+    } finally {
+      setAddingUserId(null);
+    }
   };
 
   return (
@@ -177,25 +186,48 @@ export const AddFriendDialog = ({
               </div>
             ) : users.length ? (
               <>
-                {users.map((user) => (
-                  <div
-                    className="flex items-center gap-2 rounded-lg border-2 border-solid border-slate-900 px-2 py-1"
-                    key={user.id}
-                  >
-                    <Avatar
-                      className="h-8 w-8"
-                      src={user.image}
-                      name={user.userName}
-                    />
-                    <span className="flex-1">{user.userName}</span>
-                    <IconButton
-                      aria-label={`Add ${user.userName}`}
-                      onClick={() => handleAddFriend(user.id)}
+                {users.map((user) => {
+                  const relationshipLabel = user.isSelf
+                    ? "You"
+                    : user.isFriend
+                      ? "Friends"
+                      : "";
+                  return (
+                    <div
+                      className={clsx(
+                        "flex items-center gap-2 rounded-lg border-2 border-solid px-2 py-1",
+                        relationshipLabel
+                          ? "border-slate-700 bg-slate-800/60"
+                          : "border-slate-900"
+                      )}
+                      key={user.id}
                     >
-                      <FaPlus />
-                    </IconButton>
-                  </div>
-                ))}
+                      <Avatar
+                        className="h-8 w-8"
+                        src={user.image}
+                        name={user.userName}
+                      />
+                      <span className="min-w-0 flex-1 truncate">
+                        {user.userName}
+                      </span>
+                      {relationshipLabel ? (
+                        <span className="inline-flex min-w-20 items-center justify-center gap-1.5 rounded-md bg-emerald-950/60 px-2.5 py-2 text-sm font-medium text-emerald-300">
+                          <FaCheck aria-hidden="true" />
+                          {relationshipLabel}
+                        </span>
+                      ) : (
+                        <IconButton
+                          aria-label={`Add ${user.userName}`}
+                          isDisabled={addingUserId !== null}
+                          isLoading={addingUserId === user.id}
+                          onClick={() => handleAddFriend(user)}
+                        >
+                          <FaPlus />
+                        </IconButton>
+                      )}
+                    </div>
+                  );
+                })}
                 {isLoading ? (
                   <div className="flex justify-center py-3">
                     <Spinner size="sm" aria-label="Loading more users" />
