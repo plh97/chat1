@@ -1,6 +1,7 @@
 import { Properties } from "csstype";
 import { ChangeEvent } from "react";
 import Api from "@/Api";
+import { BrandLogo } from "@/components/BrandLogo";
 import { loginThunk } from "@/store/reducer/user";
 
 const style: { [key: string]: Properties } = {
@@ -65,6 +66,11 @@ export function LoginPage() {
   return (
     <div style={style.container} data-testid="login">
       <div style={style.Wrapper} className="flex flex-col gap-2">
+        <BrandLogo
+          className="mb-3 h-12 justify-center text-2xl"
+          label="Chat"
+          showName
+        />
         <div style={style.AvatarContainer}>
           <Avatar size="xl" name="?" src={imageUrl} />
         </div>

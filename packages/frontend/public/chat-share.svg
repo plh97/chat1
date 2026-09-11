@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Chat real-time conversations">
+  <defs>
+    <linearGradient id="background" x1="52" y1="18" x2="1150" y2="610" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#102a46"/>
+      <stop offset=".55" stop-color="#071525"/>
+      <stop offset="1" stop-color="#050c16"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="100" y1="160" x2="320" y2="370" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#67e8f9"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(1015 74) rotate(134) scale(520 510)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#155e75" stop-opacity=".55"/>
+      <stop offset="1" stop-color="#071525" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="shadow" x="30" y="52" width="355" height="370" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="25" stdDeviation="26" flood-color="#020617" flood-opacity=".52"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="630" rx="36" fill="url(#background)"/>
+  <rect width="1200" height="630" rx="36" fill="url(#glow)"/>
+  <path d="M0 515c247-86 414 71 662-29 272-110 356-28 538-150v294H0V515Z" fill="#0b2034" opacity=".6"/>
+  <g opacity=".25" fill="none" stroke="#67e8f9">
+    <path d="M884 107h192M921 153h198M861 199h193"/>
+    <circle cx="848" cy="107" r="5" fill="#67e8f9"/>
+    <circle cx="885" cy="153" r="5" fill="#67e8f9"/>
+    <circle cx="825" cy="199" r="5" fill="#67e8f9"/>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="70" y="80" width="264" height="264" rx="66" fill="#0a1929" stroke="#23435e" stroke-width="4"/>
+    <path d="M212 121h43c24 0 44 20 44 44v39c0 19-12 35-28 41v25c0 10-12 15-19 8l-34-29h-6c-24 0-44-20-44-44v-40c0-24 20-44 44-44Z" fill="#164e63" stroke="#2a8296" stroke-width="5"/>
+    <path d="M153 144h81c25 0 45 20 45 45v43c0 25-20 45-45 45h-35l-39 34c-8 7-21 1-21-10v-27c-19-6-33-24-33-45v-40c0-25 20-45 45-45h2Z" fill="url(#accent)"/>
+    <circle cx="159" cy="211" r="10" fill="#06202a"/>
+    <circle cx="193" cy="211" r="10" fill="#06202a"/>
+    <circle cx="227" cy="211" r="10" fill="#06202a"/>
+  </g>
+  <text x="392" y="151" fill="#67e8f9" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="23" font-weight="700" letter-spacing="5">CHAT</text>
+  <text x="392" y="224" fill="#f1f5f9" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="58" font-weight="750">Every conversation, in sync</text>
+  <text x="392" y="282" fill="#9fb2c9" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="26">Message, search, call and share your screen in one place.</text>
+  <g transform="translate(392 357)">
+    <rect width="144" height="50" rx="25" fill="#102d42" stroke="#1e5368"/>
+    <circle cx="27" cy="25" r="6" fill="#22d3ee"/>
+    <text x="45" y="32" fill="#cffafe" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="650">Realtime</text>
+    <rect x="158" width="138" height="50" rx="25" fill="#102d42" stroke="#1e5368"/>
+    <circle cx="185" cy="25" r="6" fill="#22d3ee"/>
+    <text x="203" y="32" fill="#cffafe" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="650">Search</text>
+    <rect x="310" width="190" height="50" rx="25" fill="#102d42" stroke="#1e5368"/>
+    <circle cx="337" cy="25" r="6" fill="#22d3ee"/>
+    <text x="355" y="32" fill="#cffafe" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="650">Voice &amp; video</text>
+    <rect x="514" width="184" height="50" rx="25" fill="#102d42" stroke="#1e5368"/>
+    <circle cx="541" cy="25" r="6" fill="#22d3ee"/>
+    <text x="559" y="32" fill="#cffafe" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="650">Screen share</text>
+  </g>
+  <path d="M76 520h1048" stroke="#1d3c58"/>
+  <text x="76" y="558" fill="#71869e" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="21">c.plhh.org</text>
+</svg>

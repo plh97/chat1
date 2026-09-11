@@ -42,9 +42,12 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: [
         "icon.svg",
-        "favicon_io/apple-touch-icon.png",
-        "favicon_io/android-chrome-192x192.png",
-        "favicon_io/android-chrome-512x512.png",
+        "safari-pinned-tab.svg",
+        "chat-icon-32.png",
+        "chat-apple-touch-icon.png",
+        "chat-icon-192.png",
+        "chat-icon-512.png",
+        "chat-share.png",
       ],
       workbox: {
         cleanupOutdatedCaches: true,
@@ -56,27 +59,33 @@ export default defineConfig({
       },
       manifest: {
         id: "/",
-        name: "Chat room",
+        name: "Chat — Real-time conversations",
         short_name: "Chat",
         description:
-          "Chat web application. Send receive message from your friends immediately.",
+          "Private real-time messaging, conversation search, voice and video calls, and screen sharing.",
         start_url: "/",
         scope: "/",
         display: "standalone",
-        background_color: "#000000",
-        theme_color: "#000000",
+        background_color: "#07111f",
+        theme_color: "#07111f",
         icons: [
           {
-            src: "favicon_io/android-chrome-192x192.png",
+            src: "chat-icon-192.png",
             sizes: "192x192",
             type: "image/png",
             purpose: "any",
           },
           {
-            src: "favicon_io/android-chrome-512x512.png",
+            src: "chat-icon-512.png",
             sizes: "512x512",
             type: "image/png",
             purpose: "any",
+          },
+          {
+            src: "chat-icon-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
           },
           {
             src: "icon.svg",

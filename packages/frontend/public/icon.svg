@@ -1,49 +1,19 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg"
-	xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
-	viewBox="0 0 58 58" style="enable-background:new 0 0 58 58;" xml:space="preserve">
-<g>
-	<path style="fill:#2CB742;" d="M33.224,10.494H13.776C6.168,10.494,0,16.661,0,24.27v11.345c0,7.608,6.392,13.879,14,13.879h0
-		v7.446c0,0.503,0.384,0.755,0.74,0.4l1.521-1.521c4.116-4.116,9.699-6.325,15.52-6.325h1.443C40.832,49.494,47,43.223,47,35.615
-		V24.27C47,16.661,40.832,10.494,33.224,10.494z"/>
-	<g>
-		<path style="fill:#9BC0EA;" d="M44.224,0.494H24.776c-6.371,0-11.717,4.332-13.292,10.206c0.747-0.125,1.509-0.206,2.292-0.206
-			h19.448C40.832,10.494,47,16.661,47,24.27v11.345c0,1.259-0.183,2.476-0.5,3.639C52.957,38.061,58,32.37,58,25.615V14.27
-			C58,6.661,51.832,0.494,44.224,0.494z"/>
-	</g>
-	<circle style="fill:#FFFFFF;" cx="12" cy="30.494" r="3"/>
-	<circle style="fill:#FFFFFF;" cx="24" cy="30.494" r="3"/>
-	<circle style="fill:#FFFFFF;" cx="36" cy="30.494" r="3"/>
-</g>
-<g>
-</g>
-<g>
-</g>
-<g>
-</g>
-<g>
-</g>
-<g>
-</g>
-<g>
-</g>
-<g>
-</g>
-<g>
-</g>
-<g>
-</g>
-<g>
-</g>
-<g>
-</g>
-<g>
-</g>
-<g>
-</g>
-<g>
-</g>
-<g>
-</g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Chat">
+  <defs>
+    <linearGradient id="bg" x1="64" y1="40" x2="448" y2="472" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#102a46"/>
+      <stop offset="1" stop-color="#07111f"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="118" y1="151" x2="375" y2="374" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#67e8f9"/>
+      <stop offset="1" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="124" fill="url(#bg)"/>
+  <rect x="22" y="22" width="468" height="468" rx="104" fill="none" stroke="#1d3c58" stroke-width="12"/>
+  <path d="M265 112h80c42 0 76 34 76 76v72c0 32-20 60-49 71v44c0 17-20 26-33 15l-60-52h-14c-42 0-76-34-76-76v-74c0-42 34-76 76-76Z" fill="#164e63" stroke="#2a8296" stroke-width="8"/>
+  <path d="M167 151h143c43 0 78 35 78 78v75c0 43-35 78-78 78h-61l-69 60c-14 12-36 2-36-17v-47c-34-10-59-41-59-78v-71c0-43 35-78 78-78h4Z" fill="url(#accent)"/>
+  <circle cx="178" cy="268" r="17" fill="#06202a"/>
+  <circle cx="237" cy="268" r="17" fill="#06202a"/>
+  <circle cx="296" cy="268" r="17" fill="#06202a"/>
 </svg>

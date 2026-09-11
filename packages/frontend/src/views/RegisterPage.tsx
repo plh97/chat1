@@ -1,6 +1,7 @@
 import CSS from "csstype";
 import { ChangeEvent } from "react";
 
+import { BrandLogo } from "@/components/BrandLogo";
 import { registerThunk } from "@/store/reducer/user";
 
 const style: { [key: string]: CSS.Properties } = {
@@ -66,6 +67,11 @@ export function RegisterPage() {
   return (
     <div style={style.container} data-testid="register">
       <div style={style.Wrapper} className="flex flex-col gap-2">
+        <BrandLogo
+          className="mb-3 h-12 justify-center text-2xl"
+          label="Chat"
+          showName
+        />
         <div style={style.AvatarContainer}>
           <Avatar size="xl" name="?" src={""} />
         </div>
