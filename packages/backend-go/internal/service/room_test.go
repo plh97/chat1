@@ -6,6 +6,7 @@ import (
 	"backend-go/internal/repository"
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -26,7 +27,7 @@ func setupRoomServiceFixture(t *testing.T) *roomServiceFixture {
 	databaseName := strings.NewReplacer("/", "_", " ", "_").Replace(t.Name())
 	db, err := gorm.Open(sqlite.Open(fmt.Sprintf("file:%s?mode=memory&cache=shared", databaseName)), &gorm.Config{})
 	require.NoError(t, err)
-	require.NoError(t, db.AutoMigrate(&model.User{}, &model.Room{}, &model.RoomMember{}))
+	require.NoError(t, db.AutoMigrate(&model.User{}, &model.Room{}, &model.RoomMember{}, &model.Message{}))
 
 	users := make([]model.User, 6)
 	userIDs := make([]uint, 0, len(users))
@@ -75,6 +76,23 @@ func roomRole(t *testing.T, db *gorm.DB, roomID, userID uint) string {
 		return ""
 	}
 	return membership.Role
+}
+
+func createRoomMessage(t *testing.T, fixture *roomServiceFixture, tenantID, roomID, userID uint) *model.Message {
+	t.Helper()
+	channelID := strconv.FormatUint(uint64(roomID), 10)
+	message := &model.Message{
+		TenantID:    tenantID,
+		Seq:         7,
+		ContentType: "TEXT_MESSAGE",
+		ChannelId:   channelID,
+		RoomId:      channelID,
+		UserId:      strconv.FormatUint(uint64(userID), 10),
+		ReplyId:     "123",
+		TextMessage: `{"text":"keep the sequence","mention":[]}`,
+	}
+	require.NoError(t, fixture.db.Create(message).Error)
+	return message
 }
 
 func TestUpdateRoomRejectsRegularMember(t *testing.T) {
@@ -317,4 +335,89 @@ func TestDeleteRoomRequiresCreator(t *testing.T) {
 
 	var room model.Room
 	require.ErrorIs(t, fixture.db.First(&room, fixture.roomID).Error, gorm.ErrRecordNotFound)
+}
+
+func TestRecallMessageKeepsRowAndSequenceAndIsIdempotent(t *testing.T) {
+	fixture := setupRoomServiceFixture(t)
+	ctx := repository.WithTenantID(context.Background(), 1)
+	message := createRoomMessage(t, fixture, 1, fixture.roomID, fixture.userIDs[2])
+
+	result, err := fixture.service.RecallMessage(ctx, fixture.userIDs[2], fixture.roomID, message.ID)
+	require.NoError(t, err)
+	require.NotNil(t, result.Message)
+	require.Equal(t, message.ID, result.Message.ID)
+	require.Equal(t, 7, result.Message.Seq)
+	require.Equal(t, "123", result.Message.ReplyId)
+	require.Equal(t, "RECALL_MESSAGE", result.Message.ContentType)
+	require.True(t, result.Message.IsRecalled)
+	require.Equal(t, "null", result.Message.TextMessage)
+	require.JSONEq(t, fmt.Sprintf(`{"operator":"%d","recallMsgId":%d}`, fixture.userIDs[2], message.ID), result.Message.RecallMessage)
+
+	response, ok := result.Response.(*roomMessageResponse)
+	require.True(t, ok)
+	require.Equal(t, message.ID, response.ID)
+	require.Equal(t, "RECALL_MESSAGE", response.ContentType)
+	require.True(t, response.IsRecalled)
+	require.Nil(t, response.TextMessage)
+
+	var stored model.Message
+	require.NoError(t, fixture.db.First(&stored, message.ID).Error)
+	require.Equal(t, message.ID, stored.ID, "recall must not delete or replace the row")
+	require.Equal(t, 7, stored.Seq)
+	require.Equal(t, "123", stored.ReplyId)
+
+	repeated, err := fixture.service.RecallMessage(ctx, fixture.userIDs[2], 0, message.ID)
+	require.NoError(t, err)
+	require.Equal(t, result.Message.ID, repeated.Message.ID)
+	require.Equal(t, result.Message.UpdatedAt, repeated.Message.UpdatedAt)
+}
+
+func TestRecallMessageRejectsNonAuthorWithoutChangingMessage(t *testing.T) {
+	fixture := setupRoomServiceFixture(t)
+	ctx := repository.WithTenantID(context.Background(), 1)
+	message := createRoomMessage(t, fixture, 1, fixture.roomID, fixture.userIDs[2])
+
+	_, err := fixture.service.RecallMessage(ctx, fixture.userIDs[1], fixture.roomID, message.ID)
+	require.ErrorIs(t, err, ErrRoomForbidden)
+
+	var stored model.Message
+	require.NoError(t, fixture.db.First(&stored, message.ID).Error)
+	require.Equal(t, "TEXT_MESSAGE", stored.ContentType)
+	require.False(t, stored.IsRecalled)
+}
+
+func TestRecallMessageRejectsMismatchedRoom(t *testing.T) {
+	fixture := setupRoomServiceFixture(t)
+	ctx := repository.WithTenantID(context.Background(), 1)
+	message := createRoomMessage(t, fixture, 1, fixture.roomID, fixture.userIDs[2])
+	otherRoom := &model.Room{TenantID: 1, Name: "Different room"}
+	require.NoError(t, fixture.db.Create(otherRoom).Error)
+	require.NoError(t, fixture.db.Create(&model.RoomMember{
+		RoomID: otherRoom.ID, UserID: fixture.userIDs[2], Role: model.Member,
+	}).Error)
+
+	_, err := fixture.service.RecallMessage(ctx, fixture.userIDs[2], otherRoom.ID, message.ID)
+	require.ErrorIs(t, err, gorm.ErrRecordNotFound)
+
+	var stored model.Message
+	require.NoError(t, fixture.db.First(&stored, message.ID).Error)
+	require.False(t, stored.IsRecalled)
+}
+
+func TestRecallMessageRejectsCrossTenantRecordEvenWithLegacyMembership(t *testing.T) {
+	fixture := setupRoomServiceFixture(t)
+	otherRoom := &model.Room{TenantID: 2, Name: "Other tenant"}
+	require.NoError(t, fixture.db.Create(otherRoom).Error)
+	require.NoError(t, fixture.db.Create(&model.RoomMember{
+		RoomID: otherRoom.ID, UserID: fixture.userIDs[2], Role: model.Member,
+	}).Error)
+	message := createRoomMessage(t, fixture, 2, otherRoom.ID, fixture.userIDs[2])
+
+	ctx := repository.WithTenantID(context.Background(), 1)
+	_, err := fixture.service.RecallMessage(ctx, fixture.userIDs[2], 0, message.ID)
+	require.ErrorIs(t, err, gorm.ErrRecordNotFound)
+
+	var stored model.Message
+	require.NoError(t, fixture.db.First(&stored, message.ID).Error)
+	require.False(t, stored.IsRecalled)
 }

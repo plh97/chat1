@@ -57,6 +57,17 @@ type LoginResponse struct {
 	Data LoginResponseData
 }
 
+// GetUserImageRequest keeps the legacy `username` query key used by the
+// frontend, although the value is the email address used to sign in.
+type GetUserImageRequest struct {
+	Email string `form:"username" binding:"omitempty,max=254,email"`
+}
+
+type GetUserImageResponse struct {
+	Response
+	Data string `json:"data"`
+}
+
 type UpdateProfileRequest struct {
 	UserName *string `json:"userName" example:"alan"`
 	Email    *string `json:"email" binding:"omitempty,email" example:"1234@gmail.com"`

@@ -59,6 +59,11 @@ type RoomDeleteResult struct {
 	RoomUserIDs []uint
 }
 
+type RoomMessageRecallResult struct {
+	Message  *model.Message
+	Response interface{}
+}
+
 type RoomService interface {
 	CreateRoom(ctx context.Context, req v1.RoomCreateRequest) (*RoomCreateResult, error)
 	GetRoomByID(ctx context.Context, id, viewerID uint, memberLimit, memberOffset, adminLimit, adminOffset int) (interface{}, error)
@@ -73,6 +78,7 @@ type RoomService interface {
 	UpdateRoom(ctx context.Context, operatorID uint, req v1.RoomUpdateRequest) (*RoomUpdateResult, error)
 	JoinRoom(ctx context.Context, userID, roomID uint) (*RoomJoinResult, error)
 	DeleteRoom(ctx context.Context, operatorID, id uint) (*RoomDeleteResult, error)
+	RecallMessage(ctx context.Context, operatorID, roomID, messageID uint) (*RoomMessageRecallResult, error)
 }
 
 func NewRoomService(service *Service) RoomService {
@@ -1283,6 +1289,109 @@ func jsonStringToObject(value string) interface{} {
 		return nil
 	}
 	return object
+}
+
+// RecallMessage replaces the payload of an existing message with a recall
+// marker. Keeping the row preserves room sequence numbers and reply links.
+// Authorization and tenant checks live in this transaction as well as in the
+// HTTP middleware so non-HTTP callers cannot bypass them.
+func (s *roomService) RecallMessage(ctx context.Context, operatorID, roomID, messageID uint) (*RoomMessageRecallResult, error) {
+	if operatorID == 0 || messageID == 0 {
+		return nil, fmt.Errorf("%w: operator and message ids must be positive", ErrInvalidRoomUpdate)
+	}
+
+	var message model.Message
+	err := s.tm.Transaction(ctx, func(txCtx context.Context) error {
+		db := s.tm.(*repository.Repository).DB(txCtx)
+		messageQuery := db.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Where("id = ?", messageID)
+		if tenantID := repository.TenantIDFromContext(txCtx); tenantID != 0 {
+			messageQuery = messageQuery.Where("tenant_id = ?", tenantID)
+		}
+		if err := messageQuery.First(&message).Error; err != nil {
+			return err
+		}
+
+		messageRoomID, err := strconv.ParseUint(message.ChannelId, 10, 64)
+		if err != nil || messageRoomID == 0 {
+			return gorm.ErrRecordNotFound
+		}
+		if roomID == 0 {
+			roomID = uint(messageRoomID)
+		}
+		channelID := strconv.FormatUint(uint64(roomID), 10)
+		if message.ChannelId != channelID || message.RoomId != channelID {
+			return gorm.ErrRecordNotFound
+		}
+
+		var room model.Room
+		roomQuery := db.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Select("id", "tenant_id").
+			Where("id = ? AND tenant_id = ?", roomID, message.TenantID)
+		if tenantID := repository.TenantIDFromContext(txCtx); tenantID != 0 {
+			roomQuery = roomQuery.Where("tenant_id = ?", tenantID)
+		}
+		if err := roomQuery.First(&room).Error; err != nil {
+			return err
+		}
+
+		var membership model.RoomMember
+		if err := db.Select("id").
+			Where("room_id = ? AND user_id = ?", room.ID, operatorID).
+			First(&membership).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrRoomForbidden
+			}
+			return err
+		}
+
+		operator := strconv.FormatUint(uint64(operatorID), 10)
+		if message.UserId != operator {
+			return ErrRoomForbidden
+		}
+
+		// Repeating a successful recall is intentionally idempotent.
+		if message.IsRecalled && message.ContentType == "RECALL_MESSAGE" {
+			return nil
+		}
+
+		recallPayload, err := json.Marshal(map[string]interface{}{
+			"operator":    operator,
+			"recallMsgId": message.ID,
+		})
+		if err != nil {
+			return err
+		}
+		updates := map[string]interface{}{
+			"content_type":   "RECALL_MESSAGE",
+			"text_message":   "null",
+			"media_message":  "null",
+			"read_message":   "null",
+			"system_message": "null",
+			"recall_message": string(recallPayload),
+			"is_recalled":    true,
+		}
+		result := db.Model(&model.Message{}).
+			Where("id = ? AND tenant_id = ? AND channel_id = ? AND room_id = ? AND user_id = ?", message.ID, room.TenantID, channelID, channelID, operator).
+			Updates(updates)
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+
+		return db.Where("id = ? AND tenant_id = ? AND channel_id = ? AND room_id = ?", message.ID, room.TenantID, channelID, channelID).
+			First(&message).Error
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &RoomMessageRecallResult{
+		Message:  &message,
+		Response: buildRoomMessageResponse(message, nil, nil, nil),
+	}, nil
 }
 
 func (s *roomService) DeleteRoom(ctx context.Context, operatorID, id uint) (*RoomDeleteResult, error) {

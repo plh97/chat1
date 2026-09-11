@@ -165,7 +165,6 @@ func (h *RoomHandler) AddRoom(ctx *gin.Context) {
 // @Success 200 {object} v1.Response
 // @Router /room [get]
 func (h *RoomHandler) GetRoom(ctx *gin.Context) {
-	// TODO: 实现获取房间信息逻辑
 	id := ctx.Query("id")
 	userID := uint(GetUserIdFromCtx(ctx))
 	memberPageSize := 0
@@ -488,7 +487,6 @@ func (h *RoomHandler) UpdateRoom(ctx *gin.Context) {
 // @Success 200 {object} v1.Response
 // @Router /room [delete]
 func (h *RoomHandler) DeleteRoom(ctx *gin.Context) {
-	// TODO: 实现删除房间逻辑
 	id := ctx.Query("id")
 	if id == "" {
 		v1.HandleError(ctx, 400, v1.ErrBadRequest, "missing id")
@@ -600,17 +598,60 @@ func (h *RoomHandler) GetMessage(ctx *gin.Context) {
 }
 
 // DeleteMessage godoc
-// @Summary 删除房间消息
+// @Summary 撤回房间消息
 // @Schemes
 // @Tags 房间模块
 // @Accept json
 // @Produce json
 // @Param id query string true "消息ID"
+// @Param roomId query string false "房间ID（可选，用于交叉校验）"
 // @Success 200 {object} v1.Response
 // @Router /room/message [delete]
 func (h *RoomHandler) DeleteMessage(ctx *gin.Context) {
-	// TODO: 实现删除房间消息逻辑
-	v1.HandleSuccess(ctx, map[string]interface{}{"msg": "not implemented"})
+	messageIDValue := ctx.Query("id")
+	roomIDValue := ctx.Query("roomId")
+	if messageIDValue == "" {
+		v1.HandleError(ctx, http.StatusBadRequest, v1.ErrBadRequest, "missing id")
+		return
+	}
+
+	messageID, err := strconv.ParseUint(messageIDValue, 10, 64)
+	if err != nil || messageID == 0 {
+		v1.HandleError(ctx, http.StatusBadRequest, v1.ErrBadRequest, "invalid id")
+		return
+	}
+	var roomID uint64
+	if roomIDValue != "" {
+		roomID, err = strconv.ParseUint(roomIDValue, 10, 64)
+		if err != nil || roomID == 0 {
+			v1.HandleError(ctx, http.StatusBadRequest, v1.ErrBadRequest, "invalid roomId")
+			return
+		}
+	}
+	operatorID := uint(GetUserIdFromCtx(ctx))
+	if operatorID == 0 {
+		v1.HandleError(ctx, http.StatusUnauthorized, v1.ErrUnauthorized, nil)
+		return
+	}
+
+	result, err := h.roomService.RecallMessage(ctx, operatorID, uint(roomID), uint(messageID))
+	if err != nil {
+		handleRoomMutationError(ctx, err)
+		return
+	}
+	if h.roomEvents != nil {
+		broadcastRoomID, _ := strconv.ParseUint(result.Message.ChannelId, 10, 64)
+		if err := h.roomEvents.PublishRecalledMessage(ctx, uint(broadcastRoomID), operatorID, result.Message); err != nil && h.logger != nil {
+			h.logger.WithContext(ctx).Error(
+				"publish recalled message failed",
+				zap.Uint("room_id", uint(broadcastRoomID)),
+				zap.Uint("message_id", uint(messageID)),
+				zap.Uint("actor_id", operatorID),
+				zap.Error(err),
+			)
+		}
+	}
+	v1.HandleSuccess(ctx, result.Response, "Message recalled successfully")
 }
 
 // Join room

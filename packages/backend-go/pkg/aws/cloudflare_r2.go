@@ -61,7 +61,7 @@ func NewR2Client(v *viper.Viper) (*CloudflareR2, func(), error) {
 		Bucket:          v.GetString("r2_aws.bucket"),
 		AccessKeyId:     v.GetString("r2_aws.access_key_id"),
 		SecretAccessKey: v.GetString("r2_aws.secret_access_key"),
-	}, v.GetString(`r2_aws.account_id`), v.GetString(`r2_aws.file_url`)), nil, nil
+	}, v.GetString(`r2_aws.account_id`), v.GetString(`r2_aws.file_url`)), func() {}, nil
 }
 
 type CloudflareR2 struct {

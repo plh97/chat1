@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -9,6 +11,7 @@ import (
 	"backend-go/internal/repository"
 
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 )
 
 type MessageService interface {
@@ -179,8 +182,55 @@ func (s *messageService) RecallMessage(ctx context.Context, messageID uint, user
 
 // GetUnreadCount gets the number of unread messages for a user in a channel
 func (s *messageService) GetUnreadCount(ctx context.Context, channelID, userID string) (int64, error) {
-	// This would need to be implemented with actual read tracking
-	// For now, we return 0
-	// TODO: Implement unread count calculation
-	return 0, nil
+	roomID, err := strconv.ParseUint(channelID, 10, 64)
+	if err != nil || roomID == 0 {
+		return 0, errors.New("invalid channel id")
+	}
+	memberID, err := strconv.ParseUint(userID, 10, 64)
+	if err != nil || memberID == 0 {
+		return 0, errors.New("invalid user id")
+	}
+
+	db := s.tm.(*repository.Repository).DB(ctx)
+	var room model.Room
+	roomQuery := db.Select("id", "tenant_id", "read_seq").Where("id = ?", uint(roomID))
+	if tenantID := repository.TenantIDFromContext(ctx); tenantID != 0 {
+		roomQuery = roomQuery.Where("tenant_id = ?", tenantID)
+	}
+	if err := roomQuery.First(&room).Error; err != nil {
+		return 0, err
+	}
+	var membership model.RoomMember
+	if err := db.Select("id").Where("room_id = ? AND user_id = ?", room.ID, uint(memberID)).First(&membership).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0, errors.New("not authorized for this room")
+		}
+		return 0, err
+	}
+
+	lastReadSeq := 0
+	if value, ok := room.ReadSeq[userID]; ok {
+		switch typed := value.(type) {
+		case int:
+			lastReadSeq = typed
+		case int32:
+			lastReadSeq = int(typed)
+		case int64:
+			lastReadSeq = int(typed)
+		case uint:
+			lastReadSeq = int(typed)
+		case uint32:
+			lastReadSeq = int(typed)
+		case uint64:
+			lastReadSeq = int(typed)
+		case float64:
+			lastReadSeq = int(typed)
+		case json.Number:
+			parsed, _ := typed.Int64()
+			lastReadSeq = int(parsed)
+		case string:
+			lastReadSeq, _ = strconv.Atoi(typed)
+		}
+	}
+	return s.messageRepo.GetUnreadCount(ctx, channelID, userID, lastReadSeq)
 }

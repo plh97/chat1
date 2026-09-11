@@ -73,6 +73,7 @@ func NewHTTPServer(
 			noAuthRouter.POST("/register", userHandler.Register)
 			noAuthRouter.POST("/login", userHandler.Login)
 			noAuthRouter.POST("/logout", userHandler.Logout)
+			noAuthRouter.GET("/userImage", userHandler.GetUserImage)
 		}
 		// Strict permission routing group
 		tenantSessions := userRepo.(repository.TenantSessionRepository)
@@ -81,7 +82,6 @@ func NewHTTPServer(
 		{
 			strictAuthRouter.GET("/profile", userHandler.GetCurrentProfile)
 			strictAuthRouter.GET("/user", userHandler.ListUsers)
-			strictAuthRouter.GET("/userImage", userHandler.GetUserImage)
 			strictAuthRouter.PUT("/profile", userHandler.UpdateProfile)
 			strictAuthRouter.POST("/upload", userHandler.Upload)
 			strictAuthRouter.POST("/friend", userHandler.AddFriend)

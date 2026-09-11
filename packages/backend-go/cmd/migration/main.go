@@ -19,10 +19,10 @@ func main() {
 	logger := log.NewLog(conf)
 
 	migration, cleanup, err := wire.NewWire(conf, logger)
-	defer cleanup()
 	if err != nil {
 		panic(err)
 	}
+	defer cleanup()
 	if err = migration.Run(context.Background()); err != nil {
 		panic(err)
 	}

@@ -179,10 +179,14 @@ func (r *messageRepository) ReserveNextSeq(ctx context.Context, roomID uint) (in
 // GetUnreadCount gets the count of unread messages for a user in a channel
 func (r *messageRepository) GetUnreadCount(ctx context.Context, channelID, userID string, lastReadSeq int) (int64, error) {
 	var count int64
-	err := r.DB(ctx).
+	query := r.DB(ctx).
 		Model(&model.Message{}).
 		Where("channel_id = ? AND seq > ? AND user_id != ?", channelID, lastReadSeq, userID).
-		Count(&count).Error
+		Where("is_recalled = ?", false)
+	if tenantID := TenantIDFromContext(ctx); tenantID != 0 {
+		query = query.Where("tenant_id = ?", tenantID)
+	}
+	err := query.Count(&count).Error
 	if err != nil {
 		return 0, err
 	}

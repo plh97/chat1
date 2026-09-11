@@ -114,3 +114,41 @@ func (h *Hub) PublishSystemMessage(
 	h.targeted <- targetedMessage{userIDs: recipients, payload: payload}
 	return nil
 }
+
+// PublishRecalledMessage broadcasts a recall that has already been committed
+// by the room service. It intentionally does not write the message again.
+func (h *Hub) PublishRecalledMessage(ctx context.Context, roomID, actorUserID uint, message *model.Message) error {
+	if roomID == 0 || actorUserID == 0 || message == nil || message.ID == 0 {
+		return errors.New("roomId, actorUserId and message are required")
+	}
+	channelID := strconv.FormatUint(uint64(roomID), 10)
+	actorID := strconv.FormatUint(uint64(actorUserID), 10)
+	if message.ChannelId != channelID || message.UserId != actorID ||
+		message.ContentType != "RECALL_MESSAGE" || !message.IsRecalled {
+		return errors.New("invalid recalled message")
+	}
+
+	recipients, err := h.roomRecipients(ctx, roomID, actorUserID)
+	if err != nil {
+		return err
+	}
+	actor, err := h.lookupUser(ctx, actorID)
+	if err != nil {
+		return err
+	}
+	outgoing, err := h.formatOutgoingMessage(ctx, message, actor)
+	if err != nil {
+		return err
+	}
+	payload, err := json.Marshal(wsEnvelope{
+		Event: wsSendMessageEvent,
+		Code:  0,
+		Data:  mustMarshalRawMessage(outgoing),
+	})
+	if err != nil {
+		return err
+	}
+
+	h.targeted <- targetedMessage{userIDs: recipients, payload: payload}
+	return nil
+}

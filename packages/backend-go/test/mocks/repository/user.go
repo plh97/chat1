@@ -80,6 +80,21 @@ func (mr *MockUserRepositoryMockRecorder) Create(ctx, user interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUserRepository)(nil).Create), ctx, user)
 }
 
+// FindActiveLoginImage mocks base method.
+func (m *MockUserRepository) FindActiveLoginImage(ctx context.Context, email string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindActiveLoginImage", ctx, email)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindActiveLoginImage indicates an expected call of FindActiveLoginImage.
+func (mr *MockUserRepositoryMockRecorder) FindActiveLoginImage(ctx, email interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindActiveLoginImage", reflect.TypeOf((*MockUserRepository)(nil).FindActiveLoginImage), ctx, email)
+}
+
 // GetByEmail mocks base method.
 func (m *MockUserRepository) GetByEmail(ctx context.Context, email string) (*model.User, error) {
 	m.ctrl.T.Helper()

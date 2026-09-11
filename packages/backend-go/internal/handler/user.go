@@ -312,10 +312,27 @@ func (h *UserHandler) DeleteFriend(ctx *gin.Context) {
 // @Tags 用户模块
 // @Accept json
 // @Produce json
-// @Param username query string true "用户名"
-// @Success 200 {object} v1.Response
+// @Description 登录页按邮箱查询头像；未命中或查询失败均返回相同的空结果
+// @Param username query string false "登录邮箱（兼容旧查询参数名）"
+// @Success 200 {object} v1.GetUserImageResponse
 // @Router /userImage [get]
 func (h *UserHandler) GetUserImage(ctx *gin.Context) {
-	// TODO: 实现获取用户头像逻辑
-	v1.HandleSuccess(ctx, map[string]interface{}{"msg": "not implemented"})
+	ctx.Header("Cache-Control", "no-store, max-age=0")
+
+	var req v1.GetUserImageRequest
+	if err := ctx.ShouldBindQuery(&req); err != nil {
+		v1.HandleSuccess(ctx, "")
+		return
+	}
+
+	image, err := h.userService.GetUserImage(ctx, req.Email)
+	if err != nil {
+		// Keep operational details in server logs while the anonymous response
+		// remains indistinguishable from a lookup miss.
+		if h.logger != nil {
+			h.logger.WithContext(ctx).Error("userService.GetUserImage error", zap.Error(err))
+		}
+		image = ""
+	}
+	v1.HandleSuccess(ctx, image)
 }

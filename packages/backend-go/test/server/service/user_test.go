@@ -10,6 +10,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"backend-go/internal/model"
@@ -68,6 +69,7 @@ func (s *stubTransaction) Transaction(ctx context.Context, fn func(ctx context.C
 
 type stubUserRepository struct {
 	getByEmailFn   func(ctx context.Context, email string) (*model.User, error)
+	findImageFn    func(ctx context.Context, email string) (string, error)
 	createFn       func(ctx context.Context, user *model.User) error
 	updateFn       func(ctx context.Context, user *model.User) error
 	updateFieldsFn func(ctx context.Context, id int, fields map[string]interface{}) error
@@ -118,6 +120,13 @@ func (s *stubUserRepository) GetByEmail(ctx context.Context, email string) (*mod
 		return s.getByEmailFn(ctx, email)
 	}
 	return nil, nil
+}
+
+func (s *stubUserRepository) FindActiveLoginImage(ctx context.Context, email string) (string, error) {
+	if s.findImageFn != nil {
+		return s.findImageFn(ctx, email)
+	}
+	return "", nil
 }
 
 func (s *stubUserRepository) List(ctx context.Context, req v1.ListUsersRequest) ([]model.User, int64, error) {
@@ -240,6 +249,55 @@ func TestUserService_Login_UserNotFound(t *testing.T) {
 	_, err := userService.Login(ctx, req)
 
 	assert.Error(t, err)
+}
+
+func TestUserService_GetUserImageNormalizesLoginEmail(t *testing.T) {
+	ctx := context.Background()
+	userRepo := &stubUserRepository{
+		findImageFn: func(ctx context.Context, email string) (string, error) {
+			assert.Equal(t, "person@example.com", email)
+			return "https://cdn.example.com/avatar.png", nil
+		},
+	}
+	userService := newUserServiceForTest(&stubTransaction{}, userRepo)
+
+	image, err := userService.GetUserImage(ctx, "  Person@Example.COM ")
+
+	assert.NoError(t, err)
+	assert.Equal(t, "https://cdn.example.com/avatar.png", image)
+}
+
+func TestUserService_GetUserImageSkipsUnusableIdentifiers(t *testing.T) {
+	called := false
+	userRepo := &stubUserRepository{
+		findImageFn: func(ctx context.Context, email string) (string, error) {
+			called = true
+			return "unexpected", nil
+		},
+	}
+	userService := newUserServiceForTest(&stubTransaction{}, userRepo)
+
+	for _, email := range []string{"", "   ", strings.Repeat("a", 255)} {
+		image, err := userService.GetUserImage(context.Background(), email)
+		assert.NoError(t, err)
+		assert.Empty(t, image)
+	}
+	assert.False(t, called)
+}
+
+func TestUserService_GetUserImagePreservesRepositoryErrorsForPrivateLogging(t *testing.T) {
+	expected := errors.New("database unavailable")
+	userRepo := &stubUserRepository{
+		findImageFn: func(ctx context.Context, email string) (string, error) {
+			return "", expected
+		},
+	}
+	userService := newUserServiceForTest(&stubTransaction{}, userRepo)
+
+	image, err := userService.GetUserImage(context.Background(), "person@example.com")
+
+	assert.Empty(t, image)
+	assert.ErrorIs(t, err, expected)
 }
 
 func TestUserService_GetProfile(t *testing.T) {

@@ -4,6 +4,7 @@ import (
 	v1 "backend-go/api/v1"
 	apphandler "backend-go/internal/handler"
 	"backend-go/internal/middleware"
+	"backend-go/internal/model"
 	"bytes"
 	"context"
 	"errors"
@@ -24,6 +25,10 @@ func (p *friendDeleteEventPublisher) NotifyRoomListChanged(userIDs []uint) {
 }
 
 func (p *friendDeleteEventPublisher) PublishSystemMessage(context.Context, uint, uint, string, string) error {
+	return nil
+}
+
+func (p *friendDeleteEventPublisher) PublishRecalledMessage(context.Context, uint, uint, *model.Message) error {
 	return nil
 }
 

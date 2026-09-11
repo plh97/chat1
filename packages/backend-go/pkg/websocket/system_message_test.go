@@ -185,3 +185,77 @@ func TestPublishSystemMessageRejectsUnsupportedAction(t *testing.T) {
 		t.Fatalf("expected unsupported action error, got %v", err)
 	}
 }
+
+func TestPublishRecalledMessageTargetsCurrentRoomMembersWithoutPersistingAgain(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	userRepo := mockRepository.NewMockUserRepository(ctrl)
+	userRepo.EXPECT().
+		ListRoomUserIDs(gomock.Any(), uint(4)).
+		Return([]uint{7, 9, 11}, nil)
+	userRepo.EXPECT().
+		GetByID(gomock.Any(), 7).
+		Return(&model.User{ID: 7, UserName: "author"}, nil)
+
+	persisted := false
+	hub := NewHub(&stubMessageService{
+		sendMessageFn: func(context.Context, *model.Message) (*model.Message, error) {
+			persisted = true
+			return nil, nil
+		},
+	}, userRepo)
+	recalled := &model.Message{
+		ID:            42,
+		Seq:           18,
+		ContentType:   "RECALL_MESSAGE",
+		ChannelId:     "4",
+		RoomId:        "4",
+		UserId:        "7",
+		RecallMessage: `{"operator":"7","recallMsgId":42}`,
+		IsRecalled:    true,
+	}
+	if err := hub.PublishRecalledMessage(context.Background(), 4, 7, recalled); err != nil {
+		t.Fatalf("publish recalled message: %v", err)
+	}
+	if persisted {
+		t.Fatal("an already committed recall must not be persisted a second time")
+	}
+
+	var publication targetedMessage
+	select {
+	case publication = <-hub.targeted:
+	case <-time.After(time.Second):
+		t.Fatal("timed out waiting for recall publication")
+	}
+	for _, userID := range []uint{7, 9, 11} {
+		if _, exists := publication.userIDs[userID]; !exists {
+			t.Fatalf("expected room member %d to receive recall", userID)
+		}
+	}
+
+	var envelope wsEnvelope
+	if err := json.Unmarshal(publication.payload, &envelope); err != nil {
+		t.Fatalf("unmarshal websocket envelope: %v", err)
+	}
+	if envelope.Event != wsSendMessageEvent || envelope.Code != 0 {
+		t.Fatalf("unexpected websocket envelope: %#v", envelope)
+	}
+	var outgoing outgoingMessage
+	if err := json.Unmarshal(envelope.Data, &outgoing); err != nil {
+		t.Fatalf("unmarshal recalled message: %v", err)
+	}
+	if outgoing.ID != recalled.ID || outgoing.Seq != recalled.Seq ||
+		outgoing.ContentType != "RECALL_MESSAGE" || !outgoing.IsRecalled {
+		t.Fatalf("unexpected recalled message: %#v", outgoing)
+	}
+	recallPayload, err := json.Marshal(outgoing.RecallMessage)
+	if err != nil {
+		t.Fatalf("marshal recall payload: %v", err)
+	}
+	var actual map[string]interface{}
+	if err := json.Unmarshal(recallPayload, &actual); err != nil {
+		t.Fatalf("unmarshal recall payload: %v", err)
+	}
+	if actual["operator"] != "7" || actual["recallMsgId"] != float64(42) {
+		t.Fatalf("unexpected recall payload: %#v", actual)
+	}
+}

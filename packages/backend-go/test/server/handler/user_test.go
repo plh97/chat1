@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"time"
@@ -58,6 +59,7 @@ type stubUserService struct {
 	registerFn           func(ctx context.Context, req *v1.RegisterRequest) error
 	loginFn              func(ctx context.Context, req *v1.LoginRequest) (string, error)
 	logoutFn             func(ctx context.Context) error
+	getUserImageFn       func(ctx context.Context, email string) (string, error)
 	getProfileFn         func(ctx context.Context, id int) (*v1.GetProfileResponseData, error)
 	updateProfileFn      func(ctx context.Context, id int, req *v1.UpdateProfileRequest) (*v1.GetProfileResponseData, error)
 	listUsersFn          func(ctx context.Context, req v1.ListUsersRequest) (*v1.ListUsersResponseData, error)
@@ -101,6 +103,13 @@ func (s *stubUserService) Logout(ctx context.Context) error {
 		return s.logoutFn(ctx)
 	}
 	return nil
+}
+
+func (s *stubUserService) GetUserImage(ctx context.Context, email string) (string, error) {
+	if s.getUserImageFn != nil {
+		return s.getUserImageFn(ctx, email)
+	}
+	return "", nil
 }
 
 func (s *stubUserService) GetProfile(ctx context.Context, id int) (*v1.GetProfileResponseData, error) {
@@ -203,6 +212,48 @@ func TestUserHandler_Login(t *testing.T) {
 
 	assert.Equal(t, resp.Code, http.StatusOK)
 	assert.True(t, called)
+}
+
+func TestUserHandler_GetUserImage(t *testing.T) {
+	called := false
+	userHandler := handler.NewUserHandler(hdl, &stubUserService{
+		getUserImageFn: func(ctx context.Context, email string) (string, error) {
+			called = true
+			assert.Equal(t, "person@example.com", email)
+			return "https://cdn.example.com/avatar.png", nil
+		},
+	})
+	router := newTestRouter()
+	router.GET("/userImage", userHandler.GetUserImage)
+
+	resp := performRequest(router, "GET", "/userImage?username=person%40example.com", bytes.NewBuffer(nil))
+
+	assert.Equal(t, http.StatusOK, resp.Code)
+	assert.Equal(t, "no-store, max-age=0", resp.Header().Get("Cache-Control"))
+	assert.True(t, called)
+	var body v1.Response
+	assert.NoError(t, json.Unmarshal(resp.Body.Bytes(), &body))
+	assert.Equal(t, 0, body.Code)
+	assert.Equal(t, "", body.Message)
+	assert.Equal(t, "https://cdn.example.com/avatar.png", body.Data)
+}
+
+func TestUserHandler_GetUserImageDoesNotDiscloseLookupFailures(t *testing.T) {
+	userHandler := handler.NewUserHandler(hdl, &stubUserService{
+		getUserImageFn: func(ctx context.Context, email string) (string, error) {
+			return "", errors.New("database unavailable")
+		},
+	})
+	router := newTestRouter()
+	router.GET("/userImage", userHandler.GetUserImage)
+
+	failure := performRequest(router, "GET", "/userImage?username=person%40example.com", bytes.NewBuffer(nil))
+	invalid := performRequest(router, "GET", "/userImage?username=not-an-email", bytes.NewBuffer(nil))
+
+	assert.Equal(t, http.StatusOK, failure.Code)
+	assert.Equal(t, invalid.Code, failure.Code)
+	assert.JSONEq(t, invalid.Body.String(), failure.Body.String())
+	assert.JSONEq(t, `{"code":0,"message":"","data":""}`, failure.Body.String())
 }
 
 func TestUserHandler_GetProfile(t *testing.T) {

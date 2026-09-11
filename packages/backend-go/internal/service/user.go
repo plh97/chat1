@@ -7,6 +7,7 @@ import (
 	"backend-go/pkg/aws"
 	"context"
 	"strconv"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -16,6 +17,7 @@ type UserService interface {
 	Register(ctx context.Context, req *v1.RegisterRequest) error
 	Login(ctx context.Context, req *v1.LoginRequest) (string, error)
 	Logout(ctx context.Context) error
+	GetUserImage(ctx context.Context, email string) (string, error)
 	GetProfile(ctx context.Context, id int) (*v1.GetProfileResponseData, error)
 	UpdateProfile(ctx context.Context, id int, req *v1.UpdateProfileRequest) (*v1.GetProfileResponseData, error)
 	ListUsers(ctx context.Context, req v1.ListUsersRequest) (*v1.ListUsersResponseData, error)
@@ -66,13 +68,10 @@ func (s *userService) Register(ctx context.Context, req *v1.RegisterRequest) err
 		Email:    req.Email,
 		Password: string(hashedPassword),
 	}
-	// Transaction demo
 	err = s.tm.Transaction(ctx, func(ctx context.Context) error {
-		// Create a user
 		if err = s.userRepo.Create(ctx, user); err != nil {
 			return err
 		}
-		// TODO: other repo
 		return nil
 	})
 	return err
@@ -106,6 +105,14 @@ func (s *userService) Logout(ctx context.Context) error {
 	// JWT是无状态的，logout操作只需返回成功
 	// 客户端负责删除本地存储的token
 	return nil
+}
+
+func (s *userService) GetUserImage(ctx context.Context, email string) (string, error) {
+	email = strings.ToLower(strings.TrimSpace(email))
+	if email == "" || len(email) > 254 {
+		return "", nil
+	}
+	return s.userRepo.FindActiveLoginImage(ctx, email)
 }
 
 func (s *userService) GetProfile(ctx context.Context, id int) (*v1.GetProfileResponseData, error) {

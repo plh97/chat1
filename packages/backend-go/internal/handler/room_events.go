@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"backend-go/internal/model"
 	"context"
 	"fmt"
 	"strconv"
@@ -21,6 +22,7 @@ const (
 type RoomEventPublisher interface {
 	NotifyRoomListChanged(userIDs []uint)
 	PublishSystemMessage(ctx context.Context, roomID, actorUserID uint, actionType, content string) error
+	PublishRecalledMessage(ctx context.Context, roomID, actorUserID uint, message *model.Message) error
 }
 
 func systemMessageContent(actorID uint, action string, targetIDs ...uint) string {

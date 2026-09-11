@@ -23,7 +23,7 @@ func setupRepositoryWithDB(t *testing.T) (repository.UserRepository, *gorm.DB) {
 	if err != nil {
 		t.Fatalf("failed to open gorm connection: %v", err)
 	}
-	if err := db.AutoMigrate(&model.User{}, &model.Room{}, &model.RoomMember{}, &model.Message{}); err != nil {
+	if err := db.AutoMigrate(&model.Tenant{}, &model.User{}, &model.Room{}, &model.RoomMember{}, &model.Message{}); err != nil {
 		t.Fatalf("failed to migrate schema: %v", err)
 	}
 
@@ -324,6 +324,76 @@ func TestUserRepository_GetByUsername(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, fetched)
 	assert.Equal(t, "test@example.com", fetched.Email)
+}
+
+func TestUserRepository_FindActiveLoginImage(t *testing.T) {
+	userRepo, db := setupRepositoryWithDB(t)
+	activeTenant := &model.Tenant{Name: "Active", Slug: "active-avatar", Status: model.TenantStatusActive}
+	trialTenant := &model.Tenant{Name: "Trial", Slug: "trial-avatar", Status: model.TenantStatusTrial}
+	assert.NoError(t, db.Create([]*model.Tenant{activeTenant, trialTenant}).Error)
+	assert.NoError(t, db.Create([]model.User{
+		{TenantID: activeTenant.ID, UserName: "active-avatar", Email: "active@example.com", Status: "active", Image: "https://cdn.example.com/active.png"},
+		{TenantID: trialTenant.ID, UserName: "trial-avatar", Email: "trial@example.com", Status: "active", Image: "https://cdn.example.com/trial.png"},
+	}).Error)
+
+	image, err := userRepo.FindActiveLoginImage(context.Background(), "active@example.com")
+	assert.NoError(t, err)
+	assert.Equal(t, "https://cdn.example.com/active.png", image)
+
+	image, err = userRepo.FindActiveLoginImage(context.Background(), "trial@example.com")
+	assert.NoError(t, err)
+	assert.Equal(t, "https://cdn.example.com/trial.png", image)
+
+	image, err = userRepo.FindActiveLoginImage(context.Background(), "missing@example.com")
+	assert.NoError(t, err)
+	assert.Empty(t, image)
+}
+
+func TestUserRepository_FindActiveLoginImageHidesInactiveRecords(t *testing.T) {
+	tests := []struct {
+		name         string
+		userStatus   string
+		tenantStatus string
+		deleteUser   bool
+		deleteTenant bool
+	}{
+		{name: "suspended user", userStatus: "suspended", tenantStatus: model.TenantStatusActive},
+		{name: "suspended tenant", userStatus: "active", tenantStatus: model.TenantStatusSuspended},
+		{name: "archived tenant", userStatus: "active", tenantStatus: model.TenantStatusArchived},
+		{name: "deleted user", userStatus: "active", tenantStatus: model.TenantStatusActive, deleteUser: true},
+		{name: "deleted tenant", userStatus: "active", tenantStatus: model.TenantStatusActive, deleteTenant: true},
+	}
+
+	for index, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			userRepo, db := setupRepositoryWithDB(t)
+			tenant := &model.Tenant{
+				Name:   "Hidden tenant",
+				Slug:   "hidden-avatar-" + strconv.Itoa(index),
+				Status: test.tenantStatus,
+			}
+			assert.NoError(t, db.Create(tenant).Error)
+			user := &model.User{
+				TenantID: tenant.ID,
+				UserName: "hidden-avatar-" + strconv.Itoa(index),
+				Email:    "hidden@example.com",
+				Status:   test.userStatus,
+				Image:    "https://cdn.example.com/hidden.png",
+			}
+			assert.NoError(t, db.Create(user).Error)
+			if test.deleteUser {
+				assert.NoError(t, db.Delete(user).Error)
+			}
+			if test.deleteTenant {
+				assert.NoError(t, db.Delete(tenant).Error)
+			}
+
+			image, err := userRepo.FindActiveLoginImage(context.Background(), user.Email)
+
+			assert.NoError(t, err)
+			assert.Empty(t, image)
+		})
+	}
 }
 
 func TestUserRepository_UpdateFields(t *testing.T) {

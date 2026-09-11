@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,13 +17,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 )
 
 type roomHandlerServiceStub struct {
 	service.RoomService
-	createRoom func(context.Context, v1.RoomCreateRequest) (*service.RoomCreateResult, error)
-	updateRoom func(context.Context, uint, v1.RoomUpdateRequest) (*service.RoomUpdateResult, error)
-	joinRoom   func(context.Context, uint, uint) (*service.RoomJoinResult, error)
+	createRoom    func(context.Context, v1.RoomCreateRequest) (*service.RoomCreateResult, error)
+	updateRoom    func(context.Context, uint, v1.RoomUpdateRequest) (*service.RoomUpdateResult, error)
+	joinRoom      func(context.Context, uint, uint) (*service.RoomJoinResult, error)
+	recallMessage func(context.Context, uint, uint, uint) (*service.RoomMessageRecallResult, error)
 }
 
 func (s *roomHandlerServiceStub) CreateRoom(ctx context.Context, req v1.RoomCreateRequest) (*service.RoomCreateResult, error) {
@@ -35,6 +38,10 @@ func (s *roomHandlerServiceStub) UpdateRoom(ctx context.Context, operatorID uint
 
 func (s *roomHandlerServiceStub) JoinRoom(ctx context.Context, userID, roomID uint) (*service.RoomJoinResult, error) {
 	return s.joinRoom(ctx, userID, roomID)
+}
+
+func (s *roomHandlerServiceStub) RecallMessage(ctx context.Context, operatorID, roomID, messageID uint) (*service.RoomMessageRecallResult, error) {
+	return s.recallMessage(ctx, operatorID, roomID, messageID)
 }
 
 type userHandlerServiceStub struct {
@@ -56,6 +63,13 @@ type recordedSystemMessage struct {
 type recordingRoomEventPublisher struct {
 	notifications [][]uint
 	messages      []recordedSystemMessage
+	recalls       []recordedRecallMessage
+}
+
+type recordedRecallMessage struct {
+	roomID  uint
+	actorID uint
+	message *model.Message
 }
 
 func (p *recordingRoomEventPublisher) NotifyRoomListChanged(userIDs []uint) {
@@ -73,6 +87,11 @@ func (p *recordingRoomEventPublisher) PublishSystemMessage(
 		action:  actionType,
 		content: content,
 	})
+	return nil
+}
+
+func (p *recordingRoomEventPublisher) PublishRecalledMessage(_ context.Context, roomID, actorID uint, message *model.Message) error {
+	p.recalls = append(p.recalls, recordedRecallMessage{roomID: roomID, actorID: actorID, message: message})
 	return nil
 }
 
@@ -273,6 +292,125 @@ func TestJoinRoomPublishesOnlyWhenMembershipWasAdded(t *testing.T) {
 				assert.Equal(t, [][]uint{{42, 73}}, publisher.notifications)
 				assert.Equal(t, recordedSystemMessage{91, 42, systemActionAddMember, "42 joined the room"}, publisher.messages[0])
 			}
+		})
+	}
+}
+
+func TestDeleteMessageUsesJWTIdentityAndBroadcastsCommittedRecall(t *testing.T) {
+	var capturedOperatorID, capturedRoomID, capturedMessageID uint
+	recalled := &model.Message{
+		ID:          73,
+		ContentType: "RECALL_MESSAGE",
+		ChannelId:   "91",
+		RoomId:      "91",
+		UserId:      "42",
+		IsRecalled:  true,
+	}
+	roomService := &roomHandlerServiceStub{
+		recallMessage: func(_ context.Context, operatorID, roomID, messageID uint) (*service.RoomMessageRecallResult, error) {
+			capturedOperatorID, capturedRoomID, capturedMessageID = operatorID, roomID, messageID
+			return &service.RoomMessageRecallResult{
+				Message:  recalled,
+				Response: map[string]interface{}{"id": float64(messageID), "contentType": "RECALL_MESSAGE"},
+			}, nil
+		},
+	}
+	publisher := &recordingRoomEventPublisher{}
+	h := NewRoomHandler(&Handler{}, roomService)
+	h.SetRoomEventPublisher(publisher)
+	ctx, recorder := handlerJSONContext(t, http.MethodDelete, "/room/message?id=73&roomId=91", nil, 42)
+
+	h.DeleteMessage(ctx)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	assert.Equal(t, uint(42), capturedOperatorID)
+	assert.Equal(t, uint(91), capturedRoomID)
+	assert.Equal(t, uint(73), capturedMessageID)
+	require.Equal(t, []recordedRecallMessage{{roomID: 91, actorID: 42, message: recalled}}, publisher.recalls)
+	var response v1.Response
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &response))
+	assert.Equal(t, "Message recalled successfully", response.Message)
+}
+
+func TestDeleteMessageSupportsLegacyIDOnlyRequest(t *testing.T) {
+	var capturedRoomID uint
+	roomService := &roomHandlerServiceStub{
+		recallMessage: func(_ context.Context, _ uint, roomID, messageID uint) (*service.RoomMessageRecallResult, error) {
+			capturedRoomID = roomID
+			return &service.RoomMessageRecallResult{
+				Message:  &model.Message{ID: messageID, ChannelId: "91", RoomId: "91", UserId: "42", ContentType: "RECALL_MESSAGE", IsRecalled: true},
+				Response: map[string]interface{}{"id": float64(messageID)},
+			}, nil
+		},
+	}
+	h := NewRoomHandler(&Handler{}, roomService)
+	ctx, recorder := handlerJSONContext(t, http.MethodDelete, "/room/message?id=73", nil, 42)
+
+	h.DeleteMessage(ctx)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+	assert.Zero(t, capturedRoomID, "service must derive the room from the tenant-scoped message")
+}
+
+func TestDeleteMessageRejectsInvalidParametersAndMissingIdentity(t *testing.T) {
+	tests := []struct {
+		name   string
+		target string
+		userID int
+	}{
+		{name: "missing message id", target: "/room/message", userID: 42},
+		{name: "invalid message id", target: "/room/message?id=nope", userID: 42},
+		{name: "zero message id", target: "/room/message?id=0", userID: 42},
+		{name: "invalid optional room id", target: "/room/message?id=73&roomId=nope", userID: 42},
+		{name: "zero optional room id", target: "/room/message?id=73&roomId=0", userID: 42},
+		{name: "missing authenticated user", target: "/room/message?id=73", userID: 0},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			roomService := &roomHandlerServiceStub{
+				recallMessage: func(context.Context, uint, uint, uint) (*service.RoomMessageRecallResult, error) {
+					t.Fatal("service must not be called for an invalid request")
+					return nil, nil
+				},
+			}
+			h := NewRoomHandler(&Handler{}, roomService)
+			ctx, recorder := handlerJSONContext(t, http.MethodDelete, test.target, nil, test.userID)
+
+			h.DeleteMessage(ctx)
+
+			if test.userID == 0 {
+				require.Equal(t, http.StatusUnauthorized, recorder.Code)
+			} else {
+				require.Equal(t, http.StatusBadRequest, recorder.Code)
+			}
+		})
+	}
+}
+
+func TestDeleteMessageMapsAuthorizationAndLookupErrors(t *testing.T) {
+	tests := []struct {
+		name       string
+		err        error
+		statusCode int
+	}{
+		{name: "not author or member", err: service.ErrRoomForbidden, statusCode: http.StatusForbidden},
+		{name: "message or room not found", err: gorm.ErrRecordNotFound, statusCode: http.StatusNotFound},
+		{name: "database failure", err: errors.New("database unavailable"), statusCode: http.StatusInternalServerError},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			roomService := &roomHandlerServiceStub{
+				recallMessage: func(context.Context, uint, uint, uint) (*service.RoomMessageRecallResult, error) {
+					return nil, test.err
+				},
+			}
+			h := NewRoomHandler(&Handler{}, roomService)
+			ctx, recorder := handlerJSONContext(t, http.MethodDelete, "/room/message?id=73&roomId=91", nil, 42)
+
+			h.DeleteMessage(ctx)
+
+			require.Equal(t, test.statusCode, recorder.Code)
 		})
 	}
 }

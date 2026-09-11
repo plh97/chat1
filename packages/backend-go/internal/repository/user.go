@@ -20,6 +20,7 @@ type UserRepository interface {
 	GetByID(ctx context.Context, id int) (*model.User, error)
 	GetProfileByID(ctx context.Context, id int) (*model.User, error)
 	GetByEmail(ctx context.Context, email string) (*model.User, error)
+	FindActiveLoginImage(ctx context.Context, email string) (string, error)
 	List(ctx context.Context, req v1.ListUsersRequest) ([]model.User, int64, error)
 }
 
@@ -256,11 +257,16 @@ func (r *userRepository) loadUnreadCounts(ctx context.Context, user *model.User)
 		UnreadCount int64  `gorm:"column:unread_count"`
 	}
 	var rows []unreadCountRow
-	if err := r.DB(ctx).
+	query := r.DB(ctx).
 		Model(&model.Message{}).
 		Select("channel_id, COUNT(*) AS unread_count").
 		Where("user_id != ?", userID).
-		Where("("+strings.Join(conditions, " OR ")+")", args...).
+		Where("is_recalled = ?", false).
+		Where("("+strings.Join(conditions, " OR ")+")", args...)
+	if tenantID := TenantIDFromContext(ctx); tenantID != 0 {
+		query = query.Where("tenant_id = ?", tenantID)
+	}
+	if err := query.
 		Group("channel_id").
 		Scan(&rows).Error; err != nil {
 		return err
@@ -407,6 +413,33 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*model.U
 		return nil, err
 	}
 	return &user, nil
+}
+
+// FindActiveLoginImage intentionally projects only the avatar. A missing,
+// deleted, suspended, or inactive-tenant account has the same empty result,
+// so callers cannot obtain account or tenant metadata before login.
+func (r *userRepository) FindActiveLoginImage(ctx context.Context, email string) (string, error) {
+	type avatarRow struct {
+		Image string `gorm:"column:image"`
+	}
+
+	var avatar avatarRow
+	result := r.DB(ctx).
+		Table("users").
+		Select("users.image").
+		Joins("JOIN tenants ON tenants.id = users.tenant_id AND tenants.deleted_at IS NULL").
+		Where("LOWER(users.email) = ?", email).
+		Where("users.deleted_at IS NULL AND users.status = ?", "active").
+		Where("tenants.status IN ?", []string{model.TenantStatusTrial, model.TenantStatusActive}).
+		Limit(1).
+		Scan(&avatar)
+	if result.Error != nil {
+		return "", result.Error
+	}
+	if result.RowsAffected == 0 {
+		return "", nil
+	}
+	return avatar.Image, nil
 }
 
 func (r *userRepository) List(ctx context.Context, req v1.ListUsersRequest) ([]model.User, int64, error) {
