@@ -89,9 +89,53 @@ func TestUserRepository_GetById(t *testing.T) {
 	assert.Equal(t, user.Email, fetched.Email)
 }
 
+func TestUserRepository_GetAndUpdateByIDStayInsideTenant(t *testing.T) {
+	userRepo, db := setupRepositoryWithDB(t)
+	first := &model.User{TenantID: 1, UserName: "tenant-one-user", Email: "tenant-one-user@example.com"}
+	second := &model.User{TenantID: 2, UserName: "tenant-two-user", Email: "tenant-two-user@example.com"}
+	assert.NoError(t, db.Create([]*model.User{first, second}).Error)
+
+	tenantOneContext := repository.WithTenantID(context.Background(), 1)
+	_, err := userRepo.GetByID(tenantOneContext, int(second.ID))
+	assert.ErrorIs(t, err, v1.ErrNotFound)
+
+	assert.NoError(t, userRepo.UpdateFields(
+		tenantOneContext,
+		int(second.ID),
+		map[string]interface{}{"username": "cross-tenant-update"},
+	))
+	var unchanged model.User
+	assert.NoError(t, db.First(&unchanged, second.ID).Error)
+	assert.Equal(t, "tenant-two-user", unchanged.UserName)
+}
+
+func TestUserRepository_PlatformRoleUsesCurrentDatabasePermission(t *testing.T) {
+	userRepo, db := setupRepositoryWithDB(t)
+	owner := &model.User{
+		TenantID: 1, UserName: "platform-owner", Email: "platform-owner@example.com",
+		Permission: "platform_owner", Status: "active",
+	}
+	assert.NoError(t, db.Create(owner).Error)
+	roleRepo, ok := userRepo.(repository.PlatformRoleRepository)
+	assert.True(t, ok)
+
+	allowed, err := roleRepo.IsPlatformAdministrator(context.Background(), owner.ID, owner.TenantID)
+	assert.NoError(t, err)
+	assert.True(t, allowed)
+
+	assert.NoError(t, db.Model(owner).Update("permission", "member").Error)
+	allowed, err = roleRepo.IsPlatformAdministrator(context.Background(), owner.ID, owner.TenantID)
+	assert.NoError(t, err)
+	assert.False(t, allowed)
+}
+
 func TestUserRepository_AreUsersInRoom(t *testing.T) {
 	userRepo, db := setupRepositoryWithDB(t)
 	ctx := context.Background()
+	assert.NoError(t, db.Create([]model.User{
+		{ID: 7, UserName: "call-user-7", Email: "call-user-7@example.com", Status: "active"},
+		{ID: 9, UserName: "call-user-9", Email: "call-user-9@example.com", Status: "active"},
+	}).Error)
 	room := &model.Room{Name: "Call Room", ChannelType: model.RoomTypePrivate}
 	assert.NoError(t, db.Create(room).Error)
 	assert.NoError(t, db.Create([]model.RoomMember{

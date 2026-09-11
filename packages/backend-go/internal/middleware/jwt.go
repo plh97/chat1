@@ -1,10 +1,11 @@
 package middleware
 
 import (
-	"github.com/gin-gonic/gin"
 	"backend-go/api/v1"
+	"backend-go/internal/repository"
 	"backend-go/pkg/jwt"
 	"backend-go/pkg/log"
+	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"net/http"
 )
@@ -34,6 +35,7 @@ func StrictAuth(j *jwt.JWT, logger *log.Logger) gin.HandlerFunc {
 		}
 
 		ctx.Set("claims", claims)
+		ctx.Request = ctx.Request.WithContext(repository.WithTenantID(ctx.Request.Context(), claims.TenantId))
 		recoveryLoggerFunc(ctx, logger)
 		ctx.Next()
 	}
@@ -60,6 +62,7 @@ func NoStrictAuth(j *jwt.JWT, logger *log.Logger) gin.HandlerFunc {
 		}
 
 		ctx.Set("claims", claims)
+		ctx.Request = ctx.Request.WithContext(repository.WithTenantID(ctx.Request.Context(), claims.TenantId))
 		recoveryLoggerFunc(ctx, logger)
 		ctx.Next()
 	}

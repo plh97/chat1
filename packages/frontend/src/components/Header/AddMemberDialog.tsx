@@ -72,8 +72,14 @@ export function AddMember({ onUpdated }: { onUpdated?: () => void } = {}) {
   };
   return (
     <>
-      <IconButton aria-label="add member" size="sm" onClick={handleOpen}>
-        <FaPlus className="text-base" />
+      <IconButton
+        aria-label="add member"
+        size="sm"
+        variant="outline"
+        className="h-8 min-h-8 w-8 min-w-8 rounded-md border-slate-600 bg-slate-800 p-0 text-slate-100 hover:bg-slate-700"
+        onClick={handleOpen}
+      >
+        <FaPlus className="h-3.5 w-3.5" />
       </IconButton>
       <Modal isOpen={open} onClose={handleClose}>
         <ModalOverlay />

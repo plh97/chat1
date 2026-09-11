@@ -92,9 +92,10 @@ var upgrader = websocket.Upgrader{
 }
 
 type Client struct {
-	hub    *Hub
-	conn   *websocket.Conn
-	userID uint
+	hub      *Hub
+	conn     *websocket.Conn
+	userID   uint
+	tenantID uint
 	// 用于缓冲待发送消息的通道
 	send chan []byte
 }
@@ -126,9 +127,18 @@ func (c *Client) handleIncomingMessage(raw []byte) error {
 	if err := json.Unmarshal(raw, &envelope); err != nil {
 		return err
 	}
+	ctx := repository.WithTenantID(context.Background(), c.tenantID)
+	tenantSessions, ok := c.hub.userRepo.(repository.TenantSessionRepository)
+	if !ok {
+		return errors.New("tenant authorization unavailable")
+	}
+	active, err := tenantSessions.IsTenantSessionActive(ctx, c.userID, c.tenantID)
+	if err != nil || !active {
+		return errors.New("tenant suspended or unauthorized")
+	}
 
 	if envelope.Event == wsCallSignalEvent {
-		response, targetUserID, err := c.hub.handleCallSignal(context.Background(), c.userID, envelope)
+		response, targetUserID, err := c.hub.handleCallSignal(ctx, c.userID, envelope)
 		if err != nil {
 			return c.writeErrorResponseForEvent(envelope.Event, envelope.RequestID, err)
 		}
@@ -147,7 +157,7 @@ func (c *Client) handleIncomingMessage(raw []byte) error {
 		)
 	}
 
-	response, recipients, err := c.hub.handleSendMessage(context.Background(), c.userID, envelope)
+	response, recipients, err := c.hub.handleSendMessage(ctx, c.userID, envelope)
 	if err != nil {
 		return c.writeErrorResponse(envelope.RequestID, err)
 	}

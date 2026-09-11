@@ -81,7 +81,11 @@ func (r *messageRepository) Create(ctx context.Context, message *model.Message) 
 // GetByID gets a message by ID
 func (r *messageRepository) GetByID(ctx context.Context, id uint) (*model.Message, error) {
 	var message model.Message
-	err := r.DB(ctx).Where("id = ?", id).First(&message).Error
+	query := r.DB(ctx).Where("id = ?", id)
+	if tenantID := TenantIDFromContext(ctx); tenantID != 0 {
+		query = query.Where("tenant_id = ?", tenantID)
+	}
+	err := query.First(&message).Error
 	if err != nil {
 		return nil, err
 	}
@@ -91,8 +95,11 @@ func (r *messageRepository) GetByID(ctx context.Context, id uint) (*model.Messag
 // GetByChannelID gets messages by channel ID with pagination
 func (r *messageRepository) GetByChannelID(ctx context.Context, channelID string, limit, offset int) ([]*model.Message, error) {
 	var messages []*model.Message
-	err := r.DB(ctx).
-		Where("channel_id = ?", channelID).
+	query := r.DB(ctx).Where("channel_id = ?", channelID)
+	if tenantID := TenantIDFromContext(ctx); tenantID != 0 {
+		query = query.Where("tenant_id = ?", tenantID)
+	}
+	err := query.
 		Order("seq ASC").
 		Limit(limit).
 		Offset(offset).
@@ -106,8 +113,11 @@ func (r *messageRepository) GetByChannelID(ctx context.Context, channelID string
 // GetByChannelIDAfterSeq gets messages after a specific sequence number
 func (r *messageRepository) GetByChannelIDAfterSeq(ctx context.Context, channelID string, seq int) ([]*model.Message, error) {
 	var messages []*model.Message
-	err := r.DB(ctx).
-		Where("channel_id = ? AND seq > ?", channelID, seq).
+	query := r.DB(ctx).Where("channel_id = ? AND seq > ?", channelID, seq)
+	if tenantID := TenantIDFromContext(ctx); tenantID != 0 {
+		query = query.Where("tenant_id = ?", tenantID)
+	}
+	err := query.
 		Order("seq ASC").
 		Find(&messages).Error
 	if err != nil {

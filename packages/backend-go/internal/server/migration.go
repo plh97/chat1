@@ -62,6 +62,7 @@ func (m *Migrate) Run(ctx context.Context) error {
 			&model.Message{},
 			&model.RoomMember{},
 			"user_friends",
+			&model.Tenant{},
 		); err != nil {
 			m.log.Error("drop tables error", zap.Error(err))
 			return err
@@ -74,12 +75,50 @@ func (m *Migrate) Run(ctx context.Context) error {
 	}
 
 	if err := db.AutoMigrate(
+		&model.Tenant{},
 		&model.User{},
 		&model.Room{},
 		&model.RoomMember{},
 		&model.Message{},
 	); err != nil {
 		m.log.Error("migrate error", zap.Error(err))
+		return err
+	}
+	defaultTenant := model.Tenant{
+		ID: 1, Name: "Default workspace", Slug: "default", Plan: "starter",
+		Status: model.TenantStatusActive, MemberLimit: 10000, StorageLimit: 10 << 30,
+	}
+	if err := db.FirstOrCreate(&defaultTenant, model.Tenant{ID: 1}).Error; err != nil {
+		return err
+	}
+	if err := db.Model(&model.User{}).Where("tenant_id = 0").Update("tenant_id", 1).Error; err != nil {
+		return err
+	}
+	if err := db.Model(&model.Room{}).Where("tenant_id = 0").Update("tenant_id", 1).Error; err != nil {
+		return err
+	}
+	if err := db.Model(&model.Message{}).Where("tenant_id = 0").Update("tenant_id", 1).Error; err != nil {
+		return err
+	}
+	// Only the well-known legacy seed account becomes the first platform owner.
+	// Promoting every historical chat user named "admin" would grant control of
+	// every tenant to accounts that were never intended to manage the platform.
+	if err := db.Model(&model.User{}).
+		Where("permission = ? AND username = ? AND email = ?", "admin", "admin", "admin@gmail.com").
+		Update("permission", "platform_owner").Error; err != nil {
+		return err
+	}
+	var defaultTenantUsers int64
+	if err := db.Model(&model.User{}).Where("tenant_id = ?", defaultTenant.ID).Count(&defaultTenantUsers).Error; err != nil {
+		return err
+	}
+	minimumDefaultLimit := int64(10000)
+	if defaultTenantUsers+1000 > minimumDefaultLimit {
+		minimumDefaultLimit = defaultTenantUsers + 1000
+	}
+	if err := db.Model(&model.Tenant{}).
+		Where("id = ? AND member_limit < ?", defaultTenant.ID, minimumDefaultLimit).
+		Update("member_limit", minimumDefaultLimit).Error; err != nil {
 		return err
 	}
 	m.log.Info("AutoMigrate success")
@@ -263,7 +302,7 @@ func (m *Migrate) createSeedUsers() error {
 			Email:      "admin@gmail.com",
 			Password:   string(hashedPassword),
 			Bio:        "系统管理员",
-			Permission: "admin",
+			Permission: "platform_owner",
 			Image:      "",
 		}
 		if err := m.db.Create(adminUser).Error; err != nil {

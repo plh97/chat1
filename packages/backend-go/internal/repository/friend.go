@@ -24,48 +24,92 @@ func NewFriendRepository(r *Repository) FriendRepository {
 	return &friendRepository{Repository: r}
 }
 
+func loadTenantFriendPair(db *gorm.DB, tenantID, userID, friendID uint) (*model.User, *model.User, uint, error) {
+	var users []model.User
+	query := db.Where("id IN ?", []uint{userID, friendID})
+	if tenantID != 0 {
+		query = query.Where("tenant_id = ?", tenantID)
+	}
+	if err := query.Find(&users).Error; err != nil {
+		return nil, nil, 0, err
+	}
+	if len(users) != 2 {
+		return nil, nil, 0, gorm.ErrRecordNotFound
+	}
+
+	var user, friend *model.User
+	for index := range users {
+		switch users[index].ID {
+		case userID:
+			user = &users[index]
+		case friendID:
+			friend = &users[index]
+		}
+	}
+	if user == nil || friend == nil {
+		return nil, nil, 0, gorm.ErrRecordNotFound
+	}
+	if tenantID == 0 {
+		tenantID = user.TenantID
+	}
+	if tenantID == 0 || user.TenantID != tenantID || friend.TenantID != tenantID {
+		return nil, nil, 0, gorm.ErrRecordNotFound
+	}
+	return user, friend, tenantID, nil
+}
+
 // AddFriend 添加好友 + 创建私聊房间
 func (r *friendRepository) AddFriend(ctx context.Context, userId, friendId uint) (*model.Room, error) {
 	if userId == friendId {
 		return nil, errors.New("cannot add self as friend")
 	}
 
-	// 检查是否已经是好友 (复用之前的逻辑，建议加上)
-	isFriend, _ := r.IsFriend(ctx, userId, friendId)
+	isFriend, err := r.IsFriend(ctx, userId, friendId)
+	if err != nil {
+		return nil, err
+	}
 	if isFriend {
 		return nil, errors.New("already friends")
 	}
 
 	var createdRoom *model.Room
+	tenantID := TenantIDFromContext(ctx)
 
-	err := r.DB(ctx).Transaction(func(tx *gorm.DB) error {
-		user := model.User{ID: userId}
-		friend := model.User{ID: friendId}
-
-		// 1. 建立好友关系 (双向)
-		// A -> B
-		if err := tx.Model(&user).Association("Friends").Append(&friend); err != nil {
+	err = r.DB(ctx).Transaction(func(tx *gorm.DB) error {
+		user, friend, scopedTenantID, err := loadTenantFriendPair(tx, tenantID, userId, friendId)
+		if err != nil {
 			return err
 		}
-		// B -> A
-		if err := tx.Model(&friend).Association("Friends").Append(&user); err != nil {
+
+		// 1. 建立好友关系 (双向)
+		if err := tx.Model(user).Association("Friends").Append(friend); err != nil {
+			return err
+		}
+		if err := tx.Model(friend).Association("Friends").Append(user); err != nil {
 			return err
 		}
 
 		// 2. 创建私聊房间 (Room)
-		// 直接初始化 Room 并带上 Members，Gorm 会自动处理中间表 room_members
 		privateRoom := model.Room{
+			TenantID:    scopedTenantID,
 			ChannelType: model.RoomTypePrivate,
-			// 私聊房间通常不需要名字，或者你可以生成一个 "A_B" 格式的名字
-			Name:    "Private Chat",
-			Members: []*model.User{&user, &friend},
+			Name:        "Private Chat",
 		}
 
 		if err := tx.Create(&privateRoom).Error; err != nil {
 			return err
 		}
+		memberships := []model.RoomMember{
+			{RoomID: privateRoom.ID, UserID: user.ID, Role: model.Member},
+			{RoomID: privateRoom.ID, UserID: friend.ID, Role: model.Member},
+		}
+		if err := tx.Create(&memberships).Error; err != nil {
+			return err
+		}
 
-		if err := tx.Preload("Members").Preload("Admins").Preload("CreatorList").First(&privateRoom, privateRoom.ID).Error; err != nil {
+		if err := tx.Preload("Members").Preload("Admins").Preload("CreatorList").
+			Where("id = ? AND tenant_id = ?", privateRoom.ID, scopedTenantID).
+			First(&privateRoom).Error; err != nil {
 			return err
 		}
 		createdRoom = &privateRoom
@@ -81,9 +125,15 @@ func (r *friendRepository) AddFriend(ctx context.Context, userId, friendId uint)
 
 // DeleteFriend 删除好友 + 删除私聊房间
 func (r *friendRepository) DeleteFriend(ctx context.Context, userId, friendId uint) error {
+	if userId == friendId {
+		return errors.New("cannot delete self as friend")
+	}
+	tenantID := TenantIDFromContext(ctx)
 	return r.DB(ctx).Transaction(func(tx *gorm.DB) error {
-		user := model.User{ID: userId}
-		friend := model.User{ID: friendId}
+		user, friend, scopedTenantID, err := loadTenantFriendPair(tx, tenantID, userId, friendId)
+		if err != nil {
+			return err
+		}
 
 		// 1. 查找只包含这两名用户的私聊房间。
 		// 所有条件都使用占位符，并忽略已软删除的成员关系。
@@ -93,7 +143,7 @@ func (r *friendRepository) DeleteFriend(ctx context.Context, userId, friendId ui
 			Joins("JOIN room_members AS user_membership ON user_membership.room_id = rooms.id AND user_membership.user_id = ? AND user_membership.deleted_at IS NULL", userId).
 			Joins("JOIN room_members AS friend_membership ON friend_membership.room_id = rooms.id AND friend_membership.user_id = ? AND friend_membership.deleted_at IS NULL", friendId).
 			Joins("JOIN room_members AS active_membership ON active_membership.room_id = rooms.id AND active_membership.deleted_at IS NULL").
-			Where("rooms.channel_type = ?", model.RoomTypePrivate).
+			Where("rooms.channel_type = ? AND rooms.tenant_id = ?", model.RoomTypePrivate, scopedTenantID).
 			Group("rooms.id").
 			Having("COUNT(DISTINCT active_membership.user_id) = ?", 2).
 			Pluck("rooms.id", &roomIDs).Error; err != nil {
@@ -101,10 +151,10 @@ func (r *friendRepository) DeleteFriend(ctx context.Context, userId, friendId ui
 		}
 
 		// 2. 删除好友关系 (双向)
-		if err := tx.Model(&user).Association("Friends").Delete(&friend); err != nil {
+		if err := tx.Model(user).Association("Friends").Delete(friend); err != nil {
 			return err
 		}
-		if err := tx.Model(&friend).Association("Friends").Delete(&user); err != nil {
+		if err := tx.Model(friend).Association("Friends").Delete(user); err != nil {
 			return err
 		}
 
@@ -114,7 +164,7 @@ func (r *friendRepository) DeleteFriend(ctx context.Context, userId, friendId ui
 			if err := tx.Unscoped().Where("room_id IN ?", roomIDs).Delete(&model.RoomMember{}).Error; err != nil {
 				return err
 			}
-			if err := tx.Where("id IN ?", roomIDs).Delete(&model.Room{}).Error; err != nil {
+			if err := tx.Where("id IN ? AND tenant_id = ?", roomIDs, scopedTenantID).Delete(&model.Room{}).Error; err != nil {
 				return err
 			}
 		}
@@ -126,14 +176,18 @@ func (r *friendRepository) DeleteFriend(ctx context.Context, userId, friendId ui
 // GetFriends 获取好友列表
 // 这一步变得非常简单，不需要 Preload 复杂的嵌套结构
 func (r *friendRepository) GetFriends(ctx context.Context, userId uint) ([]*model.User, error) {
-	var user model.User
-	// 只需要查找 User 并 preload Friends 关联即可，或者直接通过 Association 查找
-	user.ID = userId
-
 	var friends []*model.User
-	// 查找该用户的 Friends 关联
-	err := r.DB(ctx).Model(&user).Association("Friends").Find(&friends)
-	if err != nil {
+	query := r.DB(ctx).
+		Table("users AS friends").
+		Select("friends.*").
+		Joins("JOIN user_friends ON user_friends.friend_id = friends.id").
+		Joins("JOIN users AS owners ON owners.id = user_friends.user_id").
+		Where("user_friends.user_id = ?", userId).
+		Where("friends.deleted_at IS NULL AND owners.deleted_at IS NULL")
+	if tenantID := TenantIDFromContext(ctx); tenantID != 0 {
+		query = query.Where("friends.tenant_id = ? AND owners.tenant_id = ?", tenantID, tenantID)
+	}
+	if err := query.Order("friends.id ASC").Find(&friends).Error; err != nil {
 		return nil, err
 	}
 
@@ -142,11 +196,17 @@ func (r *friendRepository) GetFriends(ctx context.Context, userId uint) ([]*mode
 
 // IsFriend 检查是否是好友
 func (r *friendRepository) IsFriend(ctx context.Context, userId, friendId uint) (bool, error) {
-	user := model.User{ID: userId}
-	// friend := model.User{ID: friendId}
-
-	// 检查 user 的 Friends 列表中是否包含 friendId
-	count := r.DB(ctx).Model(&user).Where("id = ?", friendId).Association("Friends").Count()
-
+	var count int64
+	query := r.DB(ctx).
+		Table("user_friends").
+		Joins("JOIN users AS owners ON owners.id = user_friends.user_id AND owners.deleted_at IS NULL").
+		Joins("JOIN users AS friends ON friends.id = user_friends.friend_id AND friends.deleted_at IS NULL").
+		Where("user_friends.user_id = ? AND user_friends.friend_id = ?", userId, friendId)
+	if tenantID := TenantIDFromContext(ctx); tenantID != 0 {
+		query = query.Where("owners.tenant_id = ? AND friends.tenant_id = ?", tenantID, tenantID)
+	}
+	if err := query.Count(&count).Error; err != nil {
+		return false, err
+	}
 	return count > 0, nil
 }

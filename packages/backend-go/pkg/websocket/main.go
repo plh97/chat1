@@ -1,6 +1,8 @@
 package ws
 
 import (
+	"backend-go/internal/repository"
+	"context"
 	"log"
 	"net/http"
 	"strings"
@@ -24,6 +26,16 @@ func ServeWs(hub *Hub, jwtService *authjwt.JWT, c *gin.Context) {
 		http.Error(c.Writer, "unauthorized", http.StatusUnauthorized)
 		return
 	}
+	tenantSessions, ok := hub.userRepo.(repository.TenantSessionRepository)
+	if !ok {
+		http.Error(c.Writer, "tenant authorization unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	active, sessionErr := tenantSessions.IsTenantSessionActive(context.Background(), uint(claims.UserId), claims.TenantId)
+	if sessionErr != nil || !active {
+		http.Error(c.Writer, "tenant suspended or unauthorized", http.StatusForbidden)
+		return
+	}
 
 	// 1. 升级 HTTP -> WebSocket
 	responseHeader := http.Header{}
@@ -40,7 +52,7 @@ func ServeWs(hub *Hub, jwtService *authjwt.JWT, c *gin.Context) {
 	}
 
 	// 2. 创建 Client 对象
-	client := &Client{hub: hub, conn: conn, userID: uint(claims.UserId), send: make(chan []byte, 256)}
+	client := &Client{hub: hub, conn: conn, userID: uint(claims.UserId), tenantID: claims.TenantId, send: make(chan []byte, 256)}
 
 	// 3. 注册到 Hub
 	client.hub.register <- client

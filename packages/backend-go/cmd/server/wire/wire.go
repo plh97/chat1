@@ -4,8 +4,6 @@
 package wire
 
 import (
-	"github.com/google/wire"
-	"github.com/spf13/viper"
 	"backend-go/internal/handler"
 	"backend-go/internal/repository"
 	"backend-go/internal/server"
@@ -16,6 +14,8 @@ import (
 	"backend-go/pkg/log"
 	"backend-go/pkg/server/http"
 	"backend-go/pkg/sid"
+	"github.com/google/wire"
+	"github.com/spf13/viper"
 )
 
 var repositorySet = wire.NewSet(
@@ -33,17 +33,20 @@ var serviceSet = wire.NewSet(
 	service.NewUserService,
 	service.NewRoomService,
 	service.NewMessageService,
+	service.NewTenantService,
 )
 
 var handlerSet = wire.NewSet(
 	handler.NewHandler,
 	handler.NewUserHandler,
 	handler.NewRoomHandler,
+	handler.NewTenantHandler,
 )
 
 var serverSet = wire.NewSet(
 	server.NewHTTPServer,
 	server.NewJob,
+	server.NewMigrate,
 )
 
 // build App
@@ -56,7 +59,6 @@ func newApp(
 		app.WithName("demo-server"),
 	)
 }
-
 
 // 声明 R2 构造函数
 var awsSet = wire.NewSet(

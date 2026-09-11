@@ -29,4 +29,19 @@ describe("system message user names", () => {
       )
     ).toBe("Owner made Admin an administrator and added You; 99 watched");
   });
+
+  it("only replaces the actor ID in room-name change messages", () => {
+    const room = {
+      member: [person("11", "Member")],
+    } as IRoom;
+
+    expect(
+      formatSystemMessage(
+        '11 changed the room name from "room 11" to "team 11"',
+        room,
+        "11",
+        "CHANGE_ROOM"
+      )
+    ).toBe('You changed the room name from "room 11" to "team 11"');
+  });
 });

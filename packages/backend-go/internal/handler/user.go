@@ -205,7 +205,7 @@ func (h *UserHandler) Upload(ctx *gin.Context) {
 		return
 	}
 
-	preSignedUrl, endpointUrl, err := h.userService.UploadPresignedUrl(req.FileExt, req.UploadScene)
+	preSignedUrl, endpointUrl, err := h.userService.UploadPresignedUrl(GetTenantIdFromCtx(ctx), req.FileExt, req.UploadScene)
 
 	if err != nil {
 		v1.HandleError(ctx, http.StatusBadRequest, v1.ErrBadRequest, nil)

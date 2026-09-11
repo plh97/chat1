@@ -23,6 +23,11 @@ type targetedMessage struct {
 	payload []byte
 }
 
+type disconnectTarget struct {
+	userID   uint
+	tenantID uint
+}
+
 type Hub struct {
 	messageService service.MessageService
 	userRepo       repository.UserRepository
@@ -35,6 +40,7 @@ type Hub struct {
 	register chan *Client
 	// 注销通道
 	unregister chan *Client
+	disconnect chan disconnectTarget
 }
 
 func NewHub(messageService service.MessageService, userRepo repository.UserRepository) *Hub {
@@ -44,8 +50,21 @@ func NewHub(messageService service.MessageService, userRepo repository.UserRepos
 		targeted:       make(chan targetedMessage, 256),
 		register:       make(chan *Client),
 		unregister:     make(chan *Client),
+		disconnect:     make(chan disconnectTarget, 256),
 		clients:        make(map[*Client]bool),
 		clientsByUser:  make(map[uint]map[*Client]struct{}),
+	}
+}
+
+func (h *Hub) DisconnectUser(userID uint) {
+	if userID != 0 {
+		h.disconnect <- disconnectTarget{userID: userID}
+	}
+}
+
+func (h *Hub) DisconnectTenant(tenantID uint) {
+	if tenantID != 0 {
+		h.disconnect <- disconnectTarget{tenantID: tenantID}
 	}
 }
 
@@ -85,6 +104,16 @@ func (h *Hub) deliverTargeted(message targetedMessage) {
 	}
 }
 
+func (h *Hub) disconnectClients(target disconnectTarget) {
+	for client := range h.clients {
+		matchesUser := target.userID != 0 && client.userID == target.userID
+		matchesTenant := target.tenantID != 0 && client.tenantID == target.tenantID
+		if matchesUser || matchesTenant {
+			h.unregisterClient(client)
+		}
+	}
+}
+
 // Hub 的核心循环：处理注册、注销、广播
 func (h *Hub) Run() {
 	for {
@@ -97,6 +126,8 @@ func (h *Hub) Run() {
 			log.Printf("Client disconnected. Total: %d", len(h.clients))
 		case message := <-h.targeted:
 			h.deliverTargeted(message)
+		case target := <-h.disconnect:
+			h.disconnectClients(target)
 		}
 	}
 }

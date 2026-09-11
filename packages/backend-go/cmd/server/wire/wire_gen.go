@@ -42,9 +42,12 @@ func NewWire(viperViper *viper.Viper, logger *log.Logger) (*app.App, func(), err
 	userHandler := handler.NewUserHandler(handlerHandler, userService)
 	roomService := service.NewRoomService(serviceService)
 	roomHandler := handler.NewRoomHandler(handlerHandler, roomService)
+	tenantService := service.NewTenantService(serviceService)
+	tenantHandler := handler.NewTenantHandler(handlerHandler, tenantService)
 	messageRepository := repository.NewMessageRepository(repositoryRepository)
 	messageService := service.NewMessageService(serviceService, messageRepository)
-	httpServer := server.NewHTTPServer(logger, viperViper, jwtJWT, userHandler, roomHandler, userRepository, messageService, roomService)
+	migrate := server.NewMigrate(db, logger, viperViper)
+	httpServer := server.NewHTTPServer(logger, viperViper, jwtJWT, userHandler, roomHandler, tenantHandler, userRepository, messageService, roomService, migrate)
 	job := server.NewJob(logger)
 	appApp := newApp(httpServer, job)
 	return appApp, func() {
@@ -56,11 +59,11 @@ func NewWire(viperViper *viper.Viper, logger *log.Logger) (*app.App, func(), err
 
 var repositorySet = wire.NewSet(repository.NewDB, repository.NewRepository, repository.NewTransaction, repository.NewUserRepository, repository.NewFriendRepository, repository.NewMessageRepository)
 
-var serviceSet = wire.NewSet(service.NewService, service.NewUserService, service.NewRoomService, service.NewMessageService)
+var serviceSet = wire.NewSet(service.NewService, service.NewUserService, service.NewRoomService, service.NewMessageService, service.NewTenantService)
 
-var handlerSet = wire.NewSet(handler.NewHandler, handler.NewUserHandler, handler.NewRoomHandler)
+var handlerSet = wire.NewSet(handler.NewHandler, handler.NewUserHandler, handler.NewRoomHandler, handler.NewTenantHandler)
 
-var serverSet = wire.NewSet(server.NewHTTPServer, server.NewJob)
+var serverSet = wire.NewSet(server.NewHTTPServer, server.NewJob, server.NewMigrate)
 
 // build App
 func newApp(

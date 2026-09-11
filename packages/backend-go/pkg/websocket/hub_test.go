@@ -301,6 +301,35 @@ func TestDeliverTargetedOnlyWritesToRequestedUsers(t *testing.T) {
 	}
 }
 
+func TestDisconnectClientsInvalidatesUserAndTenantSessions(t *testing.T) {
+	hub := NewHub(nil, nil)
+	userSession := &Client{userID: 7, tenantID: 1, send: make(chan []byte, 1)}
+	sameTenant := &Client{userID: 8, tenantID: 1, send: make(chan []byte, 1)}
+	otherTenant := &Client{userID: 9, tenantID: 2, send: make(chan []byte, 1)}
+	for _, client := range []*Client{userSession, sameTenant, otherTenant} {
+		hub.registerClient(client)
+	}
+
+	hub.disconnectClients(disconnectTarget{userID: userSession.userID})
+	if hub.clients[userSession] {
+		t.Fatal("suspended user session must be unregistered")
+	}
+	if !hub.clients[sameTenant] || !hub.clients[otherTenant] {
+		t.Fatal("disconnecting one user must preserve unrelated sessions")
+	}
+	if _, open := <-userSession.send; open {
+		t.Fatal("suspended user send channel must be closed")
+	}
+
+	hub.disconnectClients(disconnectTarget{tenantID: 1})
+	if hub.clients[sameTenant] {
+		t.Fatal("suspended tenant session must be unregistered")
+	}
+	if !hub.clients[otherTenant] {
+		t.Fatal("disconnecting one tenant must preserve other tenants")
+	}
+}
+
 func TestNotifyRoomListChangedTargetsOnlyRequestedUsers(t *testing.T) {
 	hub := NewHub(nil, nil)
 	hub.NotifyRoomListChanged([]uint{1, 2, 2, 0})

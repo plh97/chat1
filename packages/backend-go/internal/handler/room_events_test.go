@@ -144,6 +144,9 @@ func TestUpdateRoomPublishesOnlyCommittedChangesAndNotifiesRemovedUsers(t *testi
 				RemovedAdminIDs:  []uint{15},
 				NewCreatorID:     16,
 				MetadataChanged:  true,
+				PreviousName:     "old room",
+				NewName:          "renamed",
+				NameChanged:      true,
 				RoomUserIDs:      []uint{42, 12, 13, 15, 16},
 			}, nil
 		},
@@ -195,7 +198,7 @@ func TestUpdateRoomPublishesOnlyCommittedChangesAndNotifiesRemovedUsers(t *testi
 		"42 removed 14 from the room",
 		"42 removed 15 as room administrator",
 		"42 transferred room ownership to 16",
-		"42 updated the room information",
+		`42 changed the room name from "old room" to "renamed"`,
 	}, contents)
 	assert.NotContains(t, contents, "112")
 	assert.NotContains(t, contents, "113")

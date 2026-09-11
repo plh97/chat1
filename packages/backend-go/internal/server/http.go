@@ -12,6 +12,7 @@ import (
 	"backend-go/pkg/server/http"
 
 	ws "backend-go/pkg/websocket"
+	"context"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -25,10 +26,18 @@ func NewHTTPServer(
 	jwt *jwt.JWT,
 	userHandler *handler.UserHandler,
 	roomHandler *handler.RoomHandler,
+	tenantHandler *handler.TenantHandler,
 	userRepo repository.UserRepository,
 	messageService service.MessageService,
 	roomService service.RoomService,
+	migrate *Migrate,
 ) *http.Server {
+	// Run additive, non-reset migrations before accepting requests. This keeps
+	// existing installations usable when a hot reload introduces tenant-aware
+	// authorization that depends on the new tables and columns.
+	if err := migrate.Run(context.Background()); err != nil {
+		panic(err)
+	}
 	gin.SetMode(gin.DebugMode)
 	s := http.NewServer(
 		gin.Default(),
@@ -64,20 +73,17 @@ func NewHTTPServer(
 			noAuthRouter.POST("/register", userHandler.Register)
 			noAuthRouter.POST("/login", userHandler.Login)
 			noAuthRouter.POST("/logout", userHandler.Logout)
-			noAuthRouter.POST("/upload", userHandler.Upload)
 		}
-		// Non-strict permission routing group
-		noStrictAuthRouter := v1.Group("/").Use(middleware.NoStrictAuth(jwt, logger))
-		{
-			noStrictAuthRouter.GET("/profile", userHandler.GetCurrentProfile)
-			noStrictAuthRouter.GET("/user", userHandler.ListUsers)
-			noStrictAuthRouter.GET("/userImage", userHandler.GetUserImage)
-		}
-
 		// Strict permission routing group
-		strictAuthRouter := v1.Group("/").Use(middleware.StrictAuth(jwt, logger))
+		tenantSessions := userRepo.(repository.TenantSessionRepository)
+		platformRoles := userRepo.(repository.PlatformRoleRepository)
+		strictAuthRouter := v1.Group("/").Use(middleware.StrictAuth(jwt, logger), middleware.ActiveTenant(tenantSessions))
 		{
+			strictAuthRouter.GET("/profile", userHandler.GetCurrentProfile)
+			strictAuthRouter.GET("/user", userHandler.ListUsers)
+			strictAuthRouter.GET("/userImage", userHandler.GetUserImage)
 			strictAuthRouter.PUT("/profile", userHandler.UpdateProfile)
+			strictAuthRouter.POST("/upload", userHandler.Upload)
 			strictAuthRouter.POST("/friend", userHandler.AddFriend)
 			strictAuthRouter.DELETE("/friend", userHandler.DeleteFriend)
 			strictAuthRouter.POST("/room", roomHandler.AddRoom)
@@ -93,12 +99,27 @@ func NewHTTPServer(
 			strictAuthRouter.GET("/room/message", roomHandler.GetMessage)
 			strictAuthRouter.DELETE("/room/message", roomHandler.DeleteMessage)
 		}
+		platformRouter := v1.Group("/platform").Use(middleware.StrictAuth(jwt, logger), middleware.ActiveTenant(tenantSessions), middleware.PlatformAdmin(platformRoles))
+		{
+			platformRouter.GET("/overview", tenantHandler.Overview)
+			platformRouter.GET("/tenants", tenantHandler.List)
+			platformRouter.POST("/tenants", tenantHandler.Create)
+			platformRouter.GET("/tenants/:id", tenantHandler.Get)
+			platformRouter.PATCH("/tenants/:id", tenantHandler.Update)
+			platformRouter.DELETE("/tenants/:id", tenantHandler.Archive)
+			platformRouter.GET("/users", tenantHandler.ListUsers)
+			platformRouter.POST("/tenants/:id/users", tenantHandler.CreateUser)
+			platformRouter.PATCH("/users/:id", tenantHandler.UpdateUser)
+			platformRouter.DELETE("/users/:id", tenantHandler.DeleteUser)
+			platformRouter.GET("/system", tenantHandler.System)
+		}
 	}
 	// websocketのupgraderを定期
 	hub := ws.NewHub(messageService, userRepo)
 	userHandler.SetRoomEventPublisher(hub)
 	userHandler.SetUserEventPublisher(hub)
 	roomHandler.SetRoomEventPublisher(hub)
+	tenantHandler.SetSessionInvalidator(hub)
 	s.GET("/ws", func(c *gin.Context) {
 		ws.ServeWs(hub, jwt, c)
 	})

@@ -24,9 +24,13 @@ func setupFriendRepository(t *testing.T) (apprepo.FriendRepository, *gorm.DB) {
 }
 
 func createFriendTestRoom(t *testing.T, db *gorm.DB, channelType string, userIDs ...uint) *model.Room {
+	return createFriendTestRoomForTenant(t, db, 1, channelType, userIDs...)
+}
+
+func createFriendTestRoomForTenant(t *testing.T, db *gorm.DB, tenantID uint, channelType string, userIDs ...uint) *model.Room {
 	t.Helper()
 
-	room := &model.Room{Name: "test room", ChannelType: channelType}
+	room := &model.Room{TenantID: tenantID, Name: "test room", ChannelType: channelType}
 	require.NoError(t, db.Create(room).Error)
 	memberships := make([]model.RoomMember, 0, len(userIDs))
 	for _, userID := range userIDs {
@@ -38,6 +42,54 @@ func createFriendTestRoom(t *testing.T, db *gorm.DB, channelType string, userIDs
 	}
 	require.NoError(t, db.Create(&memberships).Error)
 	return room
+}
+
+func TestFriendRepository_AddFriendCreatesTenantScopedPrivateRoom(t *testing.T) {
+	friendRepo, db := setupFriendRepository(t)
+	ctx := apprepo.WithTenantID(context.Background(), 2)
+
+	user := &model.User{TenantID: 2, UserName: "tenant-two-user", Email: "tenant-two-user@example.com"}
+	friend := &model.User{TenantID: 2, UserName: "tenant-two-friend", Email: "tenant-two-friend@example.com"}
+	otherTenantUser := &model.User{TenantID: 3, UserName: "tenant-three-user", Email: "tenant-three-user@example.com"}
+	require.NoError(t, db.Create([]*model.User{user, friend, otherTenantUser}).Error)
+
+	room, err := friendRepo.AddFriend(ctx, user.ID, friend.ID)
+	require.NoError(t, err)
+	require.Equal(t, uint(2), room.TenantID)
+	require.Len(t, room.Members, 2)
+
+	var membershipCount int64
+	require.NoError(t, db.Model(&model.RoomMember{}).Where("room_id = ?", room.ID).Count(&membershipCount).Error)
+	assert.Equal(t, int64(2), membershipCount)
+
+	require.NoError(t, db.Model(user).Association("Friends").Append(otherTenantUser))
+	friends, err := friendRepo.GetFriends(ctx, user.ID)
+	require.NoError(t, err)
+	require.Len(t, friends, 1)
+	assert.Equal(t, friend.ID, friends[0].ID)
+
+	isCrossTenantFriend, err := friendRepo.IsFriend(ctx, user.ID, otherTenantUser.ID)
+	require.NoError(t, err)
+	assert.False(t, isCrossTenantFriend)
+	_, err = friendRepo.AddFriend(ctx, user.ID, otherTenantUser.ID)
+	assert.ErrorIs(t, err, gorm.ErrRecordNotFound)
+}
+
+func TestFriendRepository_DeleteFriendKeepsRoomsOutsideTenant(t *testing.T) {
+	friendRepo, db := setupFriendRepository(t)
+	ctx := apprepo.WithTenantID(context.Background(), 2)
+
+	user := &model.User{TenantID: 2, UserName: "scoped-delete-user", Email: "scoped-delete-user@example.com"}
+	friend := &model.User{TenantID: 2, UserName: "scoped-delete-friend", Email: "scoped-delete-friend@example.com"}
+	require.NoError(t, db.Create([]*model.User{user, friend}).Error)
+	addBidirectionalFriendship(t, db, user, friend)
+
+	tenantRoom := createFriendTestRoomForTenant(t, db, 2, model.RoomTypePrivate, user.ID, friend.ID)
+	legacyCrossTenantRoom := createFriendTestRoomForTenant(t, db, 3, model.RoomTypePrivate, user.ID, friend.ID)
+
+	require.NoError(t, friendRepo.DeleteFriend(ctx, user.ID, friend.ID))
+	assert.ErrorIs(t, db.First(&model.Room{}, tenantRoom.ID).Error, gorm.ErrRecordNotFound)
+	require.NoError(t, db.First(&model.Room{}, legacyCrossTenantRoom.ID).Error)
 }
 
 func addBidirectionalFriendship(t *testing.T, db *gorm.DB, user, friend *model.User) {

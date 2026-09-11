@@ -7,6 +7,7 @@ import (
 type Message struct {
 	gorm.Model
 	ID            uint   `gorm:"primarykey" json:"id"`
+	TenantID      uint   `gorm:"not null;default:1;index:idx_messages_tenant" json:"tenantId"`
 	Seq           int    `gorm:"column:seq;index:idx_messages_channel_seq,priority:2" json:"seq"`
 	ContentType   string `gorm:"column:content_type" json:"content_type"`
 	ChannelId     string `gorm:"column:channel_id;index:idx_messages_channel_seq,priority:1" json:"channel_id"`

@@ -28,6 +28,14 @@ type RoomMembershipRepository interface {
 	ListRoomUserIDs(ctx context.Context, roomID uint) ([]uint, error)
 }
 
+type TenantSessionRepository interface {
+	IsTenantSessionActive(ctx context.Context, userID, tenantID uint) (bool, error)
+}
+
+type PlatformRoleRepository interface {
+	IsPlatformAdministrator(ctx context.Context, userID, tenantID uint) (bool, error)
+}
+
 // ProfileAudienceRepository resolves the users that share at least one active
 // room with a profile owner. It keeps profile events scoped to people who are
 // already allowed to see that user in the chat UI.
@@ -52,6 +60,32 @@ type privateRoomPeerRow struct {
 	Image    string `gorm:"column:image"`
 }
 
+func (r *userRepository) IsTenantSessionActive(ctx context.Context, userID, tenantID uint) (bool, error) {
+	if userID == 0 || tenantID == 0 {
+		return false, nil
+	}
+	var count int64
+	err := r.DB(ctx).Table("users").
+		Joins("JOIN tenants ON tenants.id = users.tenant_id AND tenants.deleted_at IS NULL").
+		Where("users.id = ? AND users.tenant_id = ? AND users.deleted_at IS NULL", userID, tenantID).
+		Where("users.status = ?", "active").
+		Where("tenants.status IN ?", []string{model.TenantStatusTrial, model.TenantStatusActive}).
+		Count(&count).Error
+	return count == 1, err
+}
+
+func (r *userRepository) IsPlatformAdministrator(ctx context.Context, userID, tenantID uint) (bool, error) {
+	if userID == 0 || tenantID == 0 {
+		return false, nil
+	}
+	var count int64
+	err := r.DB(ctx).Model(&model.User{}).
+		Where("id = ? AND tenant_id = ? AND status = ?", userID, tenantID, "active").
+		Where("permission IN ?", []string{"platform_owner", "platform_admin"}).
+		Count(&count).Error
+	return count == 1, err
+}
+
 func (r *userRepository) AreUsersInRoom(ctx context.Context, roomID uint, userIDs []uint) (bool, error) {
 	uniqueUserIDs := make(map[uint]struct{}, len(userIDs))
 	for _, userID := range userIDs {
@@ -68,10 +102,16 @@ func (r *userRepository) AreUsersInRoom(ctx context.Context, roomID uint, userID
 		ids = append(ids, userID)
 	}
 	var count int64
-	err := r.DB(ctx).
+	query := r.DB(ctx).
 		Table("room_members").
-		Where("room_id = ? AND user_id IN ? AND deleted_at IS NULL", roomID, ids).
-		Distinct("user_id").
+		Joins("JOIN users ON users.id = room_members.user_id AND users.deleted_at IS NULL AND users.status = ?", "active").
+		Joins("JOIN rooms ON rooms.id = room_members.room_id AND rooms.deleted_at IS NULL").
+		Where("room_members.room_id = ? AND room_members.user_id IN ? AND room_members.deleted_at IS NULL", roomID, ids)
+	if tenantID := TenantIDFromContext(ctx); tenantID != 0 {
+		query = query.Where("rooms.tenant_id = ? AND users.tenant_id = ?", tenantID, tenantID)
+	}
+	err := query.
+		Distinct("room_members.user_id").
 		Count(&count).Error
 	return count == int64(len(ids)), err
 }
@@ -82,12 +122,20 @@ func (r *userRepository) ListRoomUserIDs(ctx context.Context, roomID uint) ([]ui
 	}
 
 	var userIDs []uint
-	err := r.DB(ctx).
+	query := r.DB(ctx).
 		Table("room_members").
-		Where("room_id = ? AND deleted_at IS NULL", roomID).
-		Distinct("user_id").
-		Order("user_id ASC").
-		Pluck("user_id", &userIDs).Error
+		Joins("JOIN users ON users.id = room_members.user_id AND users.deleted_at IS NULL AND users.status = ?", "active").
+		Where("room_members.room_id = ? AND room_members.deleted_at IS NULL", roomID)
+	if tenantID := TenantIDFromContext(ctx); tenantID != 0 {
+		query = query.Joins("JOIN rooms ON rooms.id = room_members.room_id AND rooms.deleted_at IS NULL").
+			Joins("JOIN tenants ON tenants.id = rooms.tenant_id AND tenants.deleted_at IS NULL").
+			Where("rooms.tenant_id = ? AND users.tenant_id = ?", tenantID, tenantID).
+			Where("tenants.status IN ?", []string{model.TenantStatusTrial, model.TenantStatusActive})
+	}
+	err := query.
+		Distinct("room_members.user_id").
+		Order("room_members.user_id ASC").
+		Pluck("room_members.user_id", &userIDs).Error
 	return userIDs, err
 }
 
@@ -97,16 +145,19 @@ func (r *userRepository) ListProfileAudienceUserIDs(ctx context.Context, userID 
 	}
 
 	var userIDs []uint
-	err := r.DB(ctx).
+	query := r.DB(ctx).
 		Table("room_members AS owner_rooms").
 		Select("DISTINCT audience.user_id").
 		Joins("JOIN room_members AS audience ON audience.room_id = owner_rooms.room_id AND audience.deleted_at IS NULL").
 		Joins("JOIN rooms ON rooms.id = owner_rooms.room_id AND rooms.deleted_at IS NULL").
-		Joins("JOIN users ON users.id = audience.user_id AND users.deleted_at IS NULL").
+		Joins("JOIN users ON users.id = audience.user_id AND users.deleted_at IS NULL AND users.status = ?", "active").
 		Where("owner_rooms.user_id = ? AND owner_rooms.deleted_at IS NULL", userID).
 		Where("audience.user_id <> 0 AND audience.user_id <> ?", userID).
-		Order("audience.user_id ASC").
-		Pluck("audience.user_id", &userIDs).Error
+		Order("audience.user_id ASC")
+	if tenantID := TenantIDFromContext(ctx); tenantID != 0 {
+		query = query.Where("rooms.tenant_id = ? AND users.tenant_id = ?", tenantID, tenantID)
+	}
+	err := query.Pluck("audience.user_id", &userIDs).Error
 	return userIDs, err
 }
 
@@ -294,7 +345,11 @@ func (r *userRepository) Update(ctx context.Context, user *model.User) error {
 }
 
 func (r *userRepository) UpdateFields(ctx context.Context, id int, fields map[string]interface{}) error {
-	if err := r.DB(ctx).Model(&model.User{}).Where("id = ?", id).Updates(fields).Error; err != nil {
+	query := r.DB(ctx).Model(&model.User{}).Where("id = ?", id)
+	if tenantID := TenantIDFromContext(ctx); tenantID != 0 {
+		query = query.Where("tenant_id = ?", tenantID)
+	}
+	if err := query.Updates(fields).Error; err != nil {
 		return err
 	}
 	return nil
@@ -302,7 +357,11 @@ func (r *userRepository) UpdateFields(ctx context.Context, id int, fields map[st
 
 func (r *userRepository) GetByID(ctx context.Context, id int) (*model.User, error) {
 	var user model.User
-	if err := r.DB(ctx).Where("id = ?", id).First(&user).Error; err != nil {
+	query := r.DB(ctx).Where("id = ?", id)
+	if tenantID := TenantIDFromContext(ctx); tenantID != 0 {
+		query = query.Where("tenant_id = ?", tenantID)
+	}
+	if err := query.First(&user).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, v1.ErrNotFound
 		}
@@ -313,7 +372,11 @@ func (r *userRepository) GetByID(ctx context.Context, id int) (*model.User, erro
 
 func (r *userRepository) GetProfileByID(ctx context.Context, id int) (*model.User, error) {
 	var user model.User
-	if err := r.DB(ctx).Where("id = ?", id).
+	query := r.DB(ctx).Where("id = ?", id)
+	if tenantID := TenantIDFromContext(ctx); tenantID != 0 {
+		query = query.Where("tenant_id = ?", tenantID)
+	}
+	if err := query.
 		Preload("Rooms", func(db *gorm.DB) *gorm.DB {
 			return db.Select("rooms.id", "rooms.created_at", "rooms.updated_at", "rooms.deleted_at", "rooms.name", "rooms.image", "rooms.channel_type", "rooms.read_seq")
 		}).
@@ -350,6 +413,9 @@ func (r *userRepository) List(ctx context.Context, req v1.ListUsersRequest) ([]m
 	var users []model.User
 	var totalCount int64
 	query := r.DB(ctx).Model(&model.User{})
+	if tenantID := TenantIDFromContext(ctx); tenantID != 0 {
+		query = query.Where("users.tenant_id = ?", tenantID)
+	}
 	// Filter by ID (exact match)
 	if id := req.ID; id != 0 {
 		query = query.Where("id = ?", id)

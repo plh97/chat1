@@ -14,7 +14,9 @@ type JWT struct {
 }
 
 type MyCustomClaims struct {
-	UserId int
+	UserId       int
+	TenantId     uint   `json:"tenantId"`
+	PlatformRole string `json:"platformRole,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -23,8 +25,14 @@ func NewJwt(conf *viper.Viper) *JWT {
 }
 
 func (j *JWT) GenToken(userId int, expiresAt time.Time) (string, error) {
+	return j.GenTenantToken(userId, 0, "", expiresAt)
+}
+
+func (j *JWT) GenTenantToken(userId int, tenantID uint, platformRole string, expiresAt time.Time) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, MyCustomClaims{
-		UserId: userId,
+		UserId:       userId,
+		TenantId:     tenantID,
+		PlatformRole: platformRole,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiresAt),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

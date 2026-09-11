@@ -58,14 +58,13 @@ type LoginResponse struct {
 }
 
 type UpdateProfileRequest struct {
-	UserName   *string `json:"userName" example:"alan"`
-	Email      *string `json:"email" binding:"omitempty,email" example:"1234@gmail.com"`
-	Bio        *string `json:"bio" example:"User's bio"`
-	Github     *string `json:"github" example:"User's github"`
-	QQ         *string `json:"qq" example:"User's QQ"`
-	WeChat     *string `json:"wechat" example:"User's WeChat"`
-	Permission *string `json:"permission" example:"User's permission"`
-	Image      *string `json:"image" example:"User's avatar URL"`
+	UserName *string `json:"userName" example:"alan"`
+	Email    *string `json:"email" binding:"omitempty,email" example:"1234@gmail.com"`
+	Bio      *string `json:"bio" example:"User's bio"`
+	Github   *string `json:"github" example:"User's github"`
+	QQ       *string `json:"qq" example:"User's QQ"`
+	WeChat   *string `json:"wechat" example:"User's WeChat"`
+	Image    *string `json:"image" example:"User's avatar URL"`
 }
 type GetProfileResponseData struct {
 	ID         string       `json:"id"`

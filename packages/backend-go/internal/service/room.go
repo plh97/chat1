@@ -33,6 +33,10 @@ type RoomUpdateResult struct {
 	PreviousCreatorID uint
 	NewCreatorID      uint
 	MetadataChanged   bool
+	PreviousName      string
+	NewName           string
+	NameChanged       bool
+	ImageChanged      bool
 	RoomUserIDs       []uint
 }
 
@@ -255,14 +259,18 @@ func hasUintIDOverlap(left, right []uint) bool {
 	return false
 }
 
-func ensureUsersExist(db *gorm.DB, ids []uint) error {
+func ensureTenantUsersExist(db *gorm.DB, tenantID uint, ids []uint) error {
 	ids = uniqueUintIDs(ids)
 	if len(ids) == 0 {
 		return nil
 	}
 
 	var count int64
-	if err := db.Model(&model.User{}).Where("id IN ?", ids).Count(&count).Error; err != nil {
+	query := db.Model(&model.User{}).Where("id IN ?", ids)
+	if tenantID != 0 {
+		query = query.Where("tenant_id = ?", tenantID)
+	}
+	if err := query.Count(&count).Error; err != nil {
 		return err
 	}
 	if count != int64(len(ids)) {
@@ -292,11 +300,14 @@ func (s *roomService) CreateRoom(ctx context.Context, req v1.RoomCreateRequest) 
 	memberIDs := uniqueUintIDs(req.GetMemberIDs(), excludedMemberIDs...)
 	roomUserIDs := append([]uint{creatorID}, adminIDs...)
 	roomUserIDs = append(roomUserIDs, memberIDs...)
-	room := &model.Room{Name: name, Image: req.Image}
+	room := &model.Room{TenantID: req.TenantID, Name: name, Image: req.Image}
+	if room.TenantID == 0 {
+		room.TenantID = 1
+	}
 
 	if err := s.tm.Transaction(ctx, func(txCtx context.Context) error {
 		db := s.tm.(*repository.Repository).DB(txCtx)
-		if err := ensureUsersExist(db, roomUserIDs); err != nil {
+		if err := ensureTenantUsersExist(db, room.TenantID, roomUserIDs); err != nil {
 			return err
 		}
 		if err := db.Create(room).Error; err != nil {
@@ -966,7 +977,11 @@ func (s *roomService) AuthorizeRoomAccess(ctx context.Context, roomID, userID ui
 
 	db := s.tm.(*repository.Repository).DB(ctx)
 	var room model.Room
-	if err := db.Select("id", "channel_type").Where("id = ?", roomID).First(&room).Error; err != nil {
+	query := db.Select("id", "channel_type").Where("id = ?", roomID)
+	if tenantID := repository.TenantIDFromContext(ctx); tenantID != 0 {
+		query = query.Where("tenant_id = ?", tenantID)
+	}
+	if err := query.First(&room).Error; err != nil {
 		return err
 	}
 
@@ -988,10 +1003,14 @@ func (s *roomService) ListRooms(ctx context.Context, userID uint) (interface{}, 
 	}
 	db := s.tm.(*repository.Repository).DB(ctx)
 	var rooms []model.Room
-	if err := db.
+	query := db.
 		Joins("JOIN room_members ON room_members.room_id = rooms.id").
 		Where("room_members.user_id = ? AND room_members.deleted_at IS NULL", userID).
-		Distinct("rooms.*").
+		Distinct("rooms.*")
+	if tenantID := repository.TenantIDFromContext(ctx); tenantID != 0 {
+		query = query.Where("rooms.tenant_id = ?", tenantID)
+	}
+	if err := query.
 		Preload("Members").
 		Preload("Admins").
 		Preload("CreatorList").
@@ -1035,7 +1054,11 @@ func (s *roomService) UpdateRoom(ctx context.Context, operatorID uint, req v1.Ro
 	err := s.tm.Transaction(ctx, func(txCtx context.Context) error {
 		db := s.tm.(*repository.Repository).DB(txCtx)
 		var room model.Room
-		if err := db.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ?", req.GetID()).First(&room).Error; err != nil {
+		roomQuery := db.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ?", req.GetID())
+		if req.TenantID != 0 {
+			roomQuery = roomQuery.Where("tenant_id = ?", req.TenantID)
+		}
+		if err := roomQuery.First(&room).Error; err != nil {
 			return err
 		}
 
@@ -1063,7 +1086,7 @@ func (s *roomService) UpdateRoom(ctx context.Context, operatorID uint, req v1.Ro
 			return fmt.Errorf("%w: creator cannot be removed or downgraded", ErrInvalidRoomUpdate)
 		}
 
-		if err := ensureUsersExist(db, append(append([]uint{}, adminIDs...), memberIDs...)); err != nil {
+		if err := ensureTenantUsersExist(db, room.TenantID, append(append([]uint{}, adminIDs...), memberIDs...)); err != nil {
 			return err
 		}
 		if newCreatorID != 0 && newCreatorID != operatorID {
@@ -1077,11 +1100,15 @@ func (s *roomService) UpdateRoom(ctx context.Context, operatorID uint, req v1.Ro
 			name := strings.TrimSpace(*req.Name)
 			if name != room.Name {
 				updates["name"] = name
+				result.PreviousName = room.Name
+				result.NewName = name
+				result.NameChanged = true
 			}
 		}
 		if req.Image != nil && *req.Image != room.Image {
 			// An explicitly supplied empty string clears the room avatar.
 			updates["image"] = *req.Image
+			result.ImageChanged = true
 		}
 		if len(updates) > 0 {
 			if err := db.Model(&room).Updates(updates).Error; err != nil {
@@ -1182,6 +1209,9 @@ func (s *roomService) JoinRoom(ctx context.Context, userID, roomID uint) (*RoomJ
 		db := s.tm.(*repository.Repository).DB(txCtx)
 		var room model.Room
 		query := db.Clauses(clause.Locking{Strength: "UPDATE"}).Model(&model.Room{})
+		if tenantID := repository.TenantIDFromContext(txCtx); tenantID != 0 {
+			query = query.Where("tenant_id = ?", tenantID)
+		}
 		if roomID == 0 {
 			if err := query.Where("channel_type = ?", model.RoomTypeGroup).Order("id ASC").First(&room).Error; err != nil {
 				return err
@@ -1201,7 +1231,7 @@ func (s *roomService) JoinRoom(ctx context.Context, userID, roomID uint) (*RoomJ
 			if room.ChannelType == model.RoomTypePrivate {
 				return ErrRoomForbidden
 			}
-			if err := ensureUsersExist(db, []uint{userID}); err != nil {
+			if err := ensureTenantUsersExist(db, room.TenantID, []uint{userID}); err != nil {
 				return err
 			}
 			if err := upsertRoomMember(db, room.ID, userID, model.Member); err != nil {
@@ -1264,7 +1294,11 @@ func (s *roomService) DeleteRoom(ctx context.Context, operatorID, id uint) (*Roo
 	err := s.tm.Transaction(ctx, func(txCtx context.Context) error {
 		db := s.tm.(*repository.Repository).DB(txCtx)
 		var room model.Room
-		if err := db.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ?", id).First(&room).Error; err != nil {
+		roomQuery := db.Clauses(clause.Locking{Strength: "UPDATE"}).Where("id = ?", id)
+		if tenantID := repository.TenantIDFromContext(txCtx); tenantID != 0 {
+			roomQuery = roomQuery.Where("tenant_id = ?", tenantID)
+		}
+		if err := roomQuery.First(&room).Error; err != nil {
 			return err
 		}
 

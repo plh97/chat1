@@ -72,7 +72,10 @@ type CloudflareR2 struct {
 }
 
 // 生成上传用的预签名url
-func (r *CloudflareR2) UploadPresignedUrl(fileExt string, uploadScene int) (string, string, error) {
+func (r *CloudflareR2) UploadPresignedUrl(tenantID uint, fileExt string, uploadScene int) (string, string, error) {
+	if tenantID == 0 {
+		return "", "", fmt.Errorf("tenant is required")
+	}
 	// 文件扩展名并转换为小写
 	fileExt = strings.ToLower(fileExt)
 	// 根据扩展名设置 Content-Type
@@ -90,6 +93,7 @@ func (r *CloudflareR2) UploadPresignedUrl(fileExt string, uploadScene int) (stri
 	default:
 		return "", "", fmt.Errorf("不允许的上传场景: %d", uploadScene)
 	}
+	objectKey = fmt.Sprintf("tenants/%d/%s", tenantID, objectKey)
 
 	// 通过预签名客户端发起请求，获取上传文件的预签名Url的信息
 	req, err := r.r2PresignClient.PresignPutObject(context.TODO(), &s3.PutObjectInput{

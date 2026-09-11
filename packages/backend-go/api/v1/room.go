@@ -46,6 +46,7 @@ type (
 
 	// RoomCreateRequest 用于创建房间的请求体
 	RoomCreateRequest struct {
+		TenantID  uint         `json:"-"`
 		Name      string       `json:"name"`
 		Image     string       `json:"image"`
 		CreatorID RoomUserID   `json:"creatorId"`
@@ -57,6 +58,7 @@ type (
 
 	// RoomUpdateRequest 用于更新房间的请求体
 	RoomUpdateRequest struct {
+		TenantID        uint         `json:"-"`
 		ID              RoomUserID   `json:"id"`
 		Name            *string      `json:"name"`
 		Image           *string      `json:"image"`

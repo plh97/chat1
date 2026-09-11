@@ -29,10 +29,13 @@ func (h *RoomHandler) SetRoomEventPublisher(publisher RoomEventPublisher) {
 }
 
 func (h *RoomHandler) publishSystemMessage(ctx context.Context, roomID, actorID uint, action string, targetIDs ...uint) {
+	h.publishSystemMessageContent(ctx, roomID, actorID, action, systemMessageContent(actorID, action, targetIDs...))
+}
+
+func (h *RoomHandler) publishSystemMessageContent(ctx context.Context, roomID, actorID uint, action, content string) {
 	if h.roomEvents == nil {
 		return
 	}
-	content := systemMessageContent(actorID, action, targetIDs...)
 	if err := h.roomEvents.PublishSystemMessage(ctx, roomID, actorID, action, content); err != nil && h.logger != nil {
 		h.logger.WithContext(ctx).Error(
 			"publish room system message failed",
@@ -133,6 +136,7 @@ func (h *RoomHandler) AddRoom(ctx *gin.Context) {
 	// The authenticated user is always the creator. Never trust creatorId from
 	// the request body as an authority-bearing identity.
 	body.CreatorID = v1.RoomUserID(currentUserID)
+	body.TenantID = GetTenantIdFromCtx(ctx)
 	result, err := h.roomService.CreateRoom(ctx, body)
 	if err != nil {
 		handleRoomMutationError(ctx, err)
@@ -422,6 +426,7 @@ func (h *RoomHandler) UpdateRoom(ctx *gin.Context) {
 		return
 	}
 	operatorID := uint(GetUserIdFromCtx(ctx))
+	req.TenantID = GetTenantIdFromCtx(ctx)
 	if operatorID == 0 {
 		v1.HandleError(ctx, http.StatusUnauthorized, v1.ErrUnauthorized, nil)
 		return
@@ -447,8 +452,23 @@ func (h *RoomHandler) UpdateRoom(ctx *gin.Context) {
 		if result.NewCreatorID != 0 {
 			h.publishSystemMessage(ctx, req.GetID(), operatorID, systemActionTransferOwner, result.NewCreatorID)
 		}
-		if result.MetadataChanged {
-			h.publishSystemMessage(ctx, req.GetID(), operatorID, systemActionChangeRoom)
+		if result.NameChanged {
+			h.publishSystemMessageContent(
+				ctx,
+				req.GetID(),
+				operatorID,
+				systemActionChangeRoom,
+				roomNameChangeMessage(operatorID, result.PreviousName, result.NewName),
+			)
+		}
+		if result.ImageChanged {
+			h.publishSystemMessageContent(
+				ctx,
+				req.GetID(),
+				operatorID,
+				systemActionChangeRoom,
+				roomImageChangeMessage(operatorID),
+			)
 		}
 		h.roomEvents.NotifyRoomListChanged(uniqueRoomEventUserIDs(
 			result.RoomUserIDs,

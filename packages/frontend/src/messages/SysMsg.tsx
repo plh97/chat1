@@ -28,7 +28,8 @@ export const replaceUserIds = (
 export const formatSystemMessage = (
   content: string,
   room: IRoom | undefined,
-  currentUserId: string
+  currentUserId: string,
+  actionType?: string
 ) => {
   const idMap: Record<string, string> = {};
   const people = [
@@ -41,6 +42,16 @@ export const formatSystemMessage = (
     if (id) idMap[id] = person.userName;
   }
   if (currentUserId) idMap[String(currentUserId)] = "You";
+
+  // Room names are user-entered text and may themselves contain numbers that
+  // happen to equal a user ID. Change-room events only put the actor ID at the
+  // beginning, so resolve that token without touching the old/new names.
+  if (actionType === "CHANGE_ROOM") {
+    return content.replace(
+      /^(\d+)(?=\s)/,
+      (actorId) => idMap[actorId] ?? actorId
+    );
+  }
   return replaceUserIds(content, idMap);
 };
 
@@ -48,7 +59,7 @@ const Component = ({ message, room }: { message: IMessage; room?: IRoom }) => {
   const me = useAppSelector((state) => state.user.data);
   const sysMsg = message.systemMessage;
   if (!sysMsg?.content) return "invalid system message";
-  return formatSystemMessage(sysMsg.content, room, me.id);
+  return formatSystemMessage(sysMsg.content, room, me.id, sysMsg.actionType);
 };
 
 export const SysMsg = (message: IMessage, room?: IRoom) => {

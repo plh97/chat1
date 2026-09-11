@@ -16,6 +16,7 @@ const (
 type Room struct {
 	gorm.Model
 	ID          uint              `gorm:"primarykey" json:"id"`
+	TenantID    uint              `gorm:"not null;default:1;index:idx_rooms_tenant" json:"tenantId"`
 	Name        string            `gorm:"column:name" json:"name"`
 	Image       string            `gorm:"column:image" json:"image"`
 	ChannelType string            `gorm:"column:channel_type" json:"channelType"`

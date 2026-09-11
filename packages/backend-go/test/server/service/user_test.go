@@ -280,6 +280,7 @@ func TestUserService_UpdateProfile(t *testing.T) {
 			assert.Equal(t, userId, id)
 			assert.Equal(t, userName, fields["username"])
 			assert.Equal(t, email, fields["email"])
+			assert.NotContains(t, fields, "permission")
 			return nil
 		},
 		getByIDFn: func(ctx context.Context, id int) (*model.User, error) {

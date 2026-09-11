@@ -58,6 +58,19 @@ func systemMessageContent(actorID uint, action string, targetIDs ...uint) string
 	}
 }
 
+func roomNameChangeMessage(actorID uint, previousName, newName string) string {
+	return fmt.Sprintf(
+		`%d changed the room name from %q to %q`,
+		actorID,
+		previousName,
+		newName,
+	)
+}
+
+func roomImageChangeMessage(actorID uint) string {
+	return fmt.Sprintf("%d changed the room avatar", actorID)
+}
+
 func uniqueRoomEventUserIDs(groups ...[]uint) []uint {
 	seen := make(map[uint]struct{})
 	userIDs := make([]uint, 0)

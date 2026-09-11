@@ -141,6 +141,7 @@ export function RoomPeopleDialog({
       <Button
         size="xs"
         variant="outline"
+        className="h-8 min-h-8 rounded-md border-slate-600 bg-slate-800 px-3 text-slate-100 hover:bg-slate-700"
         aria-label={`${canManage || canTransferOwnership ? "Manage" : "View all"} ${role}s`}
         onClick={onOpen}
       >

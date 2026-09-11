@@ -112,6 +112,24 @@ func TestAuthorizeRoomAccessSeparatesPublicDiscoveryFromMemberData(t *testing.T)
 	require.ErrorIs(t, fixture.service.AuthorizeRoomAccess(ctx, privateRoom.ID, outsiderID, true), ErrRoomForbidden)
 }
 
+func TestAuthorizeRoomAccessRejectsCrossTenantRoomEvenWithMembership(t *testing.T) {
+	fixture := setupRoomServiceFixture(t)
+	memberID := fixture.userIDs[2]
+	otherTenantRoom := &model.Room{TenantID: 2, Name: "Other tenant", ChannelType: model.RoomTypeGroup}
+	require.NoError(t, fixture.db.Create(otherTenantRoom).Error)
+	require.NoError(t, fixture.db.Create(&model.RoomMember{
+		RoomID: otherTenantRoom.ID,
+		UserID: memberID,
+		Role:   model.Member,
+	}).Error)
+
+	tenantOneContext := repository.WithTenantID(context.Background(), 1)
+	require.Error(t, fixture.service.AuthorizeRoomAccess(tenantOneContext, otherTenantRoom.ID, memberID, true))
+
+	tenantTwoContext := repository.WithTenantID(context.Background(), 2)
+	require.NoError(t, fixture.service.AuthorizeRoomAccess(tenantTwoContext, otherTenantRoom.ID, memberID, false))
+}
+
 func TestListRoomsExcludesSoftDeletedMemberships(t *testing.T) {
 	fixture := setupRoomServiceFixture(t)
 	ctx := context.Background()

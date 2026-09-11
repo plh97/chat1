@@ -43,6 +43,16 @@ func (s *messageService) SendMessage(ctx context.Context, message *model.Message
 	}
 
 	err = s.tm.Transaction(ctx, func(txCtx context.Context) error {
+		db := s.tm.(*repository.Repository).DB(txCtx)
+		var room model.Room
+		roomQuery := db.Select("id", "tenant_id").Where("id = ?", uint(roomID))
+		if tenantID := repository.TenantIDFromContext(txCtx); tenantID != 0 {
+			roomQuery = roomQuery.Where("tenant_id = ?", tenantID)
+		}
+		if roomErr := roomQuery.First(&room).Error; roomErr != nil {
+			return roomErr
+		}
+		message.TenantID = room.TenantID
 		nextSeq, seqErr := s.messageRepo.ReserveNextSeq(txCtx, uint(roomID))
 		if seqErr != nil {
 			return fmt.Errorf("failed to reserve next sequence: %w", seqErr)
@@ -101,7 +111,11 @@ func (s *messageService) MarkAsRead(ctx context.Context, channelID, userID strin
 
 	db := s.tm.(*repository.Repository).DB(ctx)
 	var room model.Room
-	if err := db.Where("id = ?", uint(roomID)).First(&room).Error; err != nil {
+	roomQuery := db.Where("id = ?", uint(roomID))
+	if tenantID := repository.TenantIDFromContext(ctx); tenantID != 0 {
+		roomQuery = roomQuery.Where("tenant_id = ?", tenantID)
+	}
+	if err := roomQuery.First(&room).Error; err != nil {
 		return err
 	}
 

@@ -9,6 +9,8 @@
   "scripts": {
     "bootstrap": "pnpm i",
     "dev": "pnpm --parallel -F frontend -F backend-go dev",
+    "dev:admin": "pnpm -F admin dev",
+    "build:admin": "pnpm -F admin build",
     "preview:fe": "pnpm -F frontend build && pnpm -F frontend preview",
     "serve": "pnpm run up --build -d && pnpm run preview:fe",
     "lint:eslint": "pnpm -F frontend lint:eslint",

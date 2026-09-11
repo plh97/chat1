@@ -42,6 +42,33 @@ func TestMigrationPreservesExistingDataByDefault(t *testing.T) {
 	require.Equal(t, int64(1), count)
 }
 
+func TestMigrationOnlyPromotesSeedAdminAndExpandsDefaultTenant(t *testing.T) {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	require.NoError(t, err)
+	migration := NewMigrate(db, &appLog.Logger{Logger: zap.NewNop()}, viper.New())
+	require.NoError(t, migration.Run(context.Background()))
+	require.NoError(t, db.Model(&model.Tenant{}).Where("id = ?", 1).Update("member_limit", 10).Error)
+
+	seedAdmin := model.User{
+		TenantID: 1, UserName: "admin", Email: "admin@gmail.com", Permission: "admin",
+	}
+	legacyChatAdmin := model.User{
+		TenantID: 1, UserName: "room-admin", Email: "room-admin@example.com", Permission: "admin",
+	}
+	require.NoError(t, db.Create(&seedAdmin).Error)
+	require.NoError(t, db.Create(&legacyChatAdmin).Error)
+
+	require.NoError(t, migration.Run(context.Background()))
+	require.NoError(t, db.First(&seedAdmin, seedAdmin.ID).Error)
+	require.NoError(t, db.First(&legacyChatAdmin, legacyChatAdmin.ID).Error)
+	require.Equal(t, "platform_owner", seedAdmin.Permission)
+	require.Equal(t, "admin", legacyChatAdmin.Permission)
+
+	var tenant model.Tenant
+	require.NoError(t, db.First(&tenant, 1).Error)
+	require.GreaterOrEqual(t, tenant.MemberLimit, 10000)
+}
+
 func TestMigrationResetMustBeExplicit(t *testing.T) {
 	conf := viper.New()
 	migration := NewMigrate(nil, &appLog.Logger{Logger: zap.NewNop()}, conf)

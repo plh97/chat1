@@ -1,11 +1,11 @@
 package handler
 
 import (
+	"backend-go/pkg/jwt"
+	"backend-go/pkg/log"
 	"github.com/gin-gonic/gin"
 	"github.com/topfreegames/pitaya/v2"
 	"github.com/topfreegames/pitaya/v2/component"
-	"backend-go/pkg/jwt"
-	"backend-go/pkg/log"
 )
 
 type Handler struct {
@@ -29,4 +29,16 @@ func GetUserIdFromCtx(ctx *gin.Context) int {
 		return 0
 	}
 	return v.(*jwt.MyCustomClaims).UserId
+}
+
+func GetTenantIdFromCtx(ctx *gin.Context) uint {
+	v, exists := ctx.Get("claims")
+	if !exists {
+		return 0
+	}
+	claims, ok := v.(*jwt.MyCustomClaims)
+	if !ok {
+		return 0
+	}
+	return claims.TenantId
 }

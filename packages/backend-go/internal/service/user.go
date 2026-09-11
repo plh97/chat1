@@ -21,7 +21,7 @@ type UserService interface {
 	ListUsers(ctx context.Context, req v1.ListUsersRequest) (*v1.ListUsersResponseData, error)
 	AddFriend(ctx context.Context, userId uint, req *v1.AddFriendRequest) (*model.Room, error)
 	DeleteFriend(ctx context.Context, userId uint, req *v1.DeleteFriendRequest) error
-	UploadPresignedUrl(fileExt string, scene int) (string, string, error)
+	UploadPresignedUrl(tenantID uint, fileExt string, scene int) (string, string, error)
 }
 
 func NewUserService(service *Service, userRepo repository.UserRepository, friendRepo repository.FriendRepository, r2Client *aws.CloudflareR2) UserService {
@@ -40,8 +40,8 @@ type userService struct {
 	*Service
 }
 
-func (s *userService) UploadPresignedUrl(fileExt string, scene int) (string, string, error) {
-	return s.R2Client.UploadPresignedUrl(fileExt, scene)
+func (s *userService) UploadPresignedUrl(tenantID uint, fileExt string, scene int) (string, string, error) {
+	return s.R2Client.UploadPresignedUrl(tenantID, fileExt, scene)
 }
 
 func (s *userService) Register(ctx context.Context, req *v1.RegisterRequest) error {
@@ -83,11 +83,18 @@ func (s *userService) Login(ctx context.Context, req *v1.LoginRequest) (string, 
 	if err != nil || user == nil {
 		return "", v1.ErrInvalidCredentials
 	}
+	if user.Status != "" && user.Status != "active" {
+		return "", v1.ErrInvalidCredentials
+	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password))
 	if err != nil {
 		return "", v1.ErrInvalidCredentials
 	}
-	token, err := s.jwt.GenToken(int(user.ID), time.Now().Add(time.Hour*24*90))
+	platformRole := ""
+	if user.Permission == "platform_owner" || user.Permission == "platform_admin" {
+		platformRole = user.Permission
+	}
+	token, err := s.jwt.GenTenantToken(int(user.ID), user.TenantID, platformRole, time.Now().Add(time.Hour*24*90))
 	if err != nil {
 		return "", err
 	}
@@ -144,9 +151,6 @@ func (s *userService) UpdateProfile(ctx context.Context, id int, req *v1.UpdateP
 	if req.WeChat != nil {
 		updates["wechat"] = *req.WeChat
 	}
-	if req.Permission != nil {
-		updates["permission"] = *req.Permission
-	}
 	if req.Image != nil {
 		updates["image"] = *req.Image
 	}
@@ -200,9 +204,16 @@ func (s *userService) AddFriend(ctx context.Context, userId uint, req *v1.AddFri
 	}
 
 	// Check if friend user exists
-	_, err := s.userRepo.GetByID(ctx, int(friendID))
+	friend, err := s.userRepo.GetByID(ctx, int(friendID))
 	if err != nil {
 		return nil, err
+	}
+	user, err := s.userRepo.GetByID(ctx, int(userId))
+	if err != nil {
+		return nil, err
+	}
+	if user.TenantID == 0 || friend.TenantID != user.TenantID {
+		return nil, v1.ErrNotFound
 	}
 
 	// Add friend

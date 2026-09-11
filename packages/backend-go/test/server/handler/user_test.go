@@ -138,7 +138,7 @@ func (s *stubUserService) DeleteFriend(ctx context.Context, userId uint, req *v1
 	return nil
 }
 
-func (s *stubUserService) UploadPresignedUrl(fileExt string, scene int) (string, string, error) {
+func (s *stubUserService) UploadPresignedUrl(_ uint, fileExt string, scene int) (string, string, error) {
 	if s.uploadPresignedUrlFn != nil {
 		return s.uploadPresignedUrlFn(fileExt, scene)
 	}

@@ -131,8 +131,14 @@ export function AddAdmin({ onUpdated }: { onUpdated?: () => void } = {}) {
 
   return (
     <>
-      <IconButton size="sm" onClick={handleOpen} aria-label="add admin">
-        <FaPlus className="text-base" />
+      <IconButton
+        size="sm"
+        variant="outline"
+        className="h-8 min-h-8 w-8 min-w-8 rounded-md border-slate-600 bg-slate-800 p-0 text-slate-100 hover:bg-slate-700"
+        onClick={handleOpen}
+        aria-label="add admin"
+      >
+        <FaPlus className="h-3.5 w-3.5" />
       </IconButton>
       <Dialog.Root
         open={open}
